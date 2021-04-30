@@ -1,0 +1,27 @@
+learnrate: 1.
+epochs: 100
+resolution: 224 224
+
+init:
+  mean: 0.2 0.3 0.4
+  std: 0.05 0.1 0.2
+
+targets:
+
+  - name: saturation
+    weight: 1.
+    mean_saturation_max: 0.07
+
+  - name: full scale
+    start: 0%
+    end: 30%
+
+    features:
+      - text: reoccurring events
+        weight: 1.
+      - image: ./src-img/space.png
+        weight: .2
+
+    transforms:
+      - translate: 0.0 0.1
+      - resize: 224
