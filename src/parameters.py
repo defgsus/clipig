@@ -56,26 +56,43 @@ def frame_time_converter(v):
 
 
 PARAMETERS = {
+    "verbose": {"convert": int, "default": 2},
+    "device": {"convert": str, "default": "auto"},
     "learnrate": {"convert": float, "default": 1.},
     "epochs": {"convert": int, "default": 300},
-    "resolution": {"convert": sequence_converter(int, 2), "default": [224, 244]},
+    "resolution": {"convert": sequence_converter(int, 2), "default": [224, 224]},
+    "model": {"convert": str, "default": "ViT-B/32"},
     "init": {"default": dict()},
     "init.mean": {"convert": sequence_converter(float, 3), "default": [.5, .5, .5]},
     "init.std": {"convert": sequence_converter(float, 3), "default": [.1, .1, .1]},
+    "init.image": {"convert": str, "default": None},
+    "postproc": {"default": list()},
+    "postproc.start": {"convert": frame_time_converter, "default": 0.0},
+    "postproc.end": {"convert": frame_time_converter, "default": 1.0},
+    "postproc.blur": {"convert": sequence_converter(float, 2), "default": [3, .5]},
+    "post": {"default": list()},
     "targets": {"default": list()},
     "targets.name": {"convert": str, "default": "target"},
     "targets.start": {"convert": frame_time_converter, "default": 0.0},
     "targets.end": {"convert": frame_time_converter, "default": 1.0},
     "targets.weight": {"convert": float, "default": 1.0},
     "targets.mean_saturation_max": {"convert": float, "default": None},
+    "targets.select": {"convert": str, "default": "all"},
     "targets.features": {"default": list()},
     "targets.features.weight": {"convert": float, "default": 1.0},
     "targets.features.text": {"convert": str, "default": None},
     "targets.features.image": {"convert": str, "default": None},
     "targets.transforms": {"default": list()},
-    "targets.transforms.translate": {"convert": sequence_converter(float, 2), "default": None},
-    "targets.transforms.resize": {"convert": sequence_converter(float, 2), "default": None},
-    "targets.transforms.rotate": {"convert": sequence_converter(float, 2), "default": None},
+    "targets.transforms.noise": {"convert": sequence_converter(float, 3), "default": None},
+    "targets.transforms.blur": {"convert": sequence_converter(float, 2), "default": None},
+    "targets.transforms.repeat": {"convert": sequence_converter(int, 2), "default": None},
+    "targets.transforms.resize": {"convert": sequence_converter(int, 2), "default": None},
+    "targets.transforms.center_crop": {"convert": sequence_converter(int, 2), "default": None},
+    "targets.transforms.random_translate": {"convert": sequence_converter(float, 2), "default": None},
+    "targets.transforms.random_scale": {"convert": sequence_converter(float, 2), "default": None},
+    "targets.transforms.random_rotate.degree": {"convert": sequence_converter(float, 2), "default": [-5, 5]},
+    "targets.transforms.random_rotate.center": {"convert": sequence_converter(float, 2), "default": None},
+    "targets.transforms.random_crop": {"convert": sequence_converter(int, 2), "default": None},
 }
 
 
@@ -96,17 +113,26 @@ def parse_arguments() -> dict:
              "arguments will overwrite the yaml parameters.",
     )
     parser.add_argument(
-        "-lr", "--learnrate", type=float, default=PARAMETERS["learnrate"]["default"],
+        "-lr", "--learnrate", type=float, default=None,
         help="Learnrate scaling factor, defaults to %s" % PARAMETERS["learnrate"]["default"],
     )
     parser.add_argument(
-        "-e", "--epochs", type=int, default=PARAMETERS["epochs"]["default"],
+        "-e", "--epochs", type=int, default=None,
         help="Number of training steps, default = %s" % PARAMETERS["epochs"]["default"],
     )
     parser.add_argument(
-        "-r", "--resolution", type=int, default=PARAMETERS["resolution"]["default"], nargs="+",
+        "-r", "--resolution", type=int, default=None, nargs="+",
         help="Resolution in pixels, can be one or two numbers, "
              "defaults to %s" % PARAMETERS["resolution"]["default"],
+    )
+    parser.add_argument(
+        "-v", "--verbose", type=int, default=None,
+        help="Verbosity. Default is %s" % PARAMETERS["verbose"]["default"],
+    )
+    parser.add_argument(
+        "-d", "--device", type=str, default=None,
+        help="Device to run on, either 'auto', 'cuda' or 'cuda:1', etc... "
+             "Default is %s" % PARAMETERS["device"]["default"],
     )
 
     parser.add_argument(
@@ -125,11 +151,10 @@ def parse_arguments() -> dict:
             load_yaml_config(filename),
         )
 
-    parameters.update({
-        "learnrate": args.learnrate,
-        "epochs": args.epochs,
-        "resolution": args.resolution,
-    })
+    for key in ("learnrate", "epochs", "resolution", "device"):
+        if getattr(args, key) is not None:
+            parameters[key] = getattr(args, key)
+
     parameters = convert_params(parameters)
     set_parameter_defaults(parameters)
 
