@@ -18,5 +18,7 @@ if __name__ == "__main__":
 
     except RuntimeError as e:
         if str(e).strip():
+            print(f"[[[{e}]]]")
             raise
 
+    trainer.save_image()

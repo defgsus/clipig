@@ -16,8 +16,10 @@ import PIL.Image
 import clip
 from tqdm import tqdm
 
+from .files import make_filename_dir
 from .pixel_models import PixelsRGB
-from .transfoms import NoiseTransform, RepeatTransform
+from . import transforms as transform_modules
+from . import constraints as constraint_modules
 
 
 torch.autograd.set_detect_anomaly(True)
@@ -69,14 +71,18 @@ class ImageTraining:
             print(*args, file=sys.stderr)
             sys.stderr.flush()
 
-    def snapshot(self):
-        self.log(2, "saving snapshot")
-        save_image(self.pixel_model.forward(), "./snapshot.png")
+    def save_image(self):
+        filename = self.parameters["output"]
+        self.log(2, f"saving {filename}")
+        make_filename_dir(filename)
+        save_image(self.pixel_model.forward(), filename)
 
     def setup_targets(self):
         self.log(2, "getting target features")
         self.targets = []
         for target_param in self.parameters["targets"]:
+            if not target_param["active"]:
+                continue
 
             # -- get target features ---
 
@@ -115,7 +121,7 @@ class ImageTraining:
             for trans_param in target_param["transforms"]:
                 if trans_param.get("repeat"):
                     transforms.append(
-                        RepeatTransform(trans_param["repeat"])
+                        transform_modules.RepeatTransform(trans_param["repeat"])
                     )
 
                 if trans_param.get("blur"):
@@ -154,14 +160,30 @@ class ImageTraining:
                     final_resolution = trans_param["center_crop"]
 
                 if trans_param.get("noise"):
-                    transforms.append(NoiseTransform(trans_param["noise"]))
+                    transforms.append(transform_modules.NoiseTransform(trans_param["noise"]))
 
             if final_resolution != self.clip_resolution:
                 transforms.append(VT.Resize(self.clip_resolution))
 
             if transforms:
                 target["transforms"] = torch.nn.Sequential(*transforms).to(self.device)
-                print(target["transforms"])
+                self.log(2, f"target '{target_param['name']}' transforms:")
+                self.log(2, target["transforms"])
+
+            # --- setup constraints ---
+
+            target["constraints"] = []
+            for constr_param in target_param["constraints"]:
+                constraint = None
+                if constr_param.get("std"):
+                    constraint = constraint_modules.StdConstraint(**constr_param["std"])
+
+                if constraint:
+                    target["constraints"].append({
+                        "params": constr_param,
+                        "model": constraint.to(self.device),
+                        "losses": ValueQueue(),
+                    })
 
             self.targets.append(target)
 
@@ -243,17 +265,24 @@ class ImageTraining:
 
             if self.verbose >= 2 and cur_time - last_stats_time > 4:
                 last_stats_time = cur_time
+                mean = [round(float(f), 3) for f in current_pixels.reshape(3, -1).mean(1)]
+                std = [round(float(f), 3) for f in current_pixels.reshape(3, -1).std(1)]
                 self.log(2, f"--- train step {epoch+1} / {self.parameters['epochs']} ---")
-                self.log(2, f"loss {loss_queue}")
+                self.log(2, f"device {self.device}")
+                self.log(2, f"resolution {self.parameters['resolution']}, mean {mean}, std {std}")
+                self.log(2, f"learnrate {learnrate:.3f}, loss {loss_queue}")
                 self.log(2, "targets:")
                 self.print_target_stats()
 
             if epoch == 0 or cur_time - last_snapshot_time > 10:
                 last_snapshot_time = cur_time
-                self.snapshot()
+                self.save_image()
 
     def _postproc(self, epoch: int, epoch_f: float):
         for pp in self.parameters["postproc"]:
+            if not pp["active"]:
+                continue
+
             if not _check_start_end(pp["start"], pp["end"], epoch, epoch_f):
                 continue
 
@@ -288,6 +317,11 @@ class ImageTraining:
                 target["feature_losses"][i].append(float(loss))
                 target["feature_similarities"][i].append(float(similarities[i]))
 
+        for constraint in target.get("constraints", []):
+            loss = constraint["model"].forward(pixels)
+            constraint["losses"].append(float(loss))
+            loss_sum += loss
+
         return loss_sum
 
     def print_target_stats(self):
@@ -296,6 +330,7 @@ class ImageTraining:
             for i, f in enumerate(target["params"]["features"]):
                 row = {
                     "name": _short_str(target["params"]["name"], 30) if i == 0 else "",
+                    "weight": round(target["params"]["weight"], 3),
                 }
                 if f.get("text"):
                     row["feature"] = _short_str(f["text"], 30)
@@ -312,22 +347,39 @@ class ImageTraining:
 
                 rows.append(row)
 
+            for i, constraint in enumerate(target["constraints"]):
+                row = {
+                    "name": "constraint" if i == 0 else "",
+                    "weight": round(target["params"]["weight"], 3),
+                    "feature": _short_str(type(constraint["model"]).__name__, 30),
+                    "loss_mean": round(constraint["losses"].mean(), 3),
+                    "loss_min": round(constraint["losses"].min(), 3),
+                    "loss_max": round(constraint["losses"].max(), 3),
+                }
+                rows.append(row)
+
         rows = [{k: str(v) for k, v in row.items()} for row in rows]
+        all_keys = set(sum((list(row.keys()) for row in rows), []))
         lengths = {
-            key: max(len(r[key]) for r in rows)
-            for key in rows[0]
+            key: max(len(r.get(key) or "") for r in rows)
+            for key in all_keys
         }
         for row in rows:
-            self.log(0, (
+            line = (
                 f"""{row["name"]:{lengths["name"]}} : """
+                f"""{row["weight"]:{lengths["weight"]}} x """
                 f"""{row["feature"]:{lengths["feature"]}} : """
                 f"""loss {row["loss_mean"]:{lengths["loss_mean"]}} ("""
                 f"""{row["loss_min"]:{lengths["loss_min"]}} - """
                 f"""{row["loss_max"]:{lengths["loss_max"]}})"""
-                f""" / sim {row["sim_mean"]:{lengths["sim_mean"]}} ("""
-                f"""{row["sim_min"]:{lengths["sim_min"]}} - """
-                f"""{row["sim_max"]:{lengths["sim_max"]}})"""
-            ))
+            )
+            if row.get("sim_mean"):
+                line += (
+                    f""" / sim {row["sim_mean"]:{lengths["sim_mean"]}} ("""
+                    f"""{row["sim_min"]:{lengths["sim_min"]}} - """
+                    f"""{row["sim_max"]:{lengths["sim_max"]}})"""
+                )
+            self.log(0, line)
 
 
 def _check_start_end(

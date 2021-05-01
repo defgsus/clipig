@@ -1,13 +1,12 @@
-import math
-import random
-import traceback
+import os
+import pathlib
 import argparse
-import time
-import json
 from copy import deepcopy
 from typing import Union, Sequence, Type, Tuple, Optional, Callable
 
 import yaml
+
+from .files import prepare_output_name
 
 
 def sequence_converter(Type: Callable, length: int) -> Callable:
@@ -59,6 +58,7 @@ PARAMETERS = {
     "verbose": {"convert": int, "default": 2},
     "device": {"convert": str, "default": "auto"},
     "learnrate": {"convert": float, "default": 1.},
+    "output": {"convert": str, "default": f".{os.path.sep}"},
     "epochs": {"convert": int, "default": 300},
     "resolution": {"convert": sequence_converter(int, 2), "default": [224, 224]},
     "model": {"convert": str, "default": "ViT-B/32"},
@@ -67,11 +67,12 @@ PARAMETERS = {
     "init.std": {"convert": sequence_converter(float, 3), "default": [.1, .1, .1]},
     "init.image": {"convert": str, "default": None},
     "postproc": {"default": list()},
+    "postproc.active": {"convert": bool, "default": True},
     "postproc.start": {"convert": frame_time_converter, "default": 0.0},
     "postproc.end": {"convert": frame_time_converter, "default": 1.0},
     "postproc.blur": {"convert": sequence_converter(float, 2), "default": [3, .5]},
-    "post": {"default": list()},
     "targets": {"default": list()},
+    "targets.active": {"convert": bool, "default": True},
     "targets.name": {"convert": str, "default": "target"},
     "targets.start": {"convert": frame_time_converter, "default": 0.0},
     "targets.end": {"convert": frame_time_converter, "default": 1.0},
@@ -82,6 +83,11 @@ PARAMETERS = {
     "targets.features.weight": {"convert": float, "default": 1.0},
     "targets.features.text": {"convert": str, "default": None},
     "targets.features.image": {"convert": str, "default": None},
+    "targets.constraints": {"default": list()},
+    "targets.constraints.std": {"default": dict()},
+    "targets.constraints.std.weight": {"convert": float, "default": 1.},
+    "targets.constraints.std.above": {"convert": sequence_converter(float, 3), "default": None},
+    "targets.constraints.std.below": {"convert": sequence_converter(float, 3), "default": None},
     "targets.transforms": {"default": list()},
     "targets.transforms.noise": {"convert": sequence_converter(float, 3), "default": None},
     "targets.transforms.blur": {"convert": sequence_converter(float, 2), "default": None},
@@ -113,6 +119,11 @@ def parse_arguments() -> dict:
              "arguments will overwrite the yaml parameters.",
     )
     parser.add_argument(
+        "-o", "--output", type=str, default=None,
+        help="Path with or without filename of the output image. "
+             "Defaults to the name of the last specified config file.",
+    )
+    parser.add_argument(
         "-lr", "--learnrate", type=float, default=None,
         help="Learnrate scaling factor, defaults to %s" % PARAMETERS["learnrate"]["default"],
     )
@@ -142,21 +153,36 @@ def parse_arguments() -> dict:
 
     args = parser.parse_args()
 
-
+    output_name = ""
     parameters = dict()
 
     for filename in args.config:
-        parameters = merge_parameters(
-            parameters,
-            load_yaml_config(filename),
-        )
+        yaml_config = load_yaml_config(filename)
+        parameters = merge_parameters(parameters, yaml_config)
+
+        output_name = yaml_config.get("output") or ""
+        if not output_name or output_name.endswith(os.path.sep):
+            if not output_name:
+                output_name = f".{os.path.sep}"
+            output_name += pathlib.Path(filename).name
+            if "." in output_name:
+                output_name = ".".join(output_name.split(".")[:-1])
+            output_name += ".png"
 
     for key in ("learnrate", "epochs", "resolution", "device"):
         if getattr(args, key) is not None:
             parameters[key] = getattr(args, key)
 
+    if args.output is not None:
+        if args.output.endswith(os.path.sep):
+            output_name = os.path.join(args.output, output_name.split(os.path.sep)[-1])
+        else:
+            output_name = args.output
+
     parameters = convert_params(parameters)
     set_parameter_defaults(parameters)
+
+    parameters["output"] = str(prepare_output_name(output_name, make_dir=False))
 
     return parameters
 
