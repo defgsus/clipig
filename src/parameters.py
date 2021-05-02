@@ -26,6 +26,8 @@ def sequence_converter(
         expr: bool = False,
         expression_args: Sequence[str] = tuple(),
 ) -> Callable:
+    expression_args = ("epoch", "t") + tuple(expression_args)
+
     def _convert(v):
         if isinstance(v, (list, tuple)):
             sequence = list(v)
@@ -83,6 +85,7 @@ PARAMETERS = {
     "verbose": {"convert": int, "default": 2},
     "device": {"convert": str, "default": "auto"},
     "learnrate": {"convert": expression_converter(float), "default": 1.},
+    "learnrate_scale": {"convert": expression_converter(float), "default": 1.},
     "output": {"convert": str, "default": f".{os.path.sep}"},
     "epochs": {"convert": int, "default": 300},
     "resolution": {"convert": sequence_converter(int, 2), "default": [224, 224]},
@@ -95,7 +98,7 @@ PARAMETERS = {
     "postproc.active": {"convert": bool, "default": True},
     "postproc.start": {"convert": frame_time_converter, "default": 0.0},
     "postproc.end": {"convert": frame_time_converter, "default": 1.0},
-    "postproc.blur": {"convert": sequence_converter(float, 2), "default": [3, .5]},
+    "postproc.blur": {"convert": sequence_converter(float, 2, expr=True), "default": [3, .5]},
     "targets": {"default": list()},
     "targets.active": {"convert": bool, "default": True},
     "targets.name": {"convert": str, "default": "target"},
@@ -105,6 +108,7 @@ PARAMETERS = {
     "targets.select": {"convert": str, "default": "all"},
     "targets.features": {"default": list()},
     "targets.features.weight": {"convert": expression_converter(float), "default": 1.0},
+    "targets.features.loss": {"convert": str, "default": "cosine"},
     "targets.features.text": {"convert": str, "default": None},
     "targets.features.image": {"convert": str, "default": None},
     "targets.constraints": {"default": list()},
@@ -228,18 +232,18 @@ def load_yaml_config(filename: str) -> dict:
 
 
 def save_yaml_config(filename: str, parameters: dict, header: Optional[str] = None):
-    data = _recursive_remove_none(parameters)
+    data = _recursive_export_ready(parameters)
     with open(filename, "w") as fp:
         if header:
             fp.write(header)
-        return yaml.safe_dump(data, fp)
+        return yaml.safe_dump(data, fp, sort_keys=False)
 
 
-def _recursive_remove_none(data):
+def _recursive_export_ready(data):
     if isinstance(data, dict):
         new_data = dict()
         for key, value in data.items():
-            value = _recursive_remove_none(value)
+            value = _recursive_export_ready(value)
             if value is None or value == []:
                 continue
             new_data[key] = value
@@ -247,9 +251,12 @@ def _recursive_remove_none(data):
 
     elif isinstance(data, list):
         return [
-            _recursive_remove_none(i)
+            _recursive_export_ready(i)
             for i in data
         ]
+
+    elif isinstance(data, Expression):
+        return data.expression
 
     else:
         return data
@@ -281,9 +288,9 @@ def _recursive_convert_and_validate(data, parent_path: str):
             raise ValueError(f"unknown parameter '{path}'")
         param = PARAMETERS[path]
 
-        if getattr(param["convert"], "is_expression", False):
-            return value
         try:
+            if getattr(param["convert"], "is_expression", False) and isinstance(value, Expression):
+                return value
             return param["convert"](value)
         except Exception as e:
             e.args = (f"parameter '{path}': {e}", )

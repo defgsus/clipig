@@ -4,11 +4,12 @@ import random
 import traceback
 import argparse
 import time
-from typing import Union, Sequence, Type, Tuple, Optional
+from typing import Union, Sequence, Type, Tuple, Optional, Callable
 
 import numpy as np
 import torch
 import torch.nn
+import torch.nn.functional as F
 import torchvision.transforms as VT
 import torchvision.transforms.functional as VF
 from torchvision.utils import save_image, make_grid
@@ -25,6 +26,7 @@ from . import constraints as constraint_modules
 
 
 torch.autograd.set_detect_anomaly(True)
+
 
 
 class ImageTraining:
@@ -90,6 +92,7 @@ class ImageTraining:
 
             features = []
             weights = []
+            feature_loss_functions = []
             for feature_param in target_param["features"]:
                 if feature_param.get("text"):
                     tokens = clip.tokenize([feature_param["text"]]).to(self.device)
@@ -102,6 +105,8 @@ class ImageTraining:
                 features.append(feature)
                 weights.append(feature_param["weight"])
 
+                feature_loss_functions.append(get_feature_loss_function(feature_param["loss"]))
+
             if features:
                 features = torch.cat(features)
                 features = features / features.norm(dim=-1, keepdim=True)
@@ -109,9 +114,9 @@ class ImageTraining:
             target = {
                 "params": target_param,
                 "features": features,
+                "feature_loss_functions": feature_loss_functions,
                 "weights": torch.Tensor(weights).to(self.device) if weights else [],
-                "loss_function": torch.nn.MSELoss(),
-
+                
                 "feature_losses": [ValueQueue() for _ in features],
                 "feature_similarities": [ValueQueue() for _ in features],
             }
@@ -215,18 +220,19 @@ class ImageTraining:
         for epoch in epoch_iter:
             epoch_f = epoch / max(1, self.parameters["epochs"] - 1)
 
-            expression_ctx = ExpressionContext(epoch=epoch, t=epoch_f)
+            expression_context = ExpressionContext(epoch=epoch, t=epoch_f)
 
             # --- update learnrate ---
 
-            learnrate = self.learnrate * expression_ctx(self.parameters["learnrate"])
+            learnrate_scale = expression_context(self.parameters["learnrate_scale"])
+            learnrate = self.learnrate * learnrate_scale * expression_context(self.parameters["learnrate"])
 
             for g in self.optimizer.param_groups:
                 g['lr'] = learnrate
 
             # --- post process pixels ---
 
-            self._postproc(epoch, epoch_f)
+            self._postproc(epoch, epoch_f, expression_context)
 
             # --- get pixels ---
 
@@ -253,7 +259,7 @@ class ImageTraining:
 
                 loss = loss + (
                     target["params"]["weight"] * self._get_target_loss(
-                        target, pixels, clip_features
+                        target, pixels, clip_features, expression_context
                     )
                 )
 
@@ -278,13 +284,13 @@ class ImageTraining:
                 self.log(2, f"resolution {self.parameters['resolution']}, mean {mean}, std {std}")
                 self.log(2, f"learnrate {learnrate:.3f}, loss {loss_queue}")
                 self.log(2, "targets:")
-                self.print_target_stats()
+                self.print_target_stats(expression_context)
 
             if epoch == 0 or cur_time - last_snapshot_time > 10:
                 last_snapshot_time = cur_time
                 self.save_image()
 
-    def _postproc(self, epoch: int, epoch_f: float):
+    def _postproc(self, epoch: int, epoch_f: float, context: ExpressionContext):
         for pp in self.parameters["postproc"]:
             if not pp["active"]:
                 continue
@@ -293,13 +299,17 @@ class ImageTraining:
                 continue
 
             if pp.get("blur"):
-                self.pixel_model.blur(int(pp["blur"][0]), pp["blur"][1])
+                self.pixel_model.blur(
+                    int(context(pp["blur"][0])),
+                    context(pp["blur"][1]),
+                )
 
     def _get_target_loss(
             self,
             target: dict,
             pixels: torch.Tensor,
             clip_features: torch.Tensor,
+            context: ExpressionContext,
     ) -> torch.Tensor:
         loss_sum = torch.tensor(0).to(self.device).to(clip_features.dtype)
 
@@ -315,7 +325,9 @@ class ImageTraining:
             similarities = 100. * target_features @ clip_features.T
 
             for i, target_feature in enumerate(target_features):
-                loss = 100. * target["loss_function"](clip_features[0], target_feature)
+                loss_function = target["feature_loss_functions"][i]
+
+                loss = loss_function(clip_features[0], target_feature)
 
                 loss_sum += target["weights"][i] * loss
 
@@ -324,13 +336,13 @@ class ImageTraining:
                 target["feature_similarities"][i].append(float(similarities[i]))
 
         for constraint in target.get("constraints", []):
-            loss = constraint["model"].forward(pixels)
+            loss = constraint["model"].forward(pixels, context)
             constraint["losses"].append(float(loss))
             loss_sum += loss
 
         return loss_sum
 
-    def print_target_stats(self):
+    def print_target_stats(self, context: ExpressionContext):
         feature_length = 40
 
         rows = []
@@ -358,7 +370,7 @@ class ImageTraining:
             for i, constraint in enumerate(target["constraints"]):
                 row = {
                     "name": "constraint" if i == 0 else "",
-                    "weight": round(constraint["model"].weight, 3),
+                    "weight": round(context(constraint["model"].weight), 3),
                     "feature": _short_str(str(constraint["model"]), feature_length),
                     "loss_mean": round(constraint["losses"].mean(), 3),
                     "loss_min": round(constraint["losses"].min(), 3),
@@ -441,3 +453,18 @@ class ValueQueue:
     def max(self):
         return 0. if not self.values else max(self.values)
 
+
+def get_feature_loss_function(name: str) -> Callable:
+    name = name.lower()
+
+    if name in ("l1", "mae"):
+        return lambda x1, x2: F.l1_loss(x1, x2) * 100.
+
+    elif name in ("l2", "mse"):
+        return lambda x1, x2: F.mse_loss(x1, x2) * 100.
+
+    elif name in ("cosine", ):
+        return lambda x1, x2: 1. - F.cosine_similarity(x1.unsqueeze(0), x2.unsqueeze(0))[0]
+
+    else:
+        raise ValueError(f"Invalid loss function '{name}'")

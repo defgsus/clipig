@@ -1,16 +1,19 @@
 resolution: 512 512
 epochs: 500
 
-learnrate: 2-t
+learnrate: 1.
+learnrate_scale: (1. - .99 * t)
 
 init:
-  mean: .1
+  mean: .4
   std: 0.05
 
 postproc:
   - start: 0%
-    end: 90%
-    blur: 3 .28
+    end: 70%
+    blur:
+    - 3
+    - .2 + .15 * (1. - t)
 
 targets:
 
@@ -19,11 +22,12 @@ targets:
     constraints:
       - std:
           weight: 10.
-          below: .2
+          below: .1
 
     select: all
     features:
       - text: strawberry
+        loss: cosine
 
     transforms:
       - random_rotate:

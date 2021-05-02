@@ -15,6 +15,12 @@ class Expression:
         self.code = compile(code, filename="expression", mode="eval")
         self.validate()
 
+    def __repr__(self):
+        args = ""
+        if self.arguments:
+            args = ", " + ", ".join(f"'{a}'" for a in self.arguments)
+        return f"{self.__class__.__name__}('{self.expression}'{args})"
+
     def validate(self):
         args = {
             name: 0.
@@ -41,7 +47,7 @@ class ExpressionContext:
             elif isinstance(e, Expression):
                 return e(**self.arguments)
             else:
-                raise TypeError(f"Can not evaluate expression of type '{type(e).__name__}'")
+                raise TypeError(f"Can not evaluate expression of type '{type(e).__name__}': '{e}'")
 
         if isinstance(expr, (list, tuple)):
             return [_convert(e) for e in expr]
