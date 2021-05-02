@@ -19,6 +19,7 @@ from tqdm import tqdm
 from .parameters import save_yaml_config
 from .files import make_filename_dir, change_extension
 from .pixel_models import PixelsRGB
+from .expression import Expression, ExpressionContext
 from . import transforms as transform_modules
 from . import constraints as constraint_modules
 
@@ -214,9 +215,11 @@ class ImageTraining:
         for epoch in epoch_iter:
             epoch_f = epoch / max(1, self.parameters["epochs"] - 1)
 
+            expression_ctx = ExpressionContext(epoch=epoch, t=epoch_f)
+
             # --- update learnrate ---
 
-            learnrate = self.learnrate * self.parameters["learnrate"]
+            learnrate = self.learnrate * expression_ctx(self.parameters["learnrate"])
 
             for g in self.optimizer.param_groups:
                 g['lr'] = learnrate

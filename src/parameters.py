@@ -7,22 +7,32 @@ from typing import Union, Sequence, Type, Tuple, Optional, Callable
 import yaml
 
 from .files import prepare_output_name
+from .expression import Expression
 
 
-def sequence_converter(Type: Callable, length: int) -> Callable:
+def expression_converter(type: Type, *extra_arguments: str) -> Callable:
+    arguments = ("epoch", "t") + extra_arguments
+
+    def _convert(text):
+        return Expression(text, *arguments)
+    _convert.is_expression = True
+
+    return _convert
+
+
+def sequence_converter(
+        type_: Callable,
+        length: int,
+        expr: bool = False,
+        expression_args: Sequence[str] = tuple(),
+) -> Callable:
     def _convert(v):
         if isinstance(v, (list, tuple)):
             sequence = list(v)
-        elif isinstance(v, Type):
-            sequence = [v]
         elif isinstance(v, str):
-            sequence = [Type(i) for i in v.split()]
+            sequence = v.split() if "," not in v else v.split(",")
         else:
-            try:
-                v = Type(v)
-                sequence = [v]
-            except:
-                raise TypeError(f"expected type {Type.__name__}, got {type(v).__name__}")
+            sequence = [v]
 
         if len(sequence) == 1:
             sequence = sequence * length
@@ -33,6 +43,21 @@ def sequence_converter(Type: Callable, length: int) -> Callable:
             if length > 1:
                 length_str += f" or {length}"
             raise ValueError(f"expected list of length {length_str}, got {len(sequence)}")
+
+        for i, v in enumerate(sequence):
+            if isinstance(v, type_):
+                continue
+
+            elif isinstance(v, str):
+                try:
+                    v = type_(v)
+                except:
+                    if expr:
+                        v = Expression(v, *expression_args)
+                    else:
+                        raise TypeError(f"expected type {type_.__name__}, got {type(v).__name__}")
+
+            sequence[i] = v
 
         return sequence
     return _convert
@@ -57,7 +82,7 @@ def frame_time_converter(v):
 PARAMETERS = {
     "verbose": {"convert": int, "default": 2},
     "device": {"convert": str, "default": "auto"},
-    "learnrate": {"convert": float, "default": 1.},
+    "learnrate": {"convert": expression_converter(float), "default": 1.},
     "output": {"convert": str, "default": f".{os.path.sep}"},
     "epochs": {"convert": int, "default": 300},
     "resolution": {"convert": sequence_converter(int, 2), "default": [224, 224]},
@@ -76,22 +101,21 @@ PARAMETERS = {
     "targets.name": {"convert": str, "default": "target"},
     "targets.start": {"convert": frame_time_converter, "default": 0.0},
     "targets.end": {"convert": frame_time_converter, "default": 1.0},
-    "targets.weight": {"convert": float, "default": 1.0},
-    "targets.mean_saturation_max": {"convert": float, "default": None},
+    "targets.weight": {"convert": expression_converter(float), "default": 1.0},
     "targets.select": {"convert": str, "default": "all"},
     "targets.features": {"default": list()},
-    "targets.features.weight": {"convert": float, "default": 1.0},
+    "targets.features.weight": {"convert": expression_converter(float), "default": 1.0},
     "targets.features.text": {"convert": str, "default": None},
     "targets.features.image": {"convert": str, "default": None},
     "targets.constraints": {"default": list()},
     "targets.constraints.mean": {"default": None},
-    "targets.constraints.mean.weight": {"convert": float, "default": 1.},
-    "targets.constraints.mean.above": {"convert": sequence_converter(float, 3), "default": None},
-    "targets.constraints.mean.below": {"convert": sequence_converter(float, 3), "default": None},
+    "targets.constraints.mean.weight": {"convert": expression_converter(float), "default": 1.},
+    "targets.constraints.mean.above": {"convert": sequence_converter(float, 3, expr=True), "default": None},
+    "targets.constraints.mean.below": {"convert": sequence_converter(float, 3, expr=True), "default": None},
     "targets.constraints.std": {"default": None},
-    "targets.constraints.std.weight": {"convert": float, "default": 1.},
-    "targets.constraints.std.above": {"convert": sequence_converter(float, 3), "default": None},
-    "targets.constraints.std.below": {"convert": sequence_converter(float, 3), "default": None},
+    "targets.constraints.std.weight": {"convert": expression_converter(float), "default": 1.},
+    "targets.constraints.std.above": {"convert": sequence_converter(float, 3, expr=True), "default": None},
+    "targets.constraints.std.below": {"convert": sequence_converter(float, 3, expr=True), "default": None},
     "targets.transforms": {"default": list()},
     "targets.transforms.noise": {"convert": sequence_converter(float, 3), "default": None},
     "targets.transforms.blur": {"convert": sequence_converter(float, 2), "default": None},
@@ -257,6 +281,8 @@ def _recursive_convert_and_validate(data, parent_path: str):
             raise ValueError(f"unknown parameter '{path}'")
         param = PARAMETERS[path]
 
+        if getattr(param["convert"], "is_expression", False):
+            return value
         try:
             return param["convert"](value)
         except Exception as e:

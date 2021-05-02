@@ -1,6 +1,7 @@
 import unittest
 
 from src.parameters import set_parameter_defaults, convert_params, merge_parameters
+from src.expression import Expression
 
 
 class TestParameters(unittest.TestCase):
@@ -34,7 +35,6 @@ class TestParameters(unittest.TestCase):
         self.assertEqual(23, params["targets"][0]["weight"])
         self.assertEqual(42, params["targets"][1]["weight"])
         self.assertEqual([], params["targets"][0]["features"])
-        self.assertEqual(None, params["targets"][0]["mean_saturation_max"])
 
     def test_conversion(self):
         params = {
@@ -68,8 +68,8 @@ class TestParameters(unittest.TestCase):
         self.assertEqual([1, 1, 1], params["init"]["mean"])
         self.assertEqual([1, 2, 3], params["init"]["std"])
 
-        self.assertEqual(float, type(params["targets"][0]["weight"]))
-        self.assertEqual(23., params["targets"][0]["weight"])
+        self.assertEqual(Expression, type(params["targets"][0]["weight"]))
+        self.assertEqual(23., params["targets"][0]["weight"](t=0, epoch=0))
 
         self.assertEqual(int, type(params["targets"][0]["start"]))
         self.assertEqual(1, params["targets"][0]["start"])

@@ -1,0 +1,33 @@
+resolution: 512 512
+epochs: 500
+
+learnrate: 2-t
+
+init:
+  mean: .1
+  std: 0.05
+
+postproc:
+  - start: 0%
+    end: 90%
+    blur: 3 .28
+
+targets:
+
+  - name: random sampler
+
+    constraints:
+      - std:
+          weight: 10.
+          below: .2
+
+    select: all
+    features:
+      - text: strawberry
+
+    transforms:
+      - random_rotate:
+          degree: -10 10
+          center: 0 1
+      # - random_scale: 0.5 1.
+      - random_crop: 224
