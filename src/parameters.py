@@ -130,6 +130,7 @@ PARAMETERS = {
     "postproc.start": {"convert": frame_time_converter, "default": 0.0},
     "postproc.end": {"convert": frame_time_converter, "default": 1.0},
     "postproc.blur": {"convert": sequence_converter(float, 2, expr=True), "default": [3, .5]},
+    "postproc.multiply": {"convert": sequence_converter(float, 3, expr=True), "default": [1., 1., 1.]},
     "targets": {"default": list()},
     "targets.active": {"convert": bool, "default": True},
     "targets.name": {"convert": str, "default": "target"},
@@ -272,7 +273,11 @@ def save_yaml_config(
     with open(filename, "w") as fp:
         if header:
             fp.write(header)
+        if not header.endswith("\n"):
+            fp.write("\n")
+
         yaml.safe_dump(data, fp, sort_keys=False)
+
         if footer:
             fp.write(footer)
 

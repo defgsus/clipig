@@ -306,6 +306,9 @@ class ImageTraining:
                     context(pp["blur"][1]),
                 )
 
+            if pp.get("multiply"):
+                self.pixel_model.multiply(context(pp["multiply"]))
+
     def _get_target_loss(
             self,
             target: dict,

@@ -89,3 +89,15 @@ class PixelsRGB(PixelsBase):
             pixels = self.pixels
             blurred_pixels = VF.gaussian_blur(pixels, [kernel_size, kernel_size], [sigma, sigma])
             self.pixels[...] = blurred_pixels
+
+    def multiply(
+            self,
+            rgb: Sequence[float],
+    ):
+        assert len(rgb) == 3, f"Expected sequence of 3 floats, got {rgb}"
+
+        with torch.no_grad():
+            rgb = torch.Tensor(rgb).to(self.pixels.device).reshape(3, -1)
+            self.pixels[...] = (
+                    self.pixels.reshape(3, -1) * rgb
+            ).reshape(3, self.resolution[1], self.resolution[0])
