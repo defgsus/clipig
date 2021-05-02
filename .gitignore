@@ -3,4 +3,5 @@
 *.pyc
 __pycache__/
 *.png
+*.yaml
 images/

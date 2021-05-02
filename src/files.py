@@ -63,3 +63,10 @@ def make_filename_dir(filename: str):
     filepath = pathlib.Path(filename)
     if not filepath.parent.exists():
         os.makedirs(filepath.parent)
+
+
+def change_extension(filename: str, extension: str) -> str:
+    if "." in filename:
+        filename = ".".join(filename.split(".")[:-1])
+
+    return f"{filename}.{extension}"

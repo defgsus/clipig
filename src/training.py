@@ -16,7 +16,8 @@ import PIL.Image
 import clip
 from tqdm import tqdm
 
-from .files import make_filename_dir
+from .parameters import save_yaml_config
+from .files import make_filename_dir, change_extension
 from .pixel_models import PixelsRGB
 from . import transforms as transform_modules
 from . import constraints as constraint_modules
@@ -175,6 +176,8 @@ class ImageTraining:
             target["constraints"] = []
             for constr_param in target_param["constraints"]:
                 constraint = None
+                if constr_param.get("mean"):
+                    constraint = constraint_modules.MeanConstraint(**constr_param["mean"])
                 if constr_param.get("std"):
                     constraint = constraint_modules.StdConstraint(**constr_param["std"])
 
@@ -325,6 +328,8 @@ class ImageTraining:
         return loss_sum
 
     def print_target_stats(self):
+        feature_length = 40
+
         rows = []
         for target in self.targets:
             for i, f in enumerate(target["params"]["features"]):
@@ -333,9 +338,9 @@ class ImageTraining:
                     "weight": round(target["params"]["weight"], 3),
                 }
                 if f.get("text"):
-                    row["feature"] = _short_str(f["text"], 30)
+                    row["feature"] = _short_str(f["text"], feature_length)
                 else:
-                    row["feature"] = _short_str(f["image"], 30, True)
+                    row["feature"] = _short_str(f["image"], feature_length, True)
 
                 for name, queue in (
                         ("loss", target["feature_losses"][i]),
@@ -350,8 +355,8 @@ class ImageTraining:
             for i, constraint in enumerate(target["constraints"]):
                 row = {
                     "name": "constraint" if i == 0 else "",
-                    "weight": round(target["params"]["weight"], 3),
-                    "feature": _short_str(type(constraint["model"]).__name__, 30),
+                    "weight": round(constraint["model"].weight, 3),
+                    "feature": _short_str(str(constraint["model"]), feature_length),
                     "loss_mean": round(constraint["losses"].mean(), 3),
                     "loss_min": round(constraint["losses"].min(), 3),
                     "loss_max": round(constraint["losses"].max(), 3),

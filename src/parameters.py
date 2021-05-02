@@ -84,7 +84,11 @@ PARAMETERS = {
     "targets.features.text": {"convert": str, "default": None},
     "targets.features.image": {"convert": str, "default": None},
     "targets.constraints": {"default": list()},
-    "targets.constraints.std": {"default": dict()},
+    "targets.constraints.mean": {"default": None},
+    "targets.constraints.mean.weight": {"convert": float, "default": 1.},
+    "targets.constraints.mean.above": {"convert": sequence_converter(float, 3), "default": None},
+    "targets.constraints.mean.below": {"convert": sequence_converter(float, 3), "default": None},
+    "targets.constraints.std": {"default": None},
     "targets.constraints.std.weight": {"convert": float, "default": 1.},
     "targets.constraints.std.above": {"convert": sequence_converter(float, 3), "default": None},
     "targets.constraints.std.below": {"convert": sequence_converter(float, 3), "default": None},
@@ -169,6 +173,9 @@ def parse_arguments() -> dict:
                 output_name = ".".join(output_name.split(".")[:-1])
             output_name += ".png"
 
+        elif "." not in output_name:
+            output_name += ".png"
+
     for key in ("learnrate", "epochs", "resolution", "device"):
         if getattr(args, key) is not None:
             parameters[key] = getattr(args, key)
@@ -190,10 +197,40 @@ def parse_arguments() -> dict:
 def load_yaml_config(filename: str) -> dict:
     try:
         with open(filename) as fp:
-            return convert_params(yaml.safe_load(fp.read()))
+            return convert_params(yaml.safe_load(fp))
     except Exception as e:
         e.args = (f"{filename}: {e}", )
         raise
+
+
+def save_yaml_config(filename: str, parameters: dict, header: Optional[str] = None):
+    data = _recursive_remove_none(parameters)
+    with open(filename, "w") as fp:
+        if header:
+            fp.write(header)
+        return yaml.safe_dump(data, fp)
+
+
+def _recursive_remove_none(data):
+    if isinstance(data, dict):
+        new_data = dict()
+        for key, value in data.items():
+            value = _recursive_remove_none(value)
+            if value is None or value == []:
+                continue
+            new_data[key] = value
+        return new_data
+
+    elif isinstance(data, list):
+        return [
+            _recursive_remove_none(i)
+            for i in data
+        ]
+
+    else:
+        return data
+
+
 
 
 def convert_params(data: dict) -> dict:
@@ -283,5 +320,7 @@ def _recursive_parameter_defaults(params: dict, parent_path: str):
                     _recursive_parameter_defaults(sub_params[i], path)
             elif isinstance(sub_params, dict):
                 _recursive_parameter_defaults(sub_params, path)
+            elif sub_params is None:
+                pass
             else:
                 raise TypeError(f"{path}: unhandled sub-parameter type '{type(sub_params).__name__}'")
