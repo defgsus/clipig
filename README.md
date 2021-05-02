@@ -89,8 +89,8 @@ a relatively small learning rate and random rotation like:
 
 ```yaml
 - random_rotate:
-  degree: -10 10
-  center: 0 1
+    degree: -10 10
+    center: 0 1
 ```
 
 Still it's not eye-friendly to look at without a little gaussian blur. But that runs arbitrarily
