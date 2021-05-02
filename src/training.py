@@ -23,6 +23,7 @@ from .pixel_models import PixelsRGB
 from .expression import Expression, ExpressionContext
 from . import transforms as transform_modules
 from . import constraints as constraint_modules
+from .constraints import get_mean_saturation
 
 
 torch.autograd.set_detect_anomaly(True)
@@ -47,6 +48,7 @@ class ImageTraining:
 
         self.pixel_model = PixelsRGB(parameters["resolution"]).to(self.device)
 
+        self.epoch = 0
         self.learnrate = 0.01
         self.optimizer = torch.optim.Adam(
             self.pixel_model.parameters(),
@@ -180,8 +182,12 @@ class ImageTraining:
                 constraint = None
                 if constr_param.get("mean"):
                     constraint = constraint_modules.MeanConstraint(**constr_param["mean"])
+
                 if constr_param.get("std"):
                     constraint = constraint_modules.StdConstraint(**constr_param["std"])
+
+                if constr_param.get("saturation"):
+                    constraint = constraint_modules.SaturationConstraint(**constr_param["saturation"])
 
                 if constraint:
                     target["constraints"].append({
@@ -214,6 +220,7 @@ class ImageTraining:
 
         self.log(2, "training")
         for epoch in epoch_iter:
+            self.epoch = epoch
             epoch_f = epoch / max(1, self.parameters["epochs"] - 1)
 
             expression_context = ExpressionContext(epoch=epoch, epoch_f=epoch_f, t=epoch_f)
@@ -293,9 +300,10 @@ class ImageTraining:
                 last_stats_time = cur_time
                 mean = [round(float(f), 3) for f in current_pixels.reshape(3, -1).mean(1)]
                 std = [round(float(f), 3) for f in current_pixels.reshape(3, -1).std(1)]
+                sat = round(float(get_mean_saturation(current_pixels)), 3)
                 self.log(2, f"--- train step {epoch+1} / {self.parameters['epochs']} ---")
                 self.log(2, f"device {self.device}")
-                self.log(2, f"resolution {self.parameters['resolution']}, mean {mean}, std {std}")
+                self.log(2, f"resolution {self.parameters['resolution']}, mean {mean}, std {std}, sat {sat}")
                 self.log(2, f"learnrate {learnrate:.3f}, loss {loss_queue}")
                 self.log(2, "targets:")
                 self.print_target_stats(expression_context)
@@ -338,16 +346,18 @@ class ImageTraining:
 
             similarities = 100. * target_features @ clip_features.T
 
+            target["applied_feature_weights"] = []
             for i, target_feature in enumerate(target_features):
                 loss_function = target["feature_loss_functions"][i]
                 feature_context = context.add(sim=float(similarities[i]), similarity=float(similarities[i]))
 
                 loss = loss_function(clip_features, target_feature)
 
-                feature_weight = target["params"]["features"][i]["weight"]
-                loss_sum += feature_context(feature_weight) * loss
+                feature_weight = feature_context(target["params"]["features"][i]["weight"])
+                loss_sum += feature_weight * loss
 
                 # track statistics
+                target["applied_feature_weights"].append(feature_weight)
                 target["feature_losses"][i].append(float(loss))
                 target["feature_similarities"][i].append(float(similarities[i]))
 
@@ -371,7 +381,7 @@ class ImageTraining:
             for i, f in enumerate(target["params"]["features"]):
                 row = {
                     "name": _short_str(target["params"]["name"], 30) if i == 0 else "",
-                    "weight": round(target["params"]["weight"], 3),
+                    "weight": round(target["applied_feature_weights"][i], 3),
                 }
                 if f.get("text"):
                     row["feature"] = _short_str(f["text"], feature_length)

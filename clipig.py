@@ -23,18 +23,21 @@ if __name__ == "__main__":
         pass
 
     except RuntimeError as e:
-        if str(e).strip():
-            print(f"[[[{e}]]]")
+        # sometimes the keyboard interrupt ungracefully breaks
+        # the torchscript execution
+        if not str(e).strip().endswith("RuntimeError:"):
             raise
 
     run_time = time.time() - start_time
+    epoch_time = run_time / (trainer.epoch + 1)
 
     trainer.save_image()
 
     filename = change_extension(parameters["output"], "yaml")
     if not pathlib.Path(filename).exists():
-        header = f"""auto-generated at {datetime.datetime.now()}
-runtime: {run_time:.2f} seconds"""
+        header = f"""auto-generated at {datetime.datetime.now().replace(microsecond=0)}
+epochs: {trainer.epoch+1} / {parameters['epochs']}
+runtime: {run_time:.2f} seconds ({epoch_time:.3f}/epoch)"""
 
         header = "\n".join(f"# {line}" for line in header.splitlines())
 
