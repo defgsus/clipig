@@ -28,7 +28,6 @@ from . import constraints as constraint_modules
 torch.autograd.set_detect_anomaly(True)
 
 
-
 class ImageTraining:
 
     clip_resolution = [224, 224]
@@ -240,38 +239,51 @@ class ImageTraining:
 
             current_pixels = self.pixel_model.forward()
 
-            # --- combine loss for each target ---
+            # --- add target transforms ---
 
-            loss = torch.tensor(0).to(self.device)
-
+            active_targets = []
+            target_pixels = []
             for target in self.targets:
-                if not _check_start_end(
-                    target["params"]["start"], target["params"]["end"],
-                    epoch, epoch_f
+                if _check_start_end(
+                        target["params"]["start"], target["params"]["end"],
+                        epoch, epoch_f
                 ):
-                    continue
+                    pixels = current_pixels
+                    if target.get("transforms"):
+                        pixels = target["transforms"](pixels)
 
-                pixels = current_pixels
-                if target.get("transforms"):
-                    pixels = target["transforms"](pixels)
+                    active_targets.append(target)
+                    target_pixels.append(pixels.unsqueeze(0))
 
-                norm_pixels = self.clip_preprocess.transforms[-1](pixels.unsqueeze(0))
+            if active_targets:
+                target_pixels = torch.cat(target_pixels, dim=0)
+
+                # --- retrieve CLIP features ---
+
+                norm_pixels = self.clip_preprocess.transforms[-1](target_pixels)
                 clip_features = self.clip_model.encode_image(norm_pixels)
                 clip_features = clip_features / clip_features.norm(dim=-1, keepdim=True)
 
-                loss = loss + (
-                    target["params"]["weight"] * self._get_target_loss(
-                        target, pixels, clip_features, expression_context
+                # --- combine loss for each target ---
+
+                loss = torch.tensor(0).to(self.device)
+
+                for target, pixels, clip_feature in zip(
+                        active_targets, target_pixels, clip_features
+                ):
+                    loss = loss + (
+                        target["params"]["weight"] * self._get_target_loss(
+                            target, pixels, clip_feature, expression_context
+                        )
                     )
-                )
 
-            # --- adjust weights ---
+                # --- adjust weights ---
 
-            if loss:
-                loss_queue.append(float(loss))
-                self.pixel_model.zero_grad()
-                loss.backward(retain_graph=True)
-                self.optimizer.step()
+                if loss:
+                    loss_queue.append(float(loss))
+                    self.pixel_model.zero_grad()
+                    loss.backward(retain_graph=True)
+                    self.optimizer.step()
 
             # --- print stats ---
 
@@ -306,6 +318,9 @@ class ImageTraining:
                     context(pp["blur"][1]),
                 )
 
+            if pp.get("add"):
+                self.pixel_model.add(context(pp["add"]))
+
             if pp.get("multiply"):
                 self.pixel_model.multiply(context(pp["multiply"]))
 
@@ -318,12 +333,6 @@ class ImageTraining:
     ) -> torch.Tensor:
         loss_sum = torch.tensor(0).to(self.device).to(clip_features.dtype)
 
-        #color_diff = (
-        #    torch.Tensor([1, 1, 0]).to(self.device)
-        #    - pixels.reshape(3, -1).mean(-1)
-        #)
-        #loss_sum += 0.05 * color_diff @ color_diff.T
-
         if isinstance(target["features"], torch.Tensor):
             target_features: torch.Tensor = target["features"]
 
@@ -333,7 +342,7 @@ class ImageTraining:
                 loss_function = target["feature_loss_functions"][i]
                 feature_context = context.add(sim=float(similarities[i]), similarity=float(similarities[i]))
 
-                loss = loss_function(clip_features[0], target_feature)
+                loss = loss_function(clip_features, target_feature)
 
                 feature_weight = target["params"]["features"][i]["weight"]
                 loss_sum += feature_context(feature_weight) * loss
@@ -381,7 +390,7 @@ class ImageTraining:
 
             for i, constraint in enumerate(target["constraints"]):
                 row = {
-                    "name": "constraint" if i == 0 else "",
+                    "name": "  constraint",
                     "weight": round(context(constraint["model"].weight), 3),
                     "feature": _short_str(str(constraint["model"]), feature_length),
                     "loss_mean": round(constraint["losses"].mean(), 3),
