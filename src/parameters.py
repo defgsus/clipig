@@ -10,8 +10,38 @@ from .files import prepare_output_name
 from .expression import Expression
 
 
-def expression_converter(type: Type, *extra_arguments: str) -> Callable:
-    arguments = ("epoch", "t") + extra_arguments
+class EXPR_ARGS:
+
+    LEARNRATE = (
+        "lr", "learnrate",
+        "lrs", "learnrate_scale",
+    )
+
+    DEFAULT = (
+        "epoch", "epoch_f",
+        "t",
+    ) + LEARNRATE
+
+
+    TARGET_FEATURE = DEFAULT + (
+        "sim", "similarity",
+    )
+
+    TARGET_CONSTRAINT = DEFAULT + (
+        "sim", "similarity",
+    )
+
+
+def expression_converter(
+        type: Type,
+        *arguments: str,
+        remove: Optional[Sequence[str]] = None
+) -> Callable:
+    if not arguments:
+        arguments = EXPR_ARGS.DEFAULT
+
+    if remove:
+        arguments = list(set(arguments) - set(remove))
 
     def _convert(text):
         return Expression(text, *arguments)
@@ -26,7 +56,8 @@ def sequence_converter(
         expr: bool = False,
         expression_args: Sequence[str] = tuple(),
 ) -> Callable:
-    expression_args = ("epoch", "t") + tuple(expression_args)
+    if not expression_args:
+        expression_args = EXPR_ARGS.DEFAULT
 
     def _convert(v):
         if isinstance(v, (list, tuple)):
@@ -84,8 +115,8 @@ def frame_time_converter(v):
 PARAMETERS = {
     "verbose": {"convert": int, "default": 2},
     "device": {"convert": str, "default": "auto"},
-    "learnrate": {"convert": expression_converter(float), "default": 1.},
-    "learnrate_scale": {"convert": expression_converter(float), "default": 1.},
+    "learnrate": {"convert": expression_converter(float, remove=EXPR_ARGS.LEARNRATE), "default": 1.},
+    "learnrate_scale": {"convert": expression_converter(float, remove=EXPR_ARGS.LEARNRATE), "default": 1.},
     "output": {"convert": str, "default": f".{os.path.sep}"},
     "epochs": {"convert": int, "default": 300},
     "resolution": {"convert": sequence_converter(int, 2), "default": [224, 224]},
@@ -107,19 +138,19 @@ PARAMETERS = {
     "targets.weight": {"convert": expression_converter(float), "default": 1.0},
     "targets.select": {"convert": str, "default": "all"},
     "targets.features": {"default": list()},
-    "targets.features.weight": {"convert": expression_converter(float), "default": 1.0},
+    "targets.features.weight": {"convert": expression_converter(float, *EXPR_ARGS.TARGET_FEATURE), "default": 1.0},
     "targets.features.loss": {"convert": str, "default": "cosine"},
     "targets.features.text": {"convert": str, "default": None},
     "targets.features.image": {"convert": str, "default": None},
     "targets.constraints": {"default": list()},
     "targets.constraints.mean": {"default": None},
-    "targets.constraints.mean.weight": {"convert": expression_converter(float), "default": 1.},
-    "targets.constraints.mean.above": {"convert": sequence_converter(float, 3, expr=True), "default": None},
-    "targets.constraints.mean.below": {"convert": sequence_converter(float, 3, expr=True), "default": None},
+    "targets.constraints.mean.weight": {"convert": expression_converter(float, *EXPR_ARGS.TARGET_CONSTRAINT), "default": 1.},
+    "targets.constraints.mean.above": {"convert": sequence_converter(float, 3, expr=True, expression_args=EXPR_ARGS.TARGET_CONSTRAINT), "default": None},
+    "targets.constraints.mean.below": {"convert": sequence_converter(float, 3, expr=True, expression_args=EXPR_ARGS.TARGET_CONSTRAINT), "default": None},
     "targets.constraints.std": {"default": None},
-    "targets.constraints.std.weight": {"convert": expression_converter(float), "default": 1.},
-    "targets.constraints.std.above": {"convert": sequence_converter(float, 3, expr=True), "default": None},
-    "targets.constraints.std.below": {"convert": sequence_converter(float, 3, expr=True), "default": None},
+    "targets.constraints.std.weight": {"convert": expression_converter(float, *EXPR_ARGS.TARGET_CONSTRAINT), "default": 1.},
+    "targets.constraints.std.above": {"convert": sequence_converter(float, 3, expr=True, expression_args=EXPR_ARGS.TARGET_CONSTRAINT), "default": None},
+    "targets.constraints.std.below": {"convert": sequence_converter(float, 3, expr=True, expression_args=EXPR_ARGS.TARGET_CONSTRAINT), "default": None},
     "targets.transforms": {"default": list()},
     "targets.transforms.noise": {"convert": sequence_converter(float, 3), "default": None},
     "targets.transforms.blur": {"convert": sequence_converter(float, 2), "default": None},
@@ -231,12 +262,19 @@ def load_yaml_config(filename: str) -> dict:
         raise
 
 
-def save_yaml_config(filename: str, parameters: dict, header: Optional[str] = None):
+def save_yaml_config(
+        filename: str,
+        parameters: dict,
+        header: Optional[str] = None,
+        footer: Optional[str] = None,
+):
     data = _recursive_export_ready(parameters)
     with open(filename, "w") as fp:
         if header:
             fp.write(header)
-        return yaml.safe_dump(data, fp, sort_keys=False)
+        yaml.safe_dump(data, fp, sort_keys=False)
+        if footer:
+            fp.write(footer)
 
 
 def _recursive_export_ready(data):

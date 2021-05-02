@@ -91,7 +91,6 @@ class ImageTraining:
             # -- get target features ---
 
             features = []
-            weights = []
             feature_loss_functions = []
             for feature_param in target_param["features"]:
                 if feature_param.get("text"):
@@ -103,7 +102,6 @@ class ImageTraining:
                     feature = self.clip_model.encode_image(image.unsqueeze(0))
 
                 features.append(feature)
-                weights.append(feature_param["weight"])
 
                 feature_loss_functions.append(get_feature_loss_function(feature_param["loss"]))
 
@@ -115,8 +113,7 @@ class ImageTraining:
                 "params": target_param,
                 "features": features,
                 "feature_loss_functions": feature_loss_functions,
-                "weights": torch.Tensor(weights).to(self.device) if weights else [],
-                
+
                 "feature_losses": [ValueQueue() for _ in features],
                 "feature_similarities": [ValueQueue() for _ in features],
             }
@@ -220,7 +217,7 @@ class ImageTraining:
         for epoch in epoch_iter:
             epoch_f = epoch / max(1, self.parameters["epochs"] - 1)
 
-            expression_context = ExpressionContext(epoch=epoch, t=epoch_f)
+            expression_context = ExpressionContext(epoch=epoch, epoch_f=epoch_f, t=epoch_f)
 
             # --- update learnrate ---
 
@@ -229,6 +226,11 @@ class ImageTraining:
 
             for g in self.optimizer.param_groups:
                 g['lr'] = learnrate
+
+            expression_context = expression_context.add(
+                lr=learnrate, learnrate=learnrate,
+                lrs=learnrate_scale, learnrate_scale=learnrate_scale,
+            )
 
             # --- post process pixels ---
 
@@ -326,14 +328,21 @@ class ImageTraining:
 
             for i, target_feature in enumerate(target_features):
                 loss_function = target["feature_loss_functions"][i]
+                feature_context = context.add(sim=float(similarities[i]), similarity=float(similarities[i]))
 
                 loss = loss_function(clip_features[0], target_feature)
 
-                loss_sum += target["weights"][i] * loss
+                feature_weight = target["params"]["features"][i]["weight"]
+                loss_sum += feature_context(feature_weight) * loss
 
                 # track statistics
                 target["feature_losses"][i].append(float(loss))
                 target["feature_similarities"][i].append(float(similarities[i]))
+
+            mean_sim = float(similarities.mean())
+            context = context.add(sim=mean_sim, similarity=mean_sim)
+        else:
+            context = context.add(sim=0., similarity=0.)
 
         for constraint in target.get("constraints", []):
             loss = constraint["model"].forward(pixels, context)
@@ -466,5 +475,10 @@ def get_feature_loss_function(name: str) -> Callable:
     elif name in ("cosine", ):
         return lambda x1, x2: 1. - F.cosine_similarity(x1.unsqueeze(0), x2.unsqueeze(0))[0]
 
+    elif name in ("kld", ):
+        # TODO: backward pass contains NANs
+        return lambda x1, x2: F.kl_div(x1, x2)
+
     else:
         raise ValueError(f"Invalid loss function '{name}'")
+

@@ -1,8 +1,8 @@
 resolution: 512 512
 epochs: 500
 
-learnrate: 1.
-learnrate_scale: (1. - .99 * t)
+learnrate: 2.
+learnrate_scale: (1. - .95 * pow(t, 5.))
 
 init:
   mean: .4
@@ -11,9 +11,7 @@ init:
 postproc:
   - start: 0%
     end: 70%
-    blur:
-    - 3
-    - .2 + .15 * (1. - t)
+    blur: 3, .2 + .15 * lrs
 
 targets:
 

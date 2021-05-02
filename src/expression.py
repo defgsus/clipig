@@ -35,7 +35,7 @@ class Expression:
 class ExpressionContext:
 
     def __init__(self, **arguments):
-        self.arguments = arguments
+        self.arguments = arguments.copy()
 
     def __call__(
             self,
@@ -49,7 +49,18 @@ class ExpressionContext:
             else:
                 raise TypeError(f"Can not evaluate expression of type '{type(e).__name__}': '{e}'")
 
-        if isinstance(expr, (list, tuple)):
-            return [_convert(e) for e in expr]
-        else:
-            return _convert(expr)
+        try:
+            if isinstance(expr, (list, tuple)):
+                return [_convert(e) for e in expr]
+            else:
+                return _convert(expr)
+        except Exception as e:
+            raise e.__class__(f"{e}, for expression '{expr}', context variables: {self.arguments}")
+
+    def add(self, **arguments) -> "ExpressionContext":
+        """
+        Add more arguments and return new ExpressionContext
+        """
+        args = self.arguments
+        args.update(arguments)
+        return self.__class__(**args)
