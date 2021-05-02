@@ -74,3 +74,39 @@ python clipig.py examples/strawberries.yaml -o ./images/
 
 Here's a motivating [article](https://defgsus.github.io/blog/2021/04/28/malazan-clip-features.html)
 whose images where created with the predecessor of this code.
+
+
+## Known issues
+
+The author does not have enough time!
+
+Then there are probably a lot of bugs in there and stuff that is not yet tested 
+or even implemented.
+
+But the major concern is the image quality. Just adjusting pixels so that CLIP does like them
+generally creates horrible grids and artifacts. A good first step to avoid them is 
+a relatively small learning rate and random rotation like:
+
+```yaml
+- random_rotate:
+  degree: -10 10
+  center: 0 1
+```
+
+Still it's not eye-friendly to look at without a little gaussian blur. But that runs arbitrarily
+across the whole image and most often destroys the fine details. 
+
+The other big problem is the uniform *depth* of images. CLIP seems to be good with object 
+boundaries and textures. But that does not automatically help to divide an image into 
+significant foreground and less significant background. Generally, the image always tends
+to be a uniform gray with some objects carved out.
+
+If you feel you can help or want to discuss things, please 
+[open an issue](https://github.com/defgsus/clipig/issues).
+
+
+---
+
+![CLIP-generated strawberry image](docs/strawberry.png)
+
+(i did not make this up! target-text just was '*strawberry*')
