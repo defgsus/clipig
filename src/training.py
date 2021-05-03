@@ -148,6 +148,7 @@ class ImageTraining:
                 "feature_loss_functions": feature_loss_functions,
 
                 # statistics ...
+                "count": 0,
                 "feature_losses": [ValueQueue() for _ in features],
                 "feature_similarities": [ValueQueue() for _ in features],
             }
@@ -396,30 +397,40 @@ class ImageTraining:
             self,
             target: dict,
             pixels: torch.Tensor,
-            clip_features: torch.Tensor,
+            clip_feature: torch.Tensor,
             context: ExpressionContext,
     ) -> torch.Tensor:
-        loss_sum = torch.tensor(0).to(self.device).to(clip_features.dtype)
+        target["count"] += 1
+
+        loss_sum = torch.tensor(0).to(self.device).to(clip_feature.dtype)
 
         if isinstance(target["features"], torch.Tensor):
             target_features: torch.Tensor = target["features"]
 
-            similarities = 100. * target_features @ clip_features.T
+            similarities = 100. * target_features @ clip_feature.T
+
+            feature_weights = self._get_target_feature_weights(target, similarities, context)
 
             target["applied_feature_weights"] = []
             for i, target_feature in enumerate(target_features):
-                loss_function = target["feature_loss_functions"][i]
-                feature_context = context.add(sim=float(similarities[i]), similarity=float(similarities[i]))
+                feature_weight, apply_feature = feature_weights[i]
 
-                loss = loss_function(clip_features, target_feature)
+                if not apply_feature:
+                    target["applied_feature_weights"].append(feature_weight)
+                    target["feature_losses"][i].append(0, count=False)
+                    target["feature_similarities"][i].append(float(similarities[i]), count=False)
 
-                feature_weight = feature_context(target["params"]["features"][i]["weight"])
-                loss_sum += feature_weight * loss
+                else:
+                    loss_function = target["feature_loss_functions"][i]
 
-                # track statistics
-                target["applied_feature_weights"].append(feature_weight)
-                target["feature_losses"][i].append(float(loss))
-                target["feature_similarities"][i].append(float(similarities[i]))
+                    loss = loss_function(clip_feature, target_feature)
+
+                    loss_sum += feature_weight * loss
+
+                    # track statistics
+                    target["applied_feature_weights"].append(feature_weight)
+                    target["feature_losses"][i].append(float(loss))
+                    target["feature_similarities"][i].append(float(similarities[i]))
 
             mean_sim = float(similarities.mean())
             context = context.add(sim=mean_sim, similarity=mean_sim)
@@ -432,6 +443,33 @@ class ImageTraining:
             loss_sum += loss
 
         return loss_sum * target["params"]["weight"]
+
+    def _get_target_feature_weights(
+            self,
+            target: dict,
+            similarities: torch.Tensor,
+            context: ExpressionContext
+    ) -> List[Tuple[float, bool]]:
+        mode = target["params"]["select"]
+        feature_weights = []
+
+        if mode == "all":
+            for i, target_feature in enumerate(target["features"]):
+                feature_context = context.add(sim=float(similarities[i]), similarity=float(similarities[i]))
+                weight = feature_context(target["params"]["features"][i]["weight"])
+                feature_weights.append((weight, True))
+
+        elif mode == "best":
+            best_index = int(torch.argmax(similarities))
+            for i, target_feature in enumerate(target["features"]):
+                feature_context = context.add(sim=float(similarities[i]), similarity=float(similarities[i]))
+                weight = feature_context(target["params"]["features"][i]["weight"])
+                feature_weights.append((weight, i == best_index))
+
+        else:
+            raise ValueError(f"Unknown feature selection mode '{mode}'")
+
+        return feature_weights
 
     def print_target_stats(self, context: ExpressionContext):
         feature_length = 40
@@ -449,6 +487,7 @@ class ImageTraining:
                     row["feature"] = _short_str(f["image"], feature_length, True)
 
                 row["count"] = target["feature_losses"][i].count
+                row["count_p"] = round(target["feature_losses"][i].count / max(1, target["count"]) * 100., 1)
                 for name, queue in (
                         ("loss", target["feature_losses"][i]),
                         ("sim", target["feature_similarities"][i]),
@@ -465,6 +504,7 @@ class ImageTraining:
                     "weight": round(context(constraint["model"].weight), 3),
                     "feature": _short_str(str(constraint["model"]), feature_length),
                     "count": constraint["losses"].count,
+                    "count_p": round(constraint["losses"].count / max(1, target["count"]) * 100., 1),
                     "loss_mean": round(constraint["losses"].mean(), 3),
                     "loss_min": round(constraint["losses"].min(), 3),
                     "loss_max": round(constraint["losses"].max(), 3),
@@ -482,7 +522,8 @@ class ImageTraining:
                 f"""{row["name"]:{lengths["name"]}} : """
                 f"""{row["weight"]:{lengths["weight"]}} x """
                 f"""{row["feature"]:{lengths["feature"]}} : """
-                f"""count {row["count"]:{lengths["count"]}} : """
+                f"""count {row["count"]:{lengths["count"]}} """
+                f"""({row["count_p"]:{lengths["count_p"]}}%) / """
                 f"""loss {row["loss_mean"]:{lengths["loss_mean"]}} ("""
                 f"""{row["loss_min"]:{lengths["loss_min"]}} - """
                 f"""{row["loss_max"]:{lengths["loss_max"]}})"""
@@ -534,9 +575,10 @@ class ValueQueue:
     def __str__(self):
         return f"{self.mean():.3f} ({self.min():.3f} - {self.max():.3f})"
 
-    def append(self, v):
+    def append(self, v, count: bool = True):
         self.values.append(v)
-        self.count += 1
+        if count:
+            self.count += 1
         if len(self.values) > self.max_length:
             self.values.pop(0)
 
