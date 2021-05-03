@@ -1,5 +1,5 @@
 resolution: 512 512
-epochs: 500
+epochs: 250
 
 learnrate: 2.
 learnrate_scale: (1. - .95 * pow(t, 5.))
@@ -8,28 +8,28 @@ init:
   mean: .4
   std: 0.05
 
-postproc:
-  - start: 0%
-    end: 70%
-    blur: 3, .2 + .15 * lrs
-
 targets:
 
   - name: random sampler
 
-    constraints:
-      - std:
-          weight: 10.
-          below: .1
-
-    select: all
-    features:
-      - text: strawberry
-        loss: cosine
+    # this is faster than running 1000 epochs
+    # and probably has some other effects on pixel-learning
+    batch_size: 5
 
     transforms:
       - random_rotate:
           degree: -10 10
           center: 0 1
-      # - random_scale: 0.5 1.
+      - random_scale: 0.5 1.
       - random_crop: 224
+
+    constraints:
+      # back-prop the blur into the transformation window
+      - blur:
+          kernel_size: 5
+          sigma: .5
+
+    select: all
+    features:
+      - text: strawberries lying on the grass
+      # - text: a straw basket filled with strawberries standing on the grass

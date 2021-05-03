@@ -1,11 +1,16 @@
-# (yet another) CLIP Image Generator
+# (Yet another) CLIP Image Generator
 
 Dear seeker!
 
-This is yet another pixel back-propagation engine using OpenAI's 
-[CLIP](https://github.com/openai/CLIP/) network to rate the validity.
+This is yet another generative gradient-descent engine using OpenAI's 
+[CLIP](https://github.com/openai/CLIP/) network to rate the similarity 
+between generated pixels and a CLIP-feature, typically given in the 
+form of natural language.
 
-It uses no sophisticated image generation network, just ordinary RGB pixel planes.
+![kissing cthuluhu](docs/kissing-cthulhu.png)
+(*kissing cthulhu*)
+
+CLIPig uses no sophisticated image generation network, just ordinary RGB pixel planes.
 
 The outstanding thing, maybe, and the reason for developing it, is it's configuration interface.
 I got pretty tired of constantly changing actual code during various experiments so i started
@@ -16,7 +21,7 @@ this new project which fulfills *most* desires through yaml configuration files.
 
 ```yaml
 resolution: 1024
-epochs: 2000
+epochs: 200
 
 learnrate: 1.5
 learnrate_scale: (1. - .95 * pow(t, 5.))   # 't' is training epoch in [0, 1] range
@@ -25,23 +30,24 @@ targets:
 
   - name: random sampler
 
+    transforms:
+      - noise: 0.1 0.2 0.3
+      - random_scale: .1 1.
+      - random_crop: 224
+
     features:
       - text: some text feature to match
       - text: some text feature to avoid
         weight: -1.
       - image: /path/to/image.png
-        loss: L2  # 'cosine' is default, 'L!' and 'L2' are also possible
-
-    transforms:
-      - random_scale: .1 1.
-      - random_crop: 224
+        loss: L2  # 'cosine' is default, 'L1' and 'L2' are also possible
 
   - name: image adjustments
     end: 30%
     constraints:
       - mean:
           above: .1 .2 .3
-
+      
 # post-processing is applied after each back-propagation step
 postproc:
   - blur: 3 .35
@@ -93,13 +99,19 @@ a relatively small learning rate and random rotation like:
     center: 0 1
 ```
 
-Still it's not eye-friendly to look at without a little gaussian blur. But that runs arbitrarily
-across the whole image and most often destroys the fine details. 
+Still it's not eye-friendly to look at without a little gaussian blur. It's possible to use
+a gaussian blur as a training constraint and add it to the loss function of the 
+particular target window. That leads to much better results already. And after a few hours of
+staring at those images they get better and better.
 
-The other big problem is the uniform *depth* of images. CLIP seems to be good with object 
+The other problem is the uniform *depth* of images. CLIP seems to be good with object 
 boundaries and textures. But that does not automatically help to divide an image into 
-significant foreground and less significant background. Generally, the image always tends
-to be a uniform gray with some objects carved out.
+significant foreground and less significant background. Generally, the image often tends
+to be a uniform something with some objects carved out. Although, there are counter 
+examples that show promise:
+
+![2d-platform with ](docs/2d-platformer.png)
+(*2d platformer*)
 
 If you feel you can help or want to discuss things, please 
 [open an issue](https://github.com/defgsus/clipig/issues).
@@ -108,5 +120,4 @@ If you feel you can help or want to discuss things, please
 ---
 
 ![CLIP-generated strawberry image](docs/strawberry.png)
-
-(i did not make this up! target-text just was '*strawberry*')
+(*strawberry*)
