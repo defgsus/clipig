@@ -562,10 +562,6 @@ def get_feature_loss_function(name: str) -> Callable:
     elif name in ("cosine", ):
         return lambda x1, x2: 1. - F.cosine_similarity(x1.unsqueeze(0), x2.unsqueeze(0))[0]
 
-    elif name in ("kld", ):
-        # TODO: backward pass contains NANs
-        return lambda x1, x2: F.kl_div(x1, x2)
-
     else:
         raise ValueError(f"Invalid loss function '{name}'")
 
