@@ -81,7 +81,7 @@ class ImageTraining:
                 lr=self.base_learnrate,  # will be adjusted per epoch
                 centered=True,
                 # TODO: high momentum is quite useful for more 'chaotic' images but needs to
-                #   be adjustable by expressions
+                #   be adjustable by config expression
                 momentum=0.1,
             )
         else:
@@ -208,6 +208,9 @@ class ImageTraining:
                     is_random = True
                     transforms.append(transform_modules.NoiseTransform(trans_param["noise"]))
 
+                if trans_param.get("edge"):
+                    transforms.append(transform_modules.EdgeTransform(trans_param["edge"]))
+
             if final_resolution != self.clip_resolution:
                 transforms.append(VT.Resize(self.clip_resolution))
 
@@ -221,24 +224,22 @@ class ImageTraining:
 
             target["constraints"] = []
             for constr_param in target_param["constraints"]:
-                constraint = None
-                if constr_param.get("mean"):
-                    constraint = constraint_modules.MeanConstraint(**constr_param["mean"])
+                for name, Module in (
+                        ("mean", constraint_modules.MeanConstraint),
+                        ("std", constraint_modules.StdConstraint),
+                        ("saturation", constraint_modules.SaturationConstraint),
+                        ("blur", constraint_modules.BlurConstraint),
+                ):
+                    if constr_param.get(name):
+                        constraint = Module(**constr_param[name])
 
-                if constr_param.get("std"):
-                    constraint = constraint_modules.StdConstraint(**constr_param["std"])
+                        target["constraints"].append({
+                            "params": constr_param,
+                            "model": constraint.to(self.device),
 
-                if constr_param.get("saturation"):
-                    constraint = constraint_modules.SaturationConstraint(**constr_param["saturation"])
-
-                if constraint:
-                    target["constraints"].append({
-                        "params": constr_param,
-                        "model": constraint.to(self.device),
-
-                        # statistics ...
-                        "losses": ValueQueue(),
-                    })
+                            # statistics ...
+                            "losses": ValueQueue(),
+                        })
 
             self.targets.append(target)
 
@@ -442,7 +443,7 @@ class ImageTraining:
             constraint["losses"].append(float(loss))
             loss_sum += loss
 
-        return loss_sum * target["params"]["weight"]
+        return loss_sum * context(target["params"]["weight"])
 
     def _get_target_feature_weights(
             self,
@@ -476,33 +477,34 @@ class ImageTraining:
 
         rows = []
         for target in self.targets:
-            for i, f in enumerate(target["params"]["features"]):
-                row = {
-                    "name": _short_str(target["params"]["name"], 30) if i == 0 else "",
-                    "weight": round(target["applied_feature_weights"][i], 3),
-                }
-                if f.get("text"):
-                    row["feature"] = _short_str(f["text"], feature_length)
-                else:
-                    row["feature"] = _short_str(f["image"], feature_length, True)
+            if target.get("applied_feature_weights"):
+                for i, f in enumerate(target["params"]["features"]):
+                    row = {
+                        "name": _short_str(target["params"]["name"], 30) if i == 0 else "",
+                        "weight": round(target["applied_feature_weights"][i], 3),
+                    }
+                    if f.get("text"):
+                        row["feature"] = _short_str(f["text"], feature_length)
+                    else:
+                        row["feature"] = _short_str(f["image"], feature_length, True)
 
-                row["count"] = target["feature_losses"][i].count
-                row["count_p"] = round(target["feature_losses"][i].count / max(1, target["count"]) * 100., 1)
-                for name, queue in (
-                        ("loss", target["feature_losses"][i]),
-                        ("sim", target["feature_similarities"][i]),
-                ):
-                    row[f"{name}_mean"] = round(queue.mean(), 3)
-                    row[f"{name}_min"] = round(queue.min(), 3)
-                    row[f"{name}_max"] = round(queue.max(), 3)
+                    row["count"] = target["feature_losses"][i].count
+                    row["count_p"] = round(target["feature_losses"][i].count / max(1, target["count"]) * 100., 1)
+                    for name, queue in (
+                            ("loss", target["feature_losses"][i]),
+                            ("sim", target["feature_similarities"][i]),
+                    ):
+                        row[f"{name}_mean"] = round(queue.mean(), 3)
+                        row[f"{name}_min"] = round(queue.min(), 3)
+                        row[f"{name}_max"] = round(queue.max(), 3)
 
-                rows.append(row)
+                    rows.append(row)
 
             for i, constraint in enumerate(target["constraints"]):
                 row = {
                     "name": "  constraint",
                     "weight": round(context(constraint["model"].weight), 3),
-                    "feature": _short_str(str(constraint["model"]), feature_length),
+                    "feature": _short_str(constraint["model"].description(context), feature_length),
                     "count": constraint["losses"].count,
                     "count_p": round(constraint["losses"].count / max(1, target["count"]) * 100., 1),
                     "loss_mean": round(constraint["losses"].mean(), 3),

@@ -19,6 +19,9 @@ class ConstraintBase(torch.nn.Module):
         super().__init__()
         self.weight = weight
 
+    def description(self, context: ExpressionContext) -> str:
+        raise NotImplementedError
+
 
 class AboveBelowConstraintBase(ConstraintBase):
 
@@ -44,17 +47,7 @@ class AboveBelowConstraintBase(ConstraintBase):
             target = torch.tensor(context(self.below)).to(image.device)
             loss_sum = loss_sum + torch.clamp_min(value - target, 0).pow(2).mean()
 
-        return context(self.weight) * loss_sum
-
-    def TODO_extra_repr(self) -> str:
-        t = ""
-        if self.target_above is not None:
-            t = "above=[%s]" % ",".join(str(round(float(f), 2)) for f in self.target_above)
-        if self.target_below is not None:
-            if t:
-                t += ", "
-            t = "below=[%s]" % ",".join(str(round(float(f), 2)) for f in self.target_below)
-        return t
+        return context(self.weight) * 100. * loss_sum
 
 
 class AboveBelow3ConstraintBase(AboveBelowConstraintBase):
@@ -70,6 +63,18 @@ class AboveBelow3ConstraintBase(AboveBelowConstraintBase):
         self.below = below
         self.above = above
 
+    def description(self, context: ExpressionContext) -> str:
+        text = ""
+        if self.above:
+            value = context(self.above)
+            text = f"above=[%s]" % ", ".join(str(round(float(f), 2)) for f in value)
+        if self.below:
+            if text:
+                text += ", "
+            value = context(self.below)
+            text += f"below=[%s]" % ", ".join(str(round(float(f), 2)) for f in value)
+        return text
+
 
 class AboveBelow1ConstraintBase(AboveBelowConstraintBase):
 
@@ -84,12 +89,27 @@ class AboveBelow1ConstraintBase(AboveBelowConstraintBase):
         self.below = below
         self.above = above
 
+    def description(self, context: ExpressionContext) -> str:
+        text = ""
+        if self.above:
+            value = context(self.above)
+            text = f"above={value:.3f}"
+        if self.below:
+            if text:
+                text += ", "
+            value = context(self.below)
+            text += f"below={value:.3f}"
+        return text
+
 
 class MeanConstraint(AboveBelow3ConstraintBase):
 
     def get_image_value(self, image: torch.Tensor):
         image = image.reshape(3, -1)
         return image.mean()
+
+    def description(self, context: ExpressionContext) -> str:
+        return f"mean({super().description(context)})"
 
 
 class StdConstraint(AboveBelow3ConstraintBase):
@@ -98,12 +118,49 @@ class StdConstraint(AboveBelow3ConstraintBase):
         image = image.reshape(3, -1)
         return image.std()
 
+    def description(self, context: ExpressionContext) -> str:
+        return f"std({super().description(context)})"
+
 
 class SaturationConstraint(AboveBelow1ConstraintBase):
 
     def get_image_value(self, image: torch.Tensor):
         image = image.reshape(3, -1)
         return get_mean_saturation(image)
+
+    def description(self, context: ExpressionContext) -> str:
+        return f"sat({super().description(context)})"
+
+
+class BlurConstraint(ConstraintBase):
+
+    def __init__(
+            self,
+            weight: Union[float, Expression],
+            kernel_size: List[Union[int, Expression]] = (3, 3),
+            sigma: List[Union[float, Expression]] = (.5, .5),
+    ):
+        super().__init__(weight=weight)
+        self.kernel_size = kernel_size
+        self.sigma = sigma
+
+    def forward(self, image: torch.Tensor, context: ExpressionContext):
+        kernel_size = [int(k) for k in context(self.kernel_size)]
+        sigma = context(self.sigma)
+
+        blurred_image = VF.gaussian_blur(image, kernel_size, sigma)
+
+        loss = F.mse_loss(
+            image.reshape(3, -1),
+            blurred_image.reshape(3, -1),
+        )
+
+        return context(self.weight) * 100. * loss
+
+    def description(self, context: ExpressionContext) -> str:
+        kernel_size = [int(k) for k in context(self.kernel_size)]
+        sigma = [round(f, 3) for f in context(self.sigma)]
+        return f"blur(ks={kernel_size}, sigma={sigma})"
 
 
 def get_mean_saturation(image: torch.Tensor) -> torch.Tensor:
