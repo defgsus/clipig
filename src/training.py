@@ -4,7 +4,7 @@ import random
 import traceback
 import argparse
 import time
-from typing import Union, Sequence, Type, Tuple, Optional, Callable
+from typing import Union, Sequence, Type, Tuple, Optional, Callable, List
 
 import numpy as np
 import torch
@@ -49,11 +49,43 @@ class ImageTraining:
         self.pixel_model = PixelsRGB(parameters["resolution"]).to(self.device)
 
         self.epoch = 0
-        self.learnrate = 0.01
-        self.optimizer = torch.optim.Adam(
-            self.pixel_model.parameters(),
-            lr=self.learnrate,  # will be adjusted per epoch
-        )
+
+        if self.parameters["optimizer"] == "adam":
+            self.base_learnrate = 0.01
+            self.optimizer = torch.optim.Adam(
+                self.pixel_model.parameters(),
+                lr=self.base_learnrate,  # will be adjusted per epoch
+            )
+        elif self.parameters["optimizer"] == "sgd":
+            self.base_learnrate = 50.0
+            self.optimizer = torch.optim.SGD(
+                self.pixel_model.parameters(),
+                lr=self.base_learnrate,  # will be adjusted per epoch
+            )
+        elif self.parameters["optimizer"] == "sparse_adam":
+            self.base_learnrate = 0.01
+            self.optimizer = torch.optim.RMSprop(
+                self.pixel_model.parameters(),
+                lr=self.base_learnrate,  # will be adjusted per epoch
+            )
+        elif self.parameters["optimizer"] == "adadelta":
+            self.base_learnrate = 50.0
+            self.optimizer = torch.optim.Adadelta(
+                self.pixel_model.parameters(),
+                lr=self.base_learnrate,  # will be adjusted per epoch
+            )
+        elif self.parameters["optimizer"] == "rmsprob":
+            self.base_learnrate = 0.01
+            self.optimizer = torch.optim.RMSprop(
+                self.pixel_model.parameters(),
+                lr=self.base_learnrate,  # will be adjusted per epoch
+                centered=True,
+                # TODO: high momentum is quite useful for more 'chaotic' images but needs to
+                #   be adjustable by expressions
+                momentum=0.1,
+            )
+        else:
+            raise ValueError(f"Unknown optimizer '{self.parameters['optimizer']}'")
 
         self.targets = []
 
@@ -115,12 +147,14 @@ class ImageTraining:
                 "features": features,
                 "feature_loss_functions": feature_loss_functions,
 
+                # statistics ...
                 "feature_losses": [ValueQueue() for _ in features],
                 "feature_similarities": [ValueQueue() for _ in features],
             }
 
             # --- setup transforms ---
 
+            is_random = False  # determine if the transform stack includes randomization
             transforms = []
             final_resolution = self.parameters["resolution"].copy()
             for trans_param in target_param["transforms"]:
@@ -135,8 +169,11 @@ class ImageTraining:
 
                 affine_kwargs = dict()
                 if trans_param.get("random_translate"):
+                    is_random = True
                     affine_kwargs["translate"] = trans_param["random_translate"]
+
                 if trans_param.get("random_scale"):
+                    is_random = True
                     affine_kwargs["scale"] = trans_param["random_scale"]
 
                 if affine_kwargs:
@@ -145,6 +182,7 @@ class ImageTraining:
                     transforms.append(VT.RandomAffine(**affine_kwargs))
 
                 if trans_param.get("random_rotate"):
+                    is_random = True
                     transforms.append(
                         VT.RandomRotation(
                             degrees=trans_param["random_rotate"]["degree"],
@@ -153,6 +191,7 @@ class ImageTraining:
                     )
 
                 if trans_param.get("random_crop"):
+                    is_random = True
                     transforms.append(VT.RandomCrop(trans_param["random_crop"]))
                     final_resolution = trans_param["random_crop"]
 
@@ -165,12 +204,14 @@ class ImageTraining:
                     final_resolution = trans_param["center_crop"]
 
                 if trans_param.get("noise"):
+                    is_random = True
                     transforms.append(transform_modules.NoiseTransform(trans_param["noise"]))
 
             if final_resolution != self.clip_resolution:
                 transforms.append(VT.Resize(self.clip_resolution))
 
             if transforms:
+                target["is_random"] = is_random
                 target["transforms"] = torch.nn.Sequential(*transforms).to(self.device)
                 self.log(2, f"target '{target_param['name']}' transforms:")
                 self.log(2, target["transforms"])
@@ -193,6 +234,8 @@ class ImageTraining:
                     target["constraints"].append({
                         "params": constr_param,
                         "model": constraint.to(self.device),
+
+                        # statistics ...
                         "losses": ValueQueue(),
                     })
 
@@ -228,7 +271,7 @@ class ImageTraining:
             # --- update learnrate ---
 
             learnrate_scale = expression_context(self.parameters["learnrate_scale"])
-            learnrate = self.learnrate * learnrate_scale * expression_context(self.parameters["learnrate"])
+            learnrate = self.base_learnrate * learnrate_scale * expression_context(self.parameters["learnrate"])
 
             for g in self.optimizer.param_groups:
                 g['lr'] = learnrate
@@ -246,21 +289,33 @@ class ImageTraining:
 
             current_pixels = self.pixel_model.forward()
 
-            # --- add target transforms ---
+            # --- apply target transforms ---
 
             active_targets = []
             target_pixels = []
+            target_to_pixels_mapping = dict()
             for target in self.targets:
                 if _check_start_end(
                         target["params"]["start"], target["params"]["end"],
                         epoch, epoch_f
                 ):
-                    pixels = current_pixels
-                    if target.get("transforms"):
-                        pixels = target["transforms"](pixels)
-
                     active_targets.append(target)
-                    target_pixels.append(pixels.unsqueeze(0))
+                    target_idx = len(active_targets) - 1
+                    for batch_idx in range(target["params"]["batch_size"]):
+                        if not target["is_random"] and target_idx in target_to_pixels_mapping:
+                            continue
+
+                        pixels = current_pixels
+                        if target.get("transforms"):
+                            pixels = target["transforms"](pixels)
+
+                        target_pixels.append(pixels.unsqueeze(0))
+                        target_pixel_idx = len(target_pixels) - 1
+
+                        if target_idx not in target_to_pixels_mapping:
+                            target_to_pixels_mapping[target_idx] = [target_pixel_idx]
+                        else:
+                            target_to_pixels_mapping[target_idx].append(target_pixel_idx)
 
             if active_targets:
                 target_pixels = torch.cat(target_pixels, dim=0)
@@ -275,14 +330,17 @@ class ImageTraining:
 
                 loss = torch.tensor(0).to(self.device)
 
-                for target, pixels, clip_feature in zip(
-                        active_targets, target_pixels, clip_features
-                ):
-                    loss = loss + (
-                        target["params"]["weight"] * self._get_target_loss(
-                            target, pixels, clip_feature, expression_context
+                for target_idx, target_pixel_indices in target_to_pixels_mapping.items():
+                    target = active_targets[target_idx]
+                    for target_pixel_idx in target_pixel_indices:
+                        pixels = target_pixels[target_pixel_idx]
+                        clip_feature = clip_features[target_pixel_idx]
+
+                        loss = loss + (
+                            self._get_target_loss(
+                                target, pixels, clip_feature, expression_context
+                            )
                         )
-                    )
 
                 # --- adjust weights ---
 
@@ -296,15 +354,17 @@ class ImageTraining:
 
             cur_time = time.time()
 
-            if self.verbose >= 2 and cur_time - last_stats_time > 4:
+            if self.verbose >= 2 and (cur_time - last_stats_time > 4) or epoch == self.parameters["epochs"] - 1:
                 last_stats_time = cur_time
                 mean = [round(float(f), 3) for f in current_pixels.reshape(3, -1).mean(1)]
                 std = [round(float(f), 3) for f in current_pixels.reshape(3, -1).std(1)]
                 sat = round(float(get_mean_saturation(current_pixels)), 3)
                 self.log(2, f"--- train step {epoch+1} / {self.parameters['epochs']} ---")
-                self.log(2, f"device {self.device}")
-                self.log(2, f"resolution {self.parameters['resolution']}, mean {mean}, std {std}, sat {sat}")
-                self.log(2, f"learnrate {learnrate:.3f}, loss {loss_queue}")
+                self.log(2, f"device: {self.device}")
+                self.log(2, f"image: res {self.parameters['resolution']}, mean {mean}, std {std}, sat {sat}")
+                self.log(2, f"learning: optim '{self.parameters['optimizer']}', "
+                            f"learnrate {learnrate:.3f} (scale {learnrate_scale:.3f}), "
+                            f"loss {loss_queue}")
                 self.log(2, "targets:")
                 self.print_target_stats(expression_context)
 
@@ -371,7 +431,7 @@ class ImageTraining:
             constraint["losses"].append(float(loss))
             loss_sum += loss
 
-        return loss_sum
+        return loss_sum * target["params"]["weight"]
 
     def print_target_stats(self, context: ExpressionContext):
         feature_length = 40
@@ -388,6 +448,7 @@ class ImageTraining:
                 else:
                     row["feature"] = _short_str(f["image"], feature_length, True)
 
+                row["count"] = target["feature_losses"][i].count
                 for name, queue in (
                         ("loss", target["feature_losses"][i]),
                         ("sim", target["feature_similarities"][i]),
@@ -403,6 +464,7 @@ class ImageTraining:
                     "name": "  constraint",
                     "weight": round(context(constraint["model"].weight), 3),
                     "feature": _short_str(str(constraint["model"]), feature_length),
+                    "count": constraint["losses"].count,
                     "loss_mean": round(constraint["losses"].mean(), 3),
                     "loss_min": round(constraint["losses"].min(), 3),
                     "loss_max": round(constraint["losses"].max(), 3),
@@ -420,6 +482,7 @@ class ImageTraining:
                 f"""{row["name"]:{lengths["name"]}} : """
                 f"""{row["weight"]:{lengths["weight"]}} x """
                 f"""{row["feature"]:{lengths["feature"]}} : """
+                f"""count {row["count"]:{lengths["count"]}} : """
                 f"""loss {row["loss_mean"]:{lengths["loss_mean"]}} ("""
                 f"""{row["loss_min"]:{lengths["loss_min"]}} - """
                 f"""{row["loss_max"]:{lengths["loss_max"]}})"""
@@ -463,15 +526,17 @@ def _short_str(s: str, max_length: int, front: bool = False) -> str:
 
 
 class ValueQueue:
-    def __init__(self, max_length: int = 10):
+    def __init__(self, max_length: int = 30):
         self.max_length = max_length
         self.values = list()
+        self.count = 0
 
     def __str__(self):
         return f"{self.mean():.3f} ({self.min():.3f} - {self.max():.3f})"
 
     def append(self, v):
         self.values.append(v)
+        self.count += 1
         if len(self.values) > self.max_length:
             self.values.pop(0)
 

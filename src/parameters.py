@@ -121,6 +121,7 @@ PARAMETERS = {
     "epochs": {"convert": int, "default": 300},
     "resolution": {"convert": sequence_converter(int, 2), "default": [224, 224]},
     "model": {"convert": str, "default": "ViT-B/32"},
+    "optimizer": {"convert": str, "default": "adam"},
     "init": {"default": dict()},
     "init.mean": {"convert": sequence_converter(float, 3), "default": [.5, .5, .5]},
     "init.std": {"convert": sequence_converter(float, 3), "default": [.1, .1, .1]},
@@ -138,6 +139,7 @@ PARAMETERS = {
     "targets.start": {"convert": frame_time_converter, "default": 0.0},
     "targets.end": {"convert": frame_time_converter, "default": 1.0},
     "targets.weight": {"convert": expression_converter(float), "default": 1.0},
+    "targets.batch_size": {"convert": int, "default": 1},
     "targets.select": {"convert": str, "default": "all"},
     "targets.features": {"default": list()},
     "targets.features.weight": {"convert": expression_converter(float, *EXPR_ARGS.TARGET_FEATURE), "default": 1.0},
@@ -197,6 +199,10 @@ def parse_arguments() -> dict:
         help="Learnrate scaling factor, defaults to %s" % PARAMETERS["learnrate"]["default"],
     )
     parser.add_argument(
+        "-opt", "--optimizer", type=str, default=None,
+        help="Optimizer that performs the gradient descent, defaults to %s" % PARAMETERS["optimizer"]["default"],
+    )
+    parser.add_argument(
         "-e", "--epochs", type=int, default=None,
         help="Number of training steps, default = %s" % PARAMETERS["epochs"]["default"],
     )
@@ -241,7 +247,7 @@ def parse_arguments() -> dict:
         elif "." not in output_name:
             output_name += ".png"
 
-    for key in ("learnrate", "epochs", "resolution", "device"):
+    for key in ("optimizer", "learnrate", "epochs", "resolution", "device"):
         if getattr(args, key) is not None:
             parameters[key] = getattr(args, key)
 
