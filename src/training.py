@@ -39,10 +39,12 @@ class ImageTraining:
             parameters: dict,
             snapshot_callback: Optional[Callable] = None,
             log_callback: Optional[Callable] = None,
+            progress_callback: Optional[Callable] = None,
     ):
         self.parameters = parameters
         self.snapshot_callback = snapshot_callback
         self.log_callback = log_callback
+        self.progress_callback = progress_callback
 
         if self.parameters["device"] == "auto":
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -56,7 +58,7 @@ class ImageTraining:
 
         self.pixel_model = PixelsRGB(parameters["resolution"]).to(self.device)
 
-        self.epoch = 0
+        self.epoch = self.parameters["start_epoch"]
 
         # for threaded access
         self._stop = False
@@ -263,29 +265,30 @@ class ImageTraining:
         self.log(2, "initializing pixels")
         self.pixel_model.initialize(self.parameters["init"])
 
-    def train(self):
+    def train(self, initialize: bool = True):
         self._running = True
         try:
-            self._train()
+            self._train(initialize=initialize)
         except:
             self._running = False
             raise
         self._running = False
 
-    def _train(self):
+    def _train(self, initialize: bool = True):
         assert self.clip_model
 
         if not self.targets:
             self.setup_targets()
 
-        self.initialize()
+        if initialize:
+            self.initialize()
 
         last_stats_time = 0
         last_snapshot_time = 0
         last_snapshot_epoch = 0
         loss_queue = ValueQueue()
 
-        epoch_iter = range(self.parameters["epochs"])
+        epoch_iter = range(self.epoch, self.parameters["epochs"])
         if self.verbose >= 1 and self.log_callback is None:
             epoch_iter = tqdm(epoch_iter)
 
@@ -382,6 +385,17 @@ class ImageTraining:
                     loss.backward(retain_graph=True)
                     self.optimizer.step()
 
+            # --- post stats ---
+
+            if self.progress_callback is not None:
+                self._post_epoch_statistics(
+                    current_pixels=current_pixels,
+                    learnrate=learnrate,
+                    learnrate_scale=learnrate_scale,
+                    context=expression_context,
+                    loss_queue=loss_queue,
+                )
+
             # --- print stats ---
 
             cur_time = time.time()
@@ -400,11 +414,11 @@ class ImageTraining:
                             f"learnrate {learnrate:.3f} (scale {learnrate_scale:.3f}), "
                             f"loss {loss_queue}")
                 self.log(2, "targets:")
-                self.print_target_stats(expression_context)
+                self._print_target_stats(expression_context)
 
             # -- store snapshot --
 
-            do_snapshot = epoch == 0
+            do_snapshot = epoch == 0 or epoch == self.parameters["epochs"] - 1
 
             if isinstance(self.parameters["snapshot_interval"], int):
                 do_snapshot |= epoch - last_snapshot_epoch >= self.parameters["snapshot_interval"]
@@ -517,7 +531,32 @@ class ImageTraining:
 
         return feature_weights
 
-    def print_target_stats(self, context: ExpressionContext):
+    def _post_epoch_statistics(
+            self,
+            current_pixels: torch.Tensor,
+            learnrate: float,
+            learnrate_scale: float,
+            loss_queue: "ValueQueue",
+            context: ExpressionContext,
+    ):
+        if self.progress_callback is None:
+            return
+
+        stats = {
+            "epochs": self.parameters["epochs"],
+            "epoch": self.epoch,
+            "percent": self.epoch / max(1, self.parameters["epochs"] - 1) * 100.,
+            #"image_mean": current_pixels.reshape(3, -1).mean(1).tolist(),
+            #"image_std": current_pixels.reshape(3, -1).std(1).tolist(),
+            #"image_sat": float(get_mean_saturation(current_pixels)),
+            #"image_edge_max": constraint_modules.get_edge_max(current_pixels),
+            "learnrate": learnrate,
+            "learnrate_scale": learnrate_scale,
+            "loss": loss_queue.last(),
+        }
+        self.progress_callback(stats)
+
+    def _print_target_stats(self, context: ExpressionContext):
         feature_length = 40
 
         rows = []
@@ -614,6 +653,7 @@ def _short_str(s: str, max_length: int, front: bool = False) -> str:
 
 
 class ValueQueue:
+    """Just some little statistics helper"""
     def __init__(self, max_length: int = 30):
         self.max_length = max_length
         self.values = list()
@@ -630,13 +670,19 @@ class ValueQueue:
             self.values.pop(0)
 
     def mean(self):
-        return 0. if not self.values else sum(self.values) / len(self.values)
+        values = self.values[-self.max_length:]
+        return 0. if not values else sum(values) / len(values)
 
     def min(self):
-        return 0. if not self.values else min(self.values)
+        values = self.values[-self.max_length:]
+        return 0. if not values else min(values)
 
     def max(self):
-        return 0. if not self.values else max(self.values)
+        values = self.values[-self.max_length:]
+        return 0. if not values else max(values)
+
+    def last(self):
+        return 0. if not self.values else self.values[-1]
 
 
 def get_feature_loss_function(name: str) -> Callable:

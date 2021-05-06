@@ -51,8 +51,13 @@ class PixelsRGB(PixelsBase):
 
         pixels = pixels.reshape(3, self.resolution[1], self.resolution[0])
 
+        img = None
         if parameters["image"]:
             img = VF.to_tensor(PIL.Image.open(parameters["image"]))
+        elif parameters["image_tensor"]:
+            img = torch.Tensor(parameters["image_tensor"])
+
+        if img is not None:
             if img.shape != pixels.shape:
                 scale = min(img.shape[1:]) / min(self.resolution)
                 img = VF.resize(img, [int(img.shape[2] / scale), int(img.shape[1] / scale)])

@@ -1,6 +1,6 @@
 from functools import partial
 from queue import PriorityQueue, Empty
-from typing import Any
+from typing import Any, Optional
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -14,6 +14,7 @@ from .image_display import ImageWidget
 
 from ..parameters import parameters_to_yaml, yaml_to_parameters, convert_params, set_parameter_defaults
 from .thread_wrapper import ImageTrainingThread
+from .statistics import Statistics
 
 
 class Experiment(QWidget):
@@ -31,38 +32,62 @@ class Experiment(QWidget):
         l = QVBoxLayout()
         grid.addLayout(l, 0, 0)
         self.editor = QPlainTextEdit()
+        font = QFont("Mono")
+        font.setPointSize(17)
+        self.editor.setFont(font)
         l.addWidget(self.editor)
+
+        self.log_display = QPlainTextEdit()
+        self.log_display.setMaximumHeight(100)
+        l.addWidget(self.log_display)
+        #grid.addWidget(self.log_display, 2, 0, 1, 2)
 
         bar = QToolBar()
         l.addWidget(bar)
+        self.tool_buttons = dict()
         for id, name in (
-                ("train", self.tr("&Train")),
-                ("stop", self.tr("&Stop")),
+                ("start", self.tr("&Start")),
+                ("update", self.tr("&Update")),
+                ("pause", self.tr("&Pause")),
         ):
             b = QToolButton()
             b.setText(name)
             bar.addWidget(b)
             b.clicked.connect(partial(self.slot_tool_button, id))
+            self.tool_buttons[id] = b
 
         l = QVBoxLayout()
         grid.addLayout(l, 0, 1)
         self.image_display = ImageWidget()
         l.addWidget(self.image_display)
 
-        self.log_display = QPlainTextEdit()
-        l.addWidget(self.log_display)
+        self.statistics = Statistics()
+        grid.addWidget(self.statistics, 1, 0, 1, 2)
 
-        #img = Image.open("/home/bergi/Pictures/bob/Bobdobbs.png")
-        #self.image_display.set_image(img)
+    def get_parameters(self) -> Optional[dict]:
+        return self._get_parameters(for_training=False)
+
+    def get_image(self) -> Optional[QImage]:
+        return self.image_display.image
 
     def slot_tool_button(self, id: str):
-        if id == "train":
+        parameters = self._get_parameters()
+
+        if id == "start" and parameters:
             self.trainer.create()
-            self.trainer.start_training()
-            # self._pass_parameters()
-        elif id == "stop":
-            self.trainer.stop_training()
-            self.trainer.destroy()
+            self.trainer.start_training(parameters)
+
+        elif id == "update" and parameters:
+            self.trainer.update_parameters(parameters)
+
+        elif id == "pause":
+            b: QToolButton = self.tool_buttons["pause"]
+            if b.isDown():
+                b.setDown(False)
+                self.trainer.continue_training()
+            else:
+                b.setDown(True)
+                self.trainer.pause_training()
 
     def set_parameters(self, parameters: dict):
         if parameters:
@@ -70,12 +95,11 @@ class Experiment(QWidget):
         else:
             yaml_text = ""
         self.editor.setPlainText(yaml_text)
-        self._pass_parameters()
 
     def halt(self):
         self.trainer.destroy()
 
-    def _pass_parameters(self):
+    def _get_parameters(self, for_training: bool = True) -> Optional[dict]:
         try:
             parameters = yaml_to_parameters(self.editor.toPlainText())
             params = convert_params(parameters)
@@ -84,9 +108,10 @@ class Experiment(QWidget):
             print(e)
             return
 
-        params["verbose"] = 1
-        params["snapshot_interval"] = 1.
-        self.trainer.set_parameters(params)
+        if for_training:
+            params["verbose"] = 2
+            params["snapshot_interval"] = 1.
+        return params
 
     def _call_queue_processing(self):
         QTimer.singleShot(100, self._process_queue)
@@ -109,3 +134,8 @@ class Experiment(QWidget):
         elif name == "log":
             self.log_display.appendPlainText(data)
 
+        elif name == "progress":
+            self._add_stats(data)
+
+    def _add_stats(self, stats: dict):
+        self.statistics.add_stats(stats)

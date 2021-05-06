@@ -1,7 +1,10 @@
 import time
 from queue import PriorityQueue
 from threading import Thread, Lock
-from typing import Any, Tuple
+from typing import Any, Tuple, Optional
+
+import PIL.Image
+from torchvision.transforms.functional import to_pil_image
 
 from ..training import ImageTraining
 
@@ -11,31 +14,74 @@ class ImageTrainingThread:
     def __init__(self, out_queue: PriorityQueue):
         self._parameters = None
         self._thread = None
-        self._trainer = None
+        self._trainer: Optional[ImageTraining] = None
         self._stop = False
         self._in_queue = PriorityQueue()
         self._out_queue = out_queue
+        self._last_image_tensor = None
 
     def create(self):
+        """Start the thread"""
         if not self._thread:
+            self.log("starting thread")
             self._stop = False
             self._thread = Thread(target=self._thread_loop)
             self._thread.start()
 
     def destroy(self):
+        """Destroy the thread"""
         if self._thread:
+            self.log("stopping thread")
             self._stop = True
-            self.stop_training()
+            self._put_in_queue("-")  # just put something in the queue to end the loop
+            self.pause_training()
             self._thread.join()
             self._thread = None
 
-    def start_training(self):
-        self._put_in_queue("train")
+    def start_training(self, parameters: dict):
+        """Start (or restart) a training"""
+        self._put_in_queue("start", parameters)
 
-    def stop_training(self):
+    def pause_training(self):
+        """Pause the current session"""
         if self._trainer and self._trainer._running:
+            self.log("pause training")
             self._trainer._stop = True
-            # TODO: block until not trainer._running
+            # i know, this is not the best method...
+            while self._trainer and self._trainer._running:
+                time.sleep(.1)
+
+    def continue_training(self):
+        """Continue training if possible"""
+        if not self._parameters:
+            return
+        self._put_in_queue("continue")
+
+    def update_parameters(self, parameters: dict):
+        if not self._trainer:
+            self.start_training(parameters)
+            return
+
+        self.pause_training()
+        parameters = parameters.copy()
+        parameters["start_epoch"] = self._trainer.epoch
+        if self._last_image_tensor is not None:
+            parameters["init"] = {
+                "image": None,
+                "image_tensor": self._last_image_tensor.tolist(),
+                "mean": [0, 0, 0],
+                "std": [0, 0, 0],
+            }
+
+        self._put_in_queue("update_parameters", parameters)
+        self._put_in_queue("continue")
+
+    def get_image(self) -> Optional[PIL.Image.Image]:
+        if self._last_image_tensor is not None:
+            return to_pil_image(self._last_image_tensor)
+
+    def log(self, *args):
+        self._put_out_queue("log", " ".join(str(a) for a in args))
 
     def _put_in_queue(self, name: str, data: Any = None, priority: int = 10):
         self._in_queue.put(QueueItem(priority, name, data))
@@ -47,48 +93,59 @@ class ImageTrainingThread:
         item = self._in_queue.get()
         return item.name, item.data
 
-    def set_parameters(self, parameters: dict):
-        self._put_in_queue("set_parameters", parameters)
-
     def _thread_loop(self):
         while not self._stop:
 
             action_name, data = self._get_queue()
-            print("QUEUE", action_name, data)
+            # print("QUEUE", action_name, data)
 
-            if action_name == "set_parameters":
+            if action_name == "start":
+                if self._trainer:
+                    self.pause_training()
+                    self._destroy_trainer()
                 self._parameters = data
-                if not self._trainer:
-                    self._trainer = ImageTraining(
-                        self._parameters,
-                        snapshot_callback=self._snapshot_callback,
-                        log_callback=self._log_callback,
-                    )
-                else:
-                    print("SET_PARAMS AGAIN!")
-                    raise NotImplementedError
+                self.continue_training()
 
-            elif action_name == "train":
-                if not self._trainer or not self._trainer._running:
-                    if not self._trainer:
-                        self._trainer = ImageTraining(
-                            self._parameters,
-                            snapshot_callback=self._snapshot_callback,
-                            log_callback=self._log_callback,
-                        )
-                    print("TRAIN")
-                    self._trainer.train()
-                    print("END TRAIN")
+            elif action_name == "continue":
+                if not self._trainer:
+                    self._create_trainer()
+                self.log("start training loop")
+                self._trainer.train()
+                self._snapshot_callback(self._trainer.pixel_model.forward())
+                self.log("training loop ended")
+
+            elif action_name == "update_parameters":
+                if self._trainer:
+                    self.pause_training()
+                    self._destroy_trainer()
+                self._parameters = data
 
         if self._trainer:
             del self._trainer
             self._trainer = None
 
+    def _create_trainer(self):
+        self._trainer = ImageTraining(
+            self._parameters,
+            snapshot_callback=self._snapshot_callback,
+            log_callback=self._log_callback,
+            progress_callback=self._progress_callback,
+        )
+
+    def _destroy_trainer(self):
+        del self._trainer
+        self._trainer = None
+
     def _snapshot_callback(self, tensor):
-        self._put_out_queue("snapshot", tensor.detach().cpu())
+        cpu_tensor = tensor.detach().cpu()
+        self._last_image_tensor = cpu_tensor
+        self._put_out_queue("snapshot", cpu_tensor)
 
     def _log_callback(self, *args):
         self._put_out_queue("log", " ".join(str(s) for s in args))
+
+    def _progress_callback(self, stats: dict):
+        self._put_out_queue("progress", stats)
 
 
 class QueueItem:
