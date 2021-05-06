@@ -24,6 +24,7 @@ from .expression import Expression, ExpressionContext
 from . import transforms as transform_modules
 from . import constraints as constraint_modules
 from .constraints import get_mean_saturation
+from .clip_singleton import ClipSingleton
 
 
 torch.autograd.set_detect_anomaly(True)
@@ -33,8 +34,15 @@ class ImageTraining:
 
     clip_resolution = [224, 224]
 
-    def __init__(self, parameters: dict):
+    def __init__(
+            self,
+            parameters: dict,
+            snapshot_callback: Optional[Callable] = None,
+            log_callback: Optional[Callable] = None,
+    ):
         self.parameters = parameters
+        self.snapshot_callback = snapshot_callback
+        self.log_callback = log_callback
 
         if self.parameters["device"] == "auto":
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -49,6 +57,10 @@ class ImageTraining:
         self.pixel_model = PixelsRGB(parameters["resolution"]).to(self.device)
 
         self.epoch = 0
+
+        # for threaded access
+        self._stop = False
+        self._running = False
 
         if self.parameters["optimizer"] == "adam":
             self.base_learnrate = 0.01
@@ -93,8 +105,8 @@ class ImageTraining:
     def clip_model(self):
         if self._clip_model is None:
             self.log(2, "loading CLIP")
-            self._clip_model, self.clip_preprocess = clip.load(
-                self.parameters["model"],
+            self._clip_model, self.clip_preprocess = ClipSingleton.get(
+                model=self.parameters["model"],
                 device=self.device
             )
         return self._clip_model
@@ -105,8 +117,11 @@ class ImageTraining:
 
     def log(self, level: int, *args):
         if self.verbose >= level:
-            print(*args, file=sys.stderr)
-            sys.stderr.flush()
+            if self.log_callback is not None:
+                self.log_callback(*args)
+            else:
+                print(*args, file=sys.stderr)
+                sys.stderr.flush()
 
     def save_image(self):
         filename = self.parameters["output"]
@@ -227,6 +242,7 @@ class ImageTraining:
                 for name, Module in (
                         ("mean", constraint_modules.MeanConstraint),
                         ("std", constraint_modules.StdConstraint),
+                        ("edge_max", constraint_modules.EdgeMaxConstraint),
                         ("saturation", constraint_modules.SaturationConstraint),
                         ("blur", constraint_modules.BlurConstraint),
                 ):
@@ -248,6 +264,15 @@ class ImageTraining:
         self.pixel_model.initialize(self.parameters["init"])
 
     def train(self):
+        self._running = True
+        try:
+            self._train()
+        except:
+            self._running = False
+            raise
+        self._running = False
+
+    def _train(self):
         assert self.clip_model
 
         if not self.targets:
@@ -257,14 +282,19 @@ class ImageTraining:
 
         last_stats_time = 0
         last_snapshot_time = 0
+        last_snapshot_epoch = 0
         loss_queue = ValueQueue()
 
         epoch_iter = range(self.parameters["epochs"])
-        if self.verbose >= 1:
+        if self.verbose >= 1 and self.log_callback is None:
             epoch_iter = tqdm(epoch_iter)
 
         self.log(2, "training")
         for epoch in epoch_iter:
+
+            if self._stop:
+                break
+
             self.epoch = epoch
             epoch_f = epoch / max(1, self.parameters["epochs"] - 1)
 
@@ -361,18 +391,33 @@ class ImageTraining:
                 mean = [round(float(f), 3) for f in current_pixels.reshape(3, -1).mean(1)]
                 std = [round(float(f), 3) for f in current_pixels.reshape(3, -1).std(1)]
                 sat = round(float(get_mean_saturation(current_pixels)), 3)
+                edge_max = [round(float(f), 3) for f in constraint_modules.get_edge_max(current_pixels)]
                 self.log(2, f"--- train step {epoch+1} / {self.parameters['epochs']} ---")
                 self.log(2, f"device: {self.device}")
-                self.log(2, f"image: res {self.parameters['resolution']}, mean {mean}, std {std}, sat {sat}")
+                self.log(2, f"image: res {self.parameters['resolution']}, "
+                            f"mean {mean}, std {std}, sat {sat}, edge_max {edge_max}")
                 self.log(2, f"learning: optim '{self.parameters['optimizer']}', "
                             f"learnrate {learnrate:.3f} (scale {learnrate_scale:.3f}), "
                             f"loss {loss_queue}")
                 self.log(2, "targets:")
                 self.print_target_stats(expression_context)
 
-            if epoch == 0 or cur_time - last_snapshot_time > 10:
+            # -- store snapshot --
+
+            do_snapshot = epoch == 0
+
+            if isinstance(self.parameters["snapshot_interval"], int):
+                do_snapshot |= epoch - last_snapshot_epoch >= self.parameters["snapshot_interval"]
+            elif isinstance(self.parameters["snapshot_interval"], float):
+                do_snapshot |= cur_time - last_snapshot_time >= self.parameters["snapshot_interval"]
+
+            if epoch == 0 or do_snapshot:
                 last_snapshot_time = cur_time
-                self.save_image()
+                last_snapshot_epoch = epoch
+                if self.snapshot_callback is None:
+                    self.save_image()
+                else:
+                    self.snapshot_callback(current_pixels)
 
     def _postproc(self, epoch: int, epoch_f: float, context: ExpressionContext):
         for pp in self.parameters["postproc"]:

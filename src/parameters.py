@@ -1,6 +1,7 @@
 import os
 import pathlib
 import argparse
+from io import StringIO
 from copy import deepcopy
 from typing import Union, Sequence, Type, Tuple, Optional, Callable
 
@@ -112,8 +113,18 @@ def frame_time_converter(v):
     raise TypeError(f"expected int, float or percent, got {type(v).__name__}")
 
 
+def int_or_float_converter(x):
+    try:
+        return float(x)
+    except ValueError:
+        pass
+
+    return int(x)
+
+
 PARAMETERS = {
     "verbose": {"convert": int, "default": 2},
+    "snapshot_interval": {"convert": int_or_float_converter, "default": 2.},
     "device": {"convert": str, "default": "auto"},
     "learnrate": {"convert": expression_converter(float, remove=EXPR_ARGS.LEARNRATE), "default": 1.},
     "learnrate_scale": {"convert": expression_converter(float, remove=EXPR_ARGS.LEARNRATE), "default": 1.},
@@ -155,6 +166,10 @@ PARAMETERS = {
     "targets.constraints.std.weight": {"convert": expression_converter(float, *EXPR_ARGS.TARGET_CONSTRAINT), "default": 1.},
     "targets.constraints.std.above": {"convert": sequence_converter(float, 3, expr=True, expression_args=EXPR_ARGS.TARGET_CONSTRAINT), "default": None},
     "targets.constraints.std.below": {"convert": sequence_converter(float, 3, expr=True, expression_args=EXPR_ARGS.TARGET_CONSTRAINT), "default": None},
+    "targets.constraints.edge_max": {"default": None},
+    "targets.constraints.edge_max.weight": {"convert": expression_converter(float, *EXPR_ARGS.TARGET_CONSTRAINT), "default": 1.},
+    "targets.constraints.edge_max.above": {"convert": sequence_converter(float, 3, expr=True, expression_args=EXPR_ARGS.TARGET_CONSTRAINT), "default": None},
+    "targets.constraints.edge_max.below": {"convert": sequence_converter(float, 3, expr=True, expression_args=EXPR_ARGS.TARGET_CONSTRAINT), "default": None},
     "targets.constraints.saturation": {"default": None},
     "targets.constraints.saturation.weight": {"convert": expression_converter(float, *EXPR_ARGS.TARGET_CONSTRAINT), "default": 1.},
     "targets.constraints.saturation.above": {"convert": expression_converter(float, *EXPR_ARGS.TARGET_CONSTRAINT), "default": None},
@@ -178,17 +193,20 @@ PARAMETERS = {
 }
 
 
-def parse_arguments() -> dict:
+def parse_arguments(gui_mode: bool = False) -> dict:
     """
     Returns full set of parameters to run the experiment.
 
     Parameters from yaml files and command-line parameters are merged
 
+    :param gui_mode: bool,
+        If False, at least one config file is required
+        and parameters get converted and defaults are added
     :return: dict
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "config", type=str, nargs="+", default=[],
+        "config", type=str, nargs="*" if gui_mode else "+", default=[],
         help="Configuration yaml file(s). When several files, "
              "parameters will be merged together where later config files "
              "will overwrite previous parameters. All other command line "
@@ -237,7 +255,7 @@ def parse_arguments() -> dict:
     parameters = dict()
 
     for filename in args.config:
-        yaml_config = load_yaml_config(filename)
+        yaml_config = load_yaml_config(filename, convert=not gui_mode)
         parameters = merge_parameters(parameters, yaml_config)
 
         output_name = yaml_config.get("output") or ""
@@ -262,18 +280,23 @@ def parse_arguments() -> dict:
         else:
             output_name = args.output
 
-    parameters = convert_params(parameters)
-    set_parameter_defaults(parameters)
+    if not gui_mode:
+        parameters = convert_params(parameters)
+        set_parameter_defaults(parameters)
 
-    parameters["output"] = str(prepare_output_name(output_name, make_dir=False))
+    if parameters:
+        parameters["output"] = str(prepare_output_name(output_name, make_dir=False))
 
     return parameters
 
 
-def load_yaml_config(filename: str) -> dict:
+def load_yaml_config(filename: str, convert: bool = True) -> dict:
     try:
         with open(filename) as fp:
-            return convert_params(yaml.safe_load(fp))
+            params = yaml.safe_load(fp)
+            if convert:
+                params = convert_params(params)
+            return params
     except Exception as e:
         e.args = (f"{filename}: {e}", )
         raise
@@ -296,6 +319,18 @@ def save_yaml_config(
 
         if footer:
             fp.write(footer)
+
+
+def parameters_to_yaml(parameters: dict) -> str:
+    file = StringIO()
+    yaml.safe_dump(parameters, file, sort_keys=False)
+    file.seek(0)
+    return file.read()
+
+
+def yaml_to_parameters(text: str) -> dict:
+    file = StringIO(text)
+    return yaml.safe_load(file)
 
 
 def _recursive_export_ready(data):

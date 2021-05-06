@@ -132,6 +132,13 @@ class SaturationConstraint(AboveBelow1ConstraintBase):
         return f"sat({super().description(context)})"
 
 
+def get_mean_saturation(image: torch.Tensor) -> torch.Tensor:
+    color_planes = image.reshape(3, -1)
+    mean_plane = color_planes.mean(dim=0, keepdim=True)
+    saturation_plane = torch.abs(mean_plane.repeat(3, 1) - color_planes).sum(0, keepdim=True) / 3.
+    return saturation_plane.mean()
+
+
 class BlurConstraint(ConstraintBase):
 
     def __init__(
@@ -163,8 +170,23 @@ class BlurConstraint(ConstraintBase):
         return f"blur(ks={kernel_size}, sigma={sigma})"
 
 
-def get_mean_saturation(image: torch.Tensor) -> torch.Tensor:
-    color_planes = image.reshape(3, -1)
-    mean_plane = color_planes.mean(dim=0, keepdim=True)
-    saturation_plane = torch.abs(mean_plane.repeat(3, 1) - color_planes).sum(0, keepdim=True) / 3.
-    return saturation_plane.mean()
+class EdgeMaxConstraint(AboveBelow3ConstraintBase):
+
+    def get_image_value(self, image: torch.Tensor):
+        return get_edge_max(image)
+
+    def description(self, context: ExpressionContext) -> str:
+        return f"edge_max({super().description(context)})"
+
+
+def get_edge_max(image: torch.Tensor) -> torch.Tensor:
+    blurred_image = VF.gaussian_blur(image, [5, 5], None)
+    edges = (blurred_image - image)
+    edges = torch.abs(edges.reshape(3, -1))
+    edge_max = torch.max(edges, 1).values * .7
+    edges_mean = torch.cat([
+        edges[0, edges[0] > edge_max[0]].mean().unsqueeze(0),
+        edges[1, edges[1] > edge_max[1]].mean().unsqueeze(0),
+        edges[2, edges[2] > edge_max[2]].mean().unsqueeze(0),
+    ])
+    return edges_mean
