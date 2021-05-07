@@ -124,7 +124,7 @@ def int_or_float_converter(x):
 
 PARAMETERS = {
     "verbose": {"convert": int, "default": 2},
-    "snapshot_interval": {"convert": int_or_float_converter, "default": 2.},
+    "snapshot_interval": {"convert": int_or_float_converter, "default": 20.},
     "device": {"convert": str, "default": "auto"},
     "learnrate": {"convert": expression_converter(float, remove=EXPR_ARGS.LEARNRATE), "default": 1.},
     "learnrate_scale": {"convert": expression_converter(float, remove=EXPR_ARGS.LEARNRATE), "default": 1.},
@@ -239,6 +239,11 @@ def parse_arguments(gui_mode: bool = False) -> dict:
         "-r", "--resolution", type=int, default=None, nargs="+",
         help="Resolution in pixels, can be one or two numbers, "
              "defaults to %s" % PARAMETERS["resolution"]["default"],
+    )
+    parser.add_argument(
+        "-s", "--snapshot-interval", type=float, default=None,
+        help="Number of seconds after which a snapshot is saved, "
+             "defaults to %s" % PARAMETERS["snapshot_interval"]["default"],
     )
     parser.add_argument(
         "-v", "--verbose", type=int, default=None,
