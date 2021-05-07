@@ -45,6 +45,10 @@ class ImageTraining:
         self.snapshot_callback = snapshot_callback
         self.log_callback = log_callback
         self.progress_callback = progress_callback
+        self.average_frame_rate = 0.
+        self.training_seconds = 0.
+        self.forward_seconds = 0.
+        self.backward_seconds = 0.
 
         if self.parameters["device"] == "auto":
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -71,7 +75,7 @@ class ImageTraining:
                 lr=self.base_learnrate,  # will be adjusted per epoch
             )
         elif self.parameters["optimizer"] == "sgd":
-            self.base_learnrate = 50.0
+            self.base_learnrate = 10.0
             self.optimizer = torch.optim.SGD(
                 self.pixel_model.parameters(),
                 lr=self.base_learnrate,  # will be adjusted per epoch
@@ -83,13 +87,13 @@ class ImageTraining:
                 lr=self.base_learnrate,  # will be adjusted per epoch
             )
         elif self.parameters["optimizer"] == "adadelta":
-            self.base_learnrate = 50.0
+            self.base_learnrate = 20.0
             self.optimizer = torch.optim.Adadelta(
                 self.pixel_model.parameters(),
                 lr=self.base_learnrate,  # will be adjusted per epoch
             )
         elif self.parameters["optimizer"] == "rmsprob":
-            self.base_learnrate = 0.01
+            self.base_learnrate = 0.005
             self.optimizer = torch.optim.RMSprop(
                 self.pixel_model.parameters(),
                 lr=self.base_learnrate,  # will be adjusted per epoch
@@ -244,6 +248,7 @@ class ImageTraining:
                 for name, Module in (
                         ("mean", constraint_modules.MeanConstraint),
                         ("std", constraint_modules.StdConstraint),
+                        ("edge_mean", constraint_modules.EdgeMeanConstraint),
                         ("edge_max", constraint_modules.EdgeMaxConstraint),
                         ("saturation", constraint_modules.SaturationConstraint),
                         ("blur", constraint_modules.BlurConstraint),
@@ -267,6 +272,7 @@ class ImageTraining:
 
     def train(self, initialize: bool = True):
         self._running = True
+        self._stop = False
         try:
             self._train(initialize=initialize)
         except:
@@ -283,6 +289,7 @@ class ImageTraining:
         if initialize:
             self.initialize()
 
+        last_frame_time = None
         last_stats_time = 0
         last_snapshot_time = 0
         last_snapshot_epoch = 0
@@ -295,7 +302,15 @@ class ImageTraining:
         self.log(2, "training")
         for epoch in epoch_iter:
 
+            cur_time = time.time()
+            if last_frame_time:
+                frame_time = cur_time - last_frame_time
+                self.training_seconds += frame_time
+                self.average_frame_rate += 0.1 * (frame_time - self.average_frame_rate)
+            last_frame_time = cur_time
+
             if self._stop:
+                self.log(2, "training stop requested")
                 break
 
             self.epoch = epoch
@@ -315,6 +330,8 @@ class ImageTraining:
                 lr=learnrate, learnrate=learnrate,
                 lrs=learnrate_scale, learnrate_scale=learnrate_scale,
             )
+
+            forward_start_time = time.time()
 
             # --- post process pixels ---
 
@@ -343,6 +360,7 @@ class ImageTraining:
                         pixels = current_pixels
                         if target.get("transforms"):
                             pixels = target["transforms"](pixels)
+                        # pixels = torch.clamp(pixels, 0, 1)
 
                         target_pixels.append(pixels.unsqueeze(0))
                         target_pixel_idx = len(target_pixels) - 1
@@ -352,7 +370,11 @@ class ImageTraining:
                         else:
                             target_to_pixels_mapping[target_idx].append(target_pixel_idx)
 
+            self.forward_seconds += time.time() - forward_start_time
+
             if active_targets:
+                backward_start_time = time.time()
+
                 target_pixels = torch.cat(target_pixels, dim=0)
 
                 # --- retrieve CLIP features ---
@@ -385,6 +407,8 @@ class ImageTraining:
                     loss.backward(retain_graph=True)
                     self.optimizer.step()
 
+                self.backward_seconds += time.time() - backward_start_time
+
             # --- post stats ---
 
             if self.progress_callback is not None:
@@ -405,11 +429,11 @@ class ImageTraining:
                 mean = [round(float(f), 3) for f in current_pixels.reshape(3, -1).mean(1)]
                 std = [round(float(f), 3) for f in current_pixels.reshape(3, -1).std(1)]
                 sat = round(float(get_mean_saturation(current_pixels)), 3)
-                edge_max = [round(float(f), 3) for f in constraint_modules.get_edge_max(current_pixels)]
+                edge_mean = [round(float(f), 3) for f in constraint_modules.get_edge_mean(current_pixels)]
                 self.log(2, f"--- train step {epoch+1} / {self.parameters['epochs']} ---")
                 self.log(2, f"device: {self.device}")
                 self.log(2, f"image: res {self.parameters['resolution']}, "
-                            f"mean {mean}, std {std}, sat {sat}, edge_max {edge_max}")
+                            f"mean {mean}, std {std}, sat {sat}, edge_mean {edge_mean}")
                 self.log(2, f"learning: optim '{self.parameters['optimizer']}', "
                             f"learnrate {learnrate:.3f} (scale {learnrate_scale:.3f}), "
                             f"loss {loss_queue}")
@@ -545,6 +569,10 @@ class ImageTraining:
         stats = {
             "epochs": self.parameters["epochs"],
             "epoch": self.epoch,
+            "average_frame_rate": self.average_frame_rate,
+            "training_seconds": self.training_seconds,
+            "forward_seconds": self.forward_seconds,
+            "backward_seconds": self.backward_seconds,
             "percent": self.epoch / max(1, self.parameters["epochs"] - 1) * 100.,
             #"image_mean": current_pixels.reshape(3, -1).mean(1).tolist(),
             #"image_std": current_pixels.reshape(3, -1).std(1).tolist(),

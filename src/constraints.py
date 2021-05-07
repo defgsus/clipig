@@ -170,6 +170,15 @@ class BlurConstraint(ConstraintBase):
         return f"blur(ks={kernel_size}, sigma={sigma})"
 
 
+class EdgeMeanConstraint(AboveBelow3ConstraintBase):
+
+    def get_image_value(self, image: torch.Tensor):
+        return get_edge_mean(image)
+
+    def description(self, context: ExpressionContext) -> str:
+        return f"edge_mean({super().description(context)})"
+
+
 class EdgeMaxConstraint(AboveBelow3ConstraintBase):
 
     def get_image_value(self, image: torch.Tensor):
@@ -178,6 +187,12 @@ class EdgeMaxConstraint(AboveBelow3ConstraintBase):
     def description(self, context: ExpressionContext) -> str:
         return f"edge_max({super().description(context)})"
 
+
+def get_edge_mean(image: torch.Tensor) -> torch.Tensor:
+    blurred_image = VF.gaussian_blur(image, [5, 5], None)
+    edges = (blurred_image - image)
+    edges = torch.abs(edges)
+    return edges.reshape(3, -1).mean(1)
 
 def get_edge_max(image: torch.Tensor) -> torch.Tensor:
     blurred_image = VF.gaussian_blur(image, [5, 5], None)

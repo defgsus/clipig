@@ -10,16 +10,12 @@ from torchvision.utils import save_image, make_grid
 
 
 class RepeatTransform(torch.nn.Module):
-    def __init__(self, resolution: Sequence[int]):
+    def __init__(self, count: Sequence[int]):
         super().__init__()
-        self.resolution = resolution
+        self.count = count
 
     def forward(self, image):
-        return make_grid(
-            image.unsqueeze(0).repeat(self.resolution[0] * self.resolution[1], 1, 1, 1),
-            nrow=self.resolution[0],
-            padding=0,
-        )
+        return image.repeat(1, 1, self.count[0]).repeat(1, self.count[1], 1)
 
 
 class NoiseTransform(torch.nn.Module):
