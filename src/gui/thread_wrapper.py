@@ -44,6 +44,7 @@ class ImageTrainingThread:
 
     def start_training(self, parameters: dict):
         """Start (or restart) a training"""
+        self.pause_training()
         self._put_in_queue("start", parameters)
 
     def pause_training(self):
@@ -108,7 +109,6 @@ class ImageTrainingThread:
 
                 if action_name == "start":
                     if self._trainer:
-                        self.pause_training()
                         self._destroy_trainer()
                     self._parameters = data
                     self._running_counts = dict()
