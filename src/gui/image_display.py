@@ -52,7 +52,7 @@ class ImageDisplayCanvas(QWidget):
 
         self.image = None
         self._zoom = 1
-        self.num_repeat = 1
+        self.num_repeat = 3
         self._size = (10, 10)
 
     @property

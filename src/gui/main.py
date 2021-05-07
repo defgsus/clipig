@@ -81,6 +81,7 @@ class MainWindow(QMainWindow):
         if not image:
             return
         parameters = experiment.get_parameters()
+        header = experiment.get_config_header()
 
         init_filename = self._last_filename
         if init_filename and init_filename.lower().endswith(".png"):
@@ -100,5 +101,5 @@ class MainWindow(QMainWindow):
         if parameters:
             save_yaml_config(
                 filename + ".yaml", parameters,
-                header="""# saved by CLIPig-gui\n""",
+                header=header,
             )

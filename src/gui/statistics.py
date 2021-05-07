@@ -1,6 +1,4 @@
-from functools import partial
-from queue import PriorityQueue, Empty
-from typing import Any
+from typing import Any, Optional
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -20,8 +18,26 @@ class Statistics(QWidget):
         self.pbar = QProgressBar()
         layout.addWidget(self.pbar)
 
+        l = QHBoxLayout()
+        layout.addLayout(l)
+        self.label_framerate = QLabel()
+        l.addWidget(self.label_framerate)
+
+        self.label_time = QLabel()
+        l.addWidget(self.label_time)
+
+    def stats(self) -> Optional[dict]:
+        return self._stats[-1] if self._stats else None
+
     def add_stats(self, stats: dict):
         self._stats.append(stats)
 
         self.pbar.setMaximum(stats["epochs"])
         self.pbar.setValue(stats["epoch"])
+
+        self.label_framerate.setText(f"{stats['average_frame_rate']:.2f} epochs/s")
+        self.label_time.setText(
+            f"train time: {stats['training_seconds']:.2f}s"
+            f" (fwd {stats['forward_seconds']:.2f}s"
+            f", backwd {stats['backward_seconds']:.2f}s)"
+        )

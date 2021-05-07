@@ -1,5 +1,5 @@
 from functools import partial
-from queue import PriorityQueue, Empty
+from queue import Queue, Empty
 from typing import Any, Optional
 
 from PyQt5.QtCore import *
@@ -21,7 +21,7 @@ class Experiment(QWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._queue = PriorityQueue()
+        self._queue = Queue()
         self.trainer = ImageTrainingThread(self._queue)
         self._create_widgets()
         self._call_queue_processing()
@@ -38,7 +38,7 @@ class Experiment(QWidget):
         l.addWidget(self.editor)
 
         self.log_display = QPlainTextEdit()
-        self.log_display.setMaximumHeight(100)
+        self.log_display.setMaximumHeight(200)
         l.addWidget(self.log_display)
         #grid.addWidget(self.log_display, 2, 0, 1, 2)
 
@@ -48,7 +48,7 @@ class Experiment(QWidget):
         for id, name in (
                 ("start", self.tr("&Start")),
                 ("update", self.tr("&Update")),
-                ("pause", self.tr("&Pause")),
+                ("stop", self.tr("Sto&p")),
         ):
             b = QToolButton()
             b.setText(name)
@@ -70,7 +70,17 @@ class Experiment(QWidget):
     def get_image(self) -> Optional[QImage]:
         return self.image_display.image
 
+    def get_config_header(self) -> str:
+        header = f"""# created by CLIPig-gui\n"""
+        stats = self.trainer.running_counts()
+        if stats:
+            header += f"""# overall training time: {stats['training_seconds']:.2f}
+# overall epochs: {stats['training_epochs']} 
+"""
+        return header
+
     def slot_tool_button(self, id: str):
+        # print("SLOT", id)
         parameters = self._get_parameters()
 
         if id == "start" and parameters:
@@ -78,16 +88,29 @@ class Experiment(QWidget):
             self.trainer.start_training(parameters)
 
         elif id == "update" and parameters:
+            self.trainer.create()
             self.trainer.update_parameters(parameters)
 
-        elif id == "pause":
-            b: QToolButton = self.tool_buttons["pause"]
-            if b.isDown():
-                b.setDown(False)
-                self.trainer.continue_training()
-            else:
-                b.setDown(True)
-                self.trainer.pause_training()
+        elif id == "stop":
+            self.trainer.pause_training()
+
+    def _process_queue_message(self, name: str, data: Any):
+        # print("FROM TRAINER:", name, data)
+        if name == "snapshot":
+            image = to_pil_image(data)
+            self.image_display.set_image(image)
+
+        elif name == "log":
+            self.log_display.appendPlainText(data)
+
+        elif name == "progress":
+            self._add_stats(data)
+
+        elif name == "started":
+            pass
+
+        elif name == "stopped":
+            pass
 
     def set_parameters(self, parameters: dict):
         if parameters:
@@ -117,25 +140,14 @@ class Experiment(QWidget):
         QTimer.singleShot(100, self._process_queue)
 
     def _process_queue(self):
-        try:
-            message = self._queue.get_nowait()
-            self._process_queue_message(message.name, message.data)
-        except Empty:
-            pass
+        for i in range(20):
+            try:
+                message = self._queue.get_nowait()
+                self._process_queue_message(message.name, message.data)
+            except Empty:
+                break
 
         self._call_queue_processing()
-
-    def _process_queue_message(self, name: str, data: Any):
-        # print("queue:", name, data)
-        if name == "snapshot":
-            image = to_pil_image(data)
-            self.image_display.set_image(image)
-
-        elif name == "log":
-            self.log_display.appendPlainText(data)
-
-        elif name == "progress":
-            self._add_stats(data)
 
     def _add_stats(self, stats: dict):
         self.statistics.add_stats(stats)

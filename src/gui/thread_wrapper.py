@@ -1,5 +1,5 @@
 import time
-from queue import PriorityQueue
+from queue import Queue
 from threading import Thread, Lock
 from typing import Any, Tuple, Optional
 
@@ -11,14 +11,15 @@ from ..training import ImageTraining
 
 class ImageTrainingThread:
 
-    def __init__(self, out_queue: PriorityQueue):
+    def __init__(self, out_queue: Queue):
         self._parameters = None
         self._thread = None
         self._trainer: Optional[ImageTraining] = None
         self._stop = False
-        self._in_queue = PriorityQueue()
+        self._in_queue = Queue()
         self._out_queue = out_queue
         self._last_image_tensor = None
+        self._running_counts = dict()
 
     def create(self):
         """Start the thread"""
@@ -37,6 +38,9 @@ class ImageTrainingThread:
             self.pause_training()
             self._thread.join()
             self._thread = None
+
+    def is_running(self) -> bool:
+        return self._trainer and self._trainer._running
 
     def start_training(self, parameters: dict):
         """Start (or restart) a training"""
@@ -83,6 +87,9 @@ class ImageTrainingThread:
     def log(self, *args):
         self._put_out_queue("log", " ".join(str(a) for a in args))
 
+    def running_counts(self) -> dict:
+        return self._running_counts.copy()
+
     def _put_in_queue(self, name: str, data: Any = None, priority: int = 10):
         self._in_queue.put(QueueItem(priority, name, data))
 
@@ -95,30 +102,38 @@ class ImageTrainingThread:
 
     def _thread_loop(self):
         while not self._stop:
+            try:
+                action_name, data = self._get_queue()
+                # print("QUEUE", action_name, data)
 
-            action_name, data = self._get_queue()
-            # print("QUEUE", action_name, data)
+                if action_name == "start":
+                    if self._trainer:
+                        self.pause_training()
+                        self._destroy_trainer()
+                    self._parameters = data
+                    self._running_counts = dict()
+                    self.continue_training()
 
-            if action_name == "start":
-                if self._trainer:
-                    self.pause_training()
-                    self._destroy_trainer()
-                self._parameters = data
-                self.continue_training()
+                elif action_name == "continue":
+                    if not self._trainer:
+                        self._create_trainer()
+                    else:
+                        self._update_trainer_running_counts()
+                    self.log("start training loop")
+                    self._put_out_queue("started")
+                    self._trainer.train()
+                    self._put_out_queue("stopped")
+                    self._snapshot_callback(self._trainer.pixel_model.forward())
+                    self.log("training loop ended")
 
-            elif action_name == "continue":
-                if not self._trainer:
-                    self._create_trainer()
-                self.log("start training loop")
-                self._trainer.train()
-                self._snapshot_callback(self._trainer.pixel_model.forward())
-                self.log("training loop ended")
+                elif action_name == "update_parameters":
+                    if self._trainer:
+                        self.pause_training()
+                        self._destroy_trainer()
+                    self._parameters = data
 
-            elif action_name == "update_parameters":
-                if self._trainer:
-                    self.pause_training()
-                    self._destroy_trainer()
-                self._parameters = data
+            except Exception as e:
+                self.log(f"{type(e).__name__}: {e}")
 
         if self._trainer:
             del self._trainer
@@ -131,6 +146,12 @@ class ImageTrainingThread:
             log_callback=self._log_callback,
             progress_callback=self._progress_callback,
         )
+        self._update_trainer_running_counts()
+
+    def _update_trainer_running_counts(self):
+        for key in ("training_seconds", "forward_seconds", "backward_seconds"):
+            if key in self._running_counts:
+                setattr(self._trainer, key, self._running_counts[key])
 
     def _destroy_trainer(self):
         del self._trainer
@@ -145,6 +166,10 @@ class ImageTrainingThread:
         self._put_out_queue("log", " ".join(str(s) for s in args))
 
     def _progress_callback(self, stats: dict):
+        for key in ("training_seconds", "forward_seconds", "backward_seconds"):
+            self._running_counts[key] = stats[key]
+        self._running_counts["training_epochs"] = self._running_counts.get("training_epochs", 0) + 1
+
         self._put_out_queue("progress", stats)
 
 
