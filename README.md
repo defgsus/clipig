@@ -76,17 +76,32 @@ the `torch` library matching your CUDA drivers and then
 python clipig.py examples/strawberries.yaml -o ./images/
 ```
 
+It will save an image to `./images/strawberries.png`. If such a file exists, 
+a number is attached to the filename or incremented automatically. It will never
+overwrite an existing file.
+
+There is a **GUI** version for **interactive fun** but it's even more hacked together
+than the rest. Install `pyqt5` and start it with:
+
+```bash
+python clipig-gui.py
+```
+
+It's possible to change the configuration during training which is funny and horrible alike. 
+It will not save snapshots by default, instead they are immediately displayed for your
+pleasure and can be saved with `CTRL-S`. 
+
 --- 
 
 Here's a motivating [article](https://defgsus.github.io/blog/2021/04/28/malazan-clip-features.html)
-whose images where created with the predecessor of this code.
+whose images where created with some former code.
 
 
 ## Known issues
 
 The author does not have enough time!
 
-Then there are probably a lot of bugs in there and stuff that is not yet tested 
+Then there are bugs in there and stuff that is not yet tested 
 or even implemented.
 
 But the major concern is the image quality. Just adjusting pixels so that CLIP does like them
@@ -102,7 +117,7 @@ a relatively small learning rate and random rotation like:
 Still it's not eye-friendly to look at without a little gaussian blur. It's possible to use
 a gaussian blur as a training constraint and add it to the loss function of the 
 particular target window. That leads to much better results already. And after a few hours of
-staring at those images they get better and better.
+staring at those images they get better and better anyways.
 
 The other problem is the uniform *depth* of images. CLIP seems to be good with object 
 boundaries and textures. But that does not automatically help to divide an image into 
@@ -120,4 +135,6 @@ If you feel you can help or want to discuss things, please
 ---
 
 ![CLIP-generated strawberry image](docs/strawberry.png)
-(*strawberry*)
+(*strawberry* - well, i did not make this up. things are sometimes strangely 
+interconnected in CLIP)
+
