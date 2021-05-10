@@ -83,7 +83,22 @@ class CenterCrop(TransformBase):
 
     def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
         size = context(self.size, type=int)
-        return VF.center_crop(image, size)
+        return VF.center_crop(image, size, fill=None)
+
+
+class RandomCrop(TransformBase):
+    NAME = "random_crop"
+    PARAMS = {
+        "size": SequenceParameter(int, length=2, default=None, expression=True),
+    }
+
+    def __init__(self, size: List[Int]):
+        super().__init__()
+        self.size = size
+
+    def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+        size = context(self.size, type=int)
+        return VT.RandomCrop(size=size)(image)
 
 
 class Repeat(TransformBase):
@@ -218,6 +233,36 @@ class RandomRotate(TransformBase):
             int(center[1] * image.shape[-2]),
         ]
         return VF.rotate(image, angle, center=center_pix)
+
+
+class RandomScale(TransformBase):
+    NAME = "random_scale"
+    PARAMS = {
+        "scale": SequenceParameter(float, length=2, default=None, expression=True),
+    }
+
+    def __init__(self, scale: List[Float]):
+        super().__init__()
+        self.scale = scale
+
+    def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+        scale = context(self.scale)
+        return VT.RandomAffine(degrees=0, scale=scale, fill=None)(image)
+
+
+class RandomTranslate(TransformBase):
+    NAME = "random_translate"
+    PARAMS = {
+        "offset": SequenceParameter(float, length=2, default=None, expression=True),
+    }
+
+    def __init__(self, offset: List[Float]):
+        super().__init__()
+        self.offset = offset
+
+    def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+        offset = context(self.offset)
+        return VT.RandomAffine(degrees=0, translate=offset, fill=None)(image)
 
 
 class Shift(TransformBase):
