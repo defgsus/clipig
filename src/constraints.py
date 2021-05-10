@@ -8,9 +8,19 @@ import torchvision.transforms as VT
 import torchvision.transforms.functional as VF
 
 from .expression import Expression, ExpressionContext
+from .parameters import Parameter, SequenceParameter, EXPR_ARGS
+
+
+constraints = dict()
 
 
 class ConstraintBase(torch.nn.Module):
+    NAME = None
+    PARAMS = None
+
+    def __init_subclass__(cls, **kwargs):
+        if cls.PARAMS is not None:
+            constraints[cls.NAME] = cls
 
     def __init__(
             self,
@@ -51,6 +61,11 @@ class AboveBelowConstraintBase(ConstraintBase):
 
 
 class AboveBelow3ConstraintBase(AboveBelowConstraintBase):
+    PARAMS = {
+        "weight": Parameter(float, default=1., expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
+        "above": SequenceParameter(float, length=3, default=None, expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
+        "below": SequenceParameter(float, length=3, default=None, expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
+    }
 
     def __init__(
             self,
@@ -77,6 +92,11 @@ class AboveBelow3ConstraintBase(AboveBelowConstraintBase):
 
 
 class AboveBelow1ConstraintBase(AboveBelowConstraintBase):
+    PARAMS = {
+        "weight": Parameter(float, default=1., expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
+        "above": Parameter(float, default=None, expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
+        "below": Parameter(float, default=None, expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
+    }
 
     def __init__(
             self,
@@ -103,6 +123,7 @@ class AboveBelow1ConstraintBase(AboveBelowConstraintBase):
 
 
 class MeanConstraint(AboveBelow3ConstraintBase):
+    NAME = "mean"
 
     def get_image_value(self, image: torch.Tensor):
         image = image.reshape(3, -1)
@@ -113,6 +134,7 @@ class MeanConstraint(AboveBelow3ConstraintBase):
 
 
 class StdConstraint(AboveBelow3ConstraintBase):
+    NAME = "std"
 
     def get_image_value(self, image: torch.Tensor):
         image = image.reshape(3, -1)
@@ -123,6 +145,7 @@ class StdConstraint(AboveBelow3ConstraintBase):
 
 
 class SaturationConstraint(AboveBelow1ConstraintBase):
+    NAME = "saturation"
 
     def get_image_value(self, image: torch.Tensor):
         image = image.reshape(3, -1)
@@ -140,6 +163,12 @@ def get_mean_saturation(image: torch.Tensor) -> torch.Tensor:
 
 
 class BlurConstraint(ConstraintBase):
+    NAME = "blur"
+    PARAMS = {
+        "weight": Parameter(float, default=1., expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
+        "kernel_size": SequenceParameter(int, length=2, default=[3, 3], expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
+        "sigma": SequenceParameter(float, length=2, null=True, default=None, expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
+    }
 
     def __init__(
             self,
@@ -171,6 +200,7 @@ class BlurConstraint(ConstraintBase):
 
 
 class EdgeMeanConstraint(AboveBelow3ConstraintBase):
+    NAME = "edge_mean"
 
     def get_image_value(self, image: torch.Tensor):
         return get_edge_mean(image)
@@ -180,6 +210,7 @@ class EdgeMeanConstraint(AboveBelow3ConstraintBase):
 
 
 class EdgeMaxConstraint(AboveBelow3ConstraintBase):
+    NAME = "edge_max"
 
     def get_image_value(self, image: torch.Tensor):
         return get_edge_max(image)
@@ -193,6 +224,7 @@ def get_edge_mean(image: torch.Tensor) -> torch.Tensor:
     edges = (blurred_image - image)
     edges = torch.abs(edges)
     return edges.reshape(3, -1).mean(1)
+
 
 def get_edge_max(image: torch.Tensor) -> torch.Tensor:
     blurred_image = VF.gaussian_blur(image, [5, 5], None)

@@ -26,7 +26,7 @@ class Parameter:
         self.types = list(types) if isinstance(types, Sequence) else [types]
         self.null = null
         self.default = default
-        self.expression = expression
+        self.expression = expression or bool(expression_args)
         expression_args = expression_args or EXPR_ARGS.DEFAULT
         self.expression_args = list(expression_args)
 
@@ -166,95 +166,6 @@ class EXPR_ARGS:
     )
 
 
-def expression_converter(
-        type: Type,
-        *arguments: str,
-        remove: Optional[Sequence[str]] = None
-) -> Callable:
-    if not arguments:
-        arguments = EXPR_ARGS.DEFAULT
-
-    if remove:
-        arguments = list(set(arguments) - set(remove))
-
-    def _convert(text):
-        return Expression(text, *arguments)
-    _convert.is_expression = True
-
-    return _convert
-
-
-def sequence_converter(
-        type_: Callable,
-        length: int,
-        expr: bool = False,
-        expression_args: Sequence[str] = tuple(),
-) -> Callable:
-    if not expression_args:
-        expression_args = EXPR_ARGS.DEFAULT
-
-    def _convert(v):
-        if isinstance(v, (list, tuple)):
-            sequence = list(v)
-        elif isinstance(v, str):
-            sequence = v.split() if "," not in v else v.split(",")
-        else:
-            sequence = [v]
-
-        if len(sequence) == 1:
-            sequence = sequence * length
-        elif len(sequence) == length:
-            pass
-        else:
-            length_str = "1"
-            if length > 1:
-                length_str += f" or {length}"
-            raise ValueError(f"expected list of length {length_str}, got {len(sequence)}")
-
-        for i, v in enumerate(sequence):
-            if isinstance(v, type_):
-                continue
-
-            elif isinstance(v, str):
-                try:
-                    v = type_(v)
-                except:
-                    if expr:
-                        v = Expression(v, *expression_args)
-                    else:
-                        raise TypeError(f"expected type {type_.__name__}, got {type(v).__name__}")
-
-            sequence[i] = v
-
-        return sequence
-    return _convert
-
-
-def frame_time_converter(v):
-    if isinstance(v, str):
-        if v.endswith("%"):
-            v = float(v[:-1]) / 100.
-        else:
-            try:
-                v = int(v)
-            except ValueError:
-                v = float(v)
-
-    if isinstance(v, (int, float)):
-        return v
-
-    raise TypeError(f"expected int, float or percent, got {type(v).__name__}")
-
-
-def int_or_float_converter(x):
-    try:
-        return float(x)
-    except ValueError:
-        pass
-
-    return int(x)
-
-
 PARAMETERS = {
     "verbose": Parameter(int, default=2),
     "snapshot_interval": Parameter([int, float], default=20.),
@@ -301,20 +212,29 @@ PARAMETERS = {
 }
 
 
-def _add_transform_parameters():
-    PARAMETERS["targets.transforms"] = PlaceholderParameter(list, default=list())
-    from .transforms import transformations
-    for name, klass in transformations.items():
+def _add_parameters(prefix: str, classes: dict):
+    for name, klass in classes.items():
         params = klass.PARAMS
         if len(params) == 1:
-            PARAMETERS[f"targets.transforms.{name}"] = next(iter(params.values()))
+            PARAMETERS[f"{prefix}.{name}"] = next(iter(params.values()))
         else:
             for param_name, value in params.items():
-                PARAMETERS[f"targets.transforms.{name}.{param_name}"] = value
-
-_add_transform_parameters()
+                PARAMETERS[f"{prefix}.{name}.{param_name}"] = value
 
 
+def _add_class_parameters():
+    from .transforms import transformations
+    from .constraints import constraints
+    PARAMETERS["targets.transforms"] = PlaceholderParameter(list, default=list())
+    _add_parameters("targets.transforms", transformations)
+
+    PARAMETERS["targets.constraints"] = PlaceholderParameter(list, default=list())
+    _add_parameters("targets.constraints", constraints)
+
+
+_add_class_parameters()
+
+"""
 PARAMETERS_OLD = {
     "verbose": {"convert": int, "default": 2},
     "snapshot_interval": {"convert": int_or_float_converter, "default": 20.},
@@ -394,7 +314,7 @@ PARAMETERS_OLD = {
     "targets.transforms.border.size": {"convert": sequence_converter(int, 2, expr=True), "default": [1, 1]},
     "targets.transforms.border.color": {"convert": sequence_converter(float, 3, expr=True), "default": [0., 0., 0.]},
 }
-
+"""
 
 def parse_arguments(gui_mode: bool = False) -> dict:
     """
@@ -422,34 +342,34 @@ def parse_arguments(gui_mode: bool = False) -> dict:
     )
     parser.add_argument(
         "-lr", "--learnrate", type=float, default=None,
-        help="Learnrate scaling factor, defaults to %s" % PARAMETERS["learnrate"]["default"],
+        help="Learnrate scaling factor, defaults to %s" % PARAMETERS["learnrate"].default,
     )
     parser.add_argument(
         "-opt", "--optimizer", type=str, default=None,
-        help="Optimizer that performs the gradient descent, defaults to %s" % PARAMETERS["optimizer"]["default"],
+        help="Optimizer that performs the gradient descent, defaults to %s" % PARAMETERS["optimizer"].default,
     )
     parser.add_argument(
         "-e", "--epochs", type=int, default=None,
-        help="Number of training steps, default = %s" % PARAMETERS["epochs"]["default"],
+        help="Number of training steps, default = %s" % PARAMETERS["epochs"].default,
     )
     parser.add_argument(
         "-r", "--resolution", type=int, default=None, nargs="+",
         help="Resolution in pixels, can be one or two numbers, "
-             "defaults to %s" % PARAMETERS["resolution"]["default"],
+             "defaults to %s" % PARAMETERS["resolution"].default,
     )
     parser.add_argument(
         "-s", "--snapshot-interval", type=float, default=None,
         help="Number of seconds after which a snapshot is saved, "
-             "defaults to %s" % PARAMETERS["snapshot_interval"]["default"],
+             "defaults to %s" % PARAMETERS["snapshot_interval"].default,
     )
     parser.add_argument(
         "-v", "--verbose", type=int, default=None,
-        help="Verbosity. Default is %s" % PARAMETERS["verbose"]["default"],
+        help="Verbosity. Default is %s" % PARAMETERS["verbose"].default,
     )
     parser.add_argument(
         "-d", "--device", type=str, default=None,
         help="Device to run on, either 'auto', 'cuda' or 'cuda:1', etc... "
-             "Default is %s" % PARAMETERS["device"]["default"],
+             "Default is %s" % PARAMETERS["device"].default,
     )
 
     parser.add_argument(
