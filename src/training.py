@@ -106,6 +106,7 @@ class ImageTraining:
             raise ValueError(f"Unknown optimizer '{self.parameters['optimizer']}'")
 
         self.targets = []
+        self.postprocs = []
 
     @property
     def clip_model(self):
@@ -138,6 +139,29 @@ class ImageTraining:
     def setup_targets(self):
         self.log(2, "getting target features")
         self.targets = []
+
+        # --- setup post-processing transforms ---
+
+        self.postprocs = []
+
+        for param in self.parameters["postproc"]:
+            for name, klass in transform_modules.transformations.items():
+                if not param.get(name):
+                    continue
+
+                assert not klass.IS_RESIZE, f"{klass} changes resolution and can not be used for post-processing"
+                transform_param = param[name]
+
+                if isinstance(transform_param, dict):
+                    t = klass(**transform_param)
+                else:
+                    t = klass(transform_param)
+
+                self.postprocs.append({
+                    "params": param,
+                    "transform": t,
+                })
+
         for target_param in self.parameters["targets"]:
             if not target_param["active"]:
                 continue
@@ -180,17 +204,17 @@ class ImageTraining:
             transforms = []
 
             for trans_param in target_param["transforms"]:
-                for key, value in trans_param.items():
-                    if value is None:
+                for key, transform_param in trans_param.items():
+                    if transform_param is None:
                         continue
                     if key not in transform_modules.transformations:
                         raise ValueError(f"Unknown transformation '{key}'")
                     klass = transform_modules.transformations[key]
 
-                    if isinstance(value, dict):
-                        t = klass(**value)
+                    if isinstance(transform_param, dict):
+                        t = klass(**transform_param)
                     else:
-                        t = klass(value)
+                        t = klass(transform_param)
 
                     transforms.append(t)
                     is_random |= klass.IS_RANDOM
@@ -203,21 +227,16 @@ class ImageTraining:
 
             target["constraints"] = []
             for constr_param in target_param["constraints"]:
-                for name, Module in (
-                        ("mean", constraint_modules.MeanConstraint),
-                        ("std", constraint_modules.StdConstraint),
-                        ("edge_mean", constraint_modules.EdgeMeanConstraint),
-                        ("edge_max", constraint_modules.EdgeMaxConstraint),
-                        ("saturation", constraint_modules.SaturationConstraint),
-                        ("blur", constraint_modules.BlurConstraint),
-                ):
+                for name, Module in constraint_modules.constraints.items():
                     if constr_param.get(name):
-                        constraint = Module(**constr_param[name])
+                        kwargs = constr_param[name].copy()
+                        kwargs.pop("weight")
+                        constraint = Module(**kwargs)
 
                         target["constraints"].append({
                             "params": constr_param,
                             "model": constraint.to(self.device),
-
+                            "weight": constr_param[name]["weight"],
                             # statistics ...
                             "losses": ValueQueue(),
                         })
@@ -419,21 +438,13 @@ class ImageTraining:
         image = self.pixel_model.pixels
         changed = False
 
-        for pp in self.parameters["postproc"]:
-            if not pp["active"]:
+        for pp in self.postprocs:
+
+            if not _check_start_end(pp["params"]["start"], pp["params"]["end"], epoch, epoch_f):
                 continue
 
-            if not _check_start_end(pp["start"], pp["end"], epoch, epoch_f):
-                continue
-
-            for name, klass in transform_modules.transformations.items():
-                if pp.get(name):
-                    param = pp[name]
-                    if isinstance(param, dict):
-                        image = klass(**param)(image, context)
-                    else:
-                        image = klass(param)(image, context)
-                    changed = True
+            image = pp["transform"](image, context)
+            changed = True
 
         if changed:
             with torch.no_grad():
@@ -485,6 +496,7 @@ class ImageTraining:
 
         for constraint in target.get("constraints", []):
             loss = constraint["model"].forward(pixels, context)
+            loss = loss * context(constraint["weight"])
             constraint["losses"].append(float(loss))
             loss_sum += loss
 

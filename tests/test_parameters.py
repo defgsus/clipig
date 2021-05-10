@@ -27,7 +27,12 @@ class TestParameters(unittest.TestCase):
         params = {
             "targets": [
                 {"weight": 23},
-                {"weight": 42},
+                {
+                    "weight": 42,
+                    "constraints": [
+                        {"saturation": {"above": 10.}},
+                    ]
+                },
             ],
         }
         set_parameter_defaults(params)
@@ -35,6 +40,8 @@ class TestParameters(unittest.TestCase):
         self.assertEqual(23, params["targets"][0]["weight"])
         self.assertEqual(42, params["targets"][1]["weight"])
         self.assertEqual([], params["targets"][0]["features"])
+        self.assertEqual(10., params["targets"][1]["constraints"][0]["saturation"]["above"])
+        self.assertEqual(1., params["targets"][1]["constraints"][0]["saturation"]["weight"])
 
     def test_conversion(self):
         params = {

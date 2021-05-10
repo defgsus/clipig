@@ -238,6 +238,7 @@ def _add_parameters(prefix: str, classes: dict, expr_args: Tuple[str, ...] = Non
         if len(params) == 1:
             PARAMETERS[f"{prefix}.{name}"] = _add_args(next(iter(params.values())))
         else:
+            PARAMETERS[f"{prefix}.{name}"] = PlaceholderParameter(dict, default=None)
             for param_name, value in params.items():
                 PARAMETERS[f"{prefix}.{name}.{param_name}"] = _add_args(value)
 
@@ -263,14 +264,6 @@ def _add_class_parameters():
         "postproc.end": FrameTimeParameter(default=1.0),
     })
     _add_parameters("postproc", postprocs, expr_args=EXPR_ARGS.DEFAULT)
-
-    """
-    "postproc": PlaceholderParameter(list, default=list()),
-    "postproc.blur.kernel_size": SequenceParameter(int, length=2, default=[3, 3]),
-    "postproc.blur.sigma": SequenceParameter(float, length=2, null=True, default=None),
-    "postproc.add": SequenceParameter(float, length=3, expression=True),
-    "postproc.multiply": SequenceParameter(float, length=3, expression=True),
-    """
 
 
 _add_class_parameters()

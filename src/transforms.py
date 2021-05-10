@@ -289,15 +289,11 @@ class Shift(TransformBase):
         x = int(x) % image.shape[-1]
         y = int(y) % image.shape[-2]
 
-        if x > 0:
-            image = torch.cat([image[:, :, -x:], image[:, :, :-x]], -1)
-        elif x < 0:
+        if x != 0:
             image = torch.cat([image[:, :, -x:], image[:, :, :-x]], -1)
 
-        if y > 0:
+        if y != 0:
             image = torch.cat([image[:, -y:, :], image[:, :-y, :]], -2)
-        elif y < 0:
-            image = torch.cat([image[:, -y:, :], image[:, :-x, :]], -2)
 
         return image
 

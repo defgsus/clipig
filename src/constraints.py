@@ -15,19 +15,29 @@ constraints = dict()
 
 
 class ConstraintBase(torch.nn.Module):
+    """
+    So, constraint modules must implement a forward function
+    which takes the image tensor and an ExpressionContext
+    and which must return a scalar tensor with the loss.
+
+    The constructor must accept all defined parameters
+    except the `weight` parameter, which is handled
+    by ImageTrainer.
+    """
     NAME = None
     PARAMS = None
 
     def __init_subclass__(cls, **kwargs):
         if cls.NAME is not None:
             constraints[cls.NAME] = cls
+        if cls.PARAMS is not None:
+            cls.PARAMS = {
+                "weight": Parameter(float, default=1.),
+                **cls.PARAMS,
+            }
 
-    def __init__(
-            self,
-            weight: Union[float, Expression],
-    ):
-        super().__init__()
-        self.weight = weight
+    def forward(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+        raise NotImplementedError
 
     def description(self, context: ExpressionContext) -> str:
         raise NotImplementedError
@@ -35,16 +45,12 @@ class ConstraintBase(torch.nn.Module):
 
 class AboveBelowConstraintBase(ConstraintBase):
 
-    def __init__(
-            self,
-            weight: Union[float, Expression],
-    ):
-        super().__init__(weight=weight)
+    WEIGHT_FACTOR = 1.
 
     def get_image_value(self, image: torch.Tensor):
         raise NotImplementedError
 
-    def forward(self, image: torch.Tensor, context: ExpressionContext):
+    def forward(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
         value = self.get_image_value(image)
 
         loss_sum = torch.tensor(0)
@@ -57,23 +63,21 @@ class AboveBelowConstraintBase(ConstraintBase):
             target = torch.tensor(context(self.below)).to(image.device)
             loss_sum = loss_sum + torch.clamp_min(value - target, 0).pow(2).mean()
 
-        return context(self.weight) * 100. * loss_sum
+        return loss_sum * self.WEIGHT_FACTOR
 
 
 class AboveBelow3ConstraintBase(AboveBelowConstraintBase):
     PARAMS = {
-        "weight": Parameter(float, default=1., expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
-        "above": SequenceParameter(float, length=3, default=None, expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
-        "below": SequenceParameter(float, length=3, default=None, expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
+        "above": SequenceParameter(float, length=3, default=None),
+        "below": SequenceParameter(float, length=3, default=None),
     }
 
     def __init__(
             self,
-            weight: Union[float, Expression],
             above: List[Union[float, Expression]] = None,
             below: List[Union[float, Expression]] = None
     ):
-        super().__init__(weight=weight)
+        super().__init__()
         assert above is not None or below is not None, "Must specify at least one of 'above' and 'below'"
         self.below = below
         self.above = above
@@ -93,18 +97,16 @@ class AboveBelow3ConstraintBase(AboveBelowConstraintBase):
 
 class AboveBelow1ConstraintBase(AboveBelowConstraintBase):
     PARAMS = {
-        "weight": Parameter(float, default=1., expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
         "above": Parameter(float, default=None, expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
         "below": Parameter(float, default=None, expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
     }
 
     def __init__(
             self,
-            weight: Union[float, Expression],
             above: Union[float, Expression] = None,
             below: Union[float, Expression] = None
     ):
-        super().__init__(weight=weight)
+        super().__init__()
         assert above is not None or below is not None, "Must specify at least one of 'above' and 'below'"
         self.below = below
         self.above = above
@@ -124,6 +126,7 @@ class AboveBelow1ConstraintBase(AboveBelowConstraintBase):
 
 class MeanConstraint(AboveBelow3ConstraintBase):
     NAME = "mean"
+    WEIGHT_FACTOR = 100.
 
     def get_image_value(self, image: torch.Tensor):
         image = image.reshape(3, -1)
@@ -135,6 +138,7 @@ class MeanConstraint(AboveBelow3ConstraintBase):
 
 class StdConstraint(AboveBelow3ConstraintBase):
     NAME = "std"
+    WEIGHT_FACTOR = 100.
 
     def get_image_value(self, image: torch.Tensor):
         image = image.reshape(3, -1)
@@ -146,6 +150,7 @@ class StdConstraint(AboveBelow3ConstraintBase):
 
 class SaturationConstraint(AboveBelow1ConstraintBase):
     NAME = "saturation"
+    WEIGHT_FACTOR = 100.
 
     def get_image_value(self, image: torch.Tensor):
         image = image.reshape(3, -1)
@@ -172,11 +177,10 @@ class BlurConstraint(ConstraintBase):
 
     def __init__(
             self,
-            weight: Union[float, Expression],
             kernel_size: List[Union[int, Expression]] = (3, 3),
             sigma: List[Union[float, Expression]] = (.5, .5),
     ):
-        super().__init__(weight=weight)
+        super().__init__()
         self.kernel_size = kernel_size
         self.sigma = sigma
 
@@ -191,16 +195,20 @@ class BlurConstraint(ConstraintBase):
             blurred_image.reshape(3, -1),
         )
 
-        return context(self.weight) * 100. * loss
+        return 100. * loss
 
     def description(self, context: ExpressionContext) -> str:
         kernel_size = [int(k) for k in context(self.kernel_size)]
-        sigma = [round(f, 3) for f in context(self.sigma)]
+        if self.sigma is None:
+            sigma = None
+        else:
+            sigma = [round(f, 3) for f in context(self.sigma)]
         return f"blur(ks={kernel_size}, sigma={sigma})"
 
 
 class EdgeMeanConstraint(AboveBelow3ConstraintBase):
     NAME = "edge_mean"
+    WEIGHT_FACTOR = 100.
 
     def get_image_value(self, image: torch.Tensor):
         return get_edge_mean(image)
@@ -211,6 +219,7 @@ class EdgeMeanConstraint(AboveBelow3ConstraintBase):
 
 class EdgeMaxConstraint(AboveBelow3ConstraintBase):
     NAME = "edge_max"
+    WEIGHT_FACTOR = 100.
 
     def get_image_value(self, image: torch.Tensor):
         return get_edge_max(image)

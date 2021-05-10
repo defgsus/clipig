@@ -7,7 +7,7 @@ from src.parameters import EXPR_ARGS
 from src import transforms
 
 
-class TestParameters(unittest.TestCase):
+class TestTransforms(unittest.TestCase):
 
     def assertTensor(self, expected: torch.Tensor, real: torch.Tensor):
         if expected.shape != real.shape:
