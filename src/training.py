@@ -293,7 +293,11 @@ class ImageTraining:
             self.epoch = epoch
             epoch_f = epoch / max(1, self.parameters["epochs"] - 1)
 
-            expression_context = ExpressionContext(epoch=epoch, epoch_f=epoch_f, t=epoch_f)
+            expression_context = ExpressionContext(
+                epoch=epoch,
+                t=epoch_f,
+                t1=1. - epoch_f,
+            )
 
             # --- update learnrate ---
 
@@ -589,7 +593,7 @@ class ImageTraining:
             for i, constraint in enumerate(target["constraints"]):
                 row = {
                     "name": "  constraint",
-                    "weight": round(context(constraint["model"].weight), 3),
+                    "weight": round(context(constraint["weight"]), 3),
                     "feature": _short_str(constraint["model"].description(context), feature_length),
                     "count": constraint["losses"].count,
                     "count_p": round(constraint["losses"].count / max(1, target["count"]) * 100., 1),
