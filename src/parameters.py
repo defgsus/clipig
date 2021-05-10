@@ -3,12 +3,144 @@ import pathlib
 import argparse
 from io import StringIO
 from copy import deepcopy
-from typing import Union, Sequence, Type, Tuple, Optional, Callable
+from typing import Union, Sequence, List, Type, Tuple, Optional, Callable, Any
 
 import yaml
 
 from .files import prepare_output_name
 from .expression import Expression
+
+
+class Parameter:
+
+    def __init__(
+            self,
+            types: Union[Type, Sequence[Type]],
+            default: Any = None,
+            null: bool = False,
+            doc: Optional[str] = None,
+            expression: bool = False,
+            expression_args: Optional[Sequence[str]] = None,
+    ):
+        self.doc = doc
+        self.types = list(types) if isinstance(types, Sequence) else [type]
+        self.null = null
+        self.default = default
+        self.expression = expression
+        expression_args = expression_args or EXPR_ARGS.DEFAULT
+        self.expression_args = list(expression_args)
+
+        assert len(self.types)
+        assert len(self.types) == 1 or not self.expression
+
+    def convert(self, x: Any) -> Any:
+        return self._convert_value(x)
+
+    def _convert_value(self, x: Any) -> Any:
+        if self.null and x is None:
+            return None
+
+        for t in self.types:
+            try:
+                return t(x)
+            except (TypeError, ValueError):
+                pass
+
+        if not self.expression:
+            if len(self.types) == 1:
+                raise ValueError(
+                    f"Expected type '{self.types[0]}', got '{x}'"
+                )
+            else:
+                raise ValueError(
+                    f"Expected one of types {self.types}, got '{x}'"
+                )
+
+        exp = Expression(self.types[0], x, *self.expression_args)
+        try:
+            arguments = {name: 0. for name in self.expression_args}
+            exp(**arguments)
+        except Exception as e:
+            raise ValueError(
+                f"{type(e).__name__} in expression '{x}': {e}"
+            )
+
+        return exp
+
+
+class FrameTimeParameter(Parameter):
+
+    def __init__(
+            self,
+            default,
+            doc: Optional[str] = None,
+    ):
+        super().__init__(
+            types=[int, float],
+            default=default,
+            doc=doc
+        )
+
+    def convert(self, x: Any) -> Any:
+        factor = 1.
+        if isinstance(x, str):
+            if v.endswith("%"):
+                x = x[:-1]
+                factor = 1. / 100.
+
+        return self._convert_value(x) * factor
+
+
+class SequenceParameter(Parameter):
+    def __init__(
+            self,
+            types: Union[Type, Sequence[Type]],
+            length: int,
+            default: Any = None,
+            null: bool = False,
+            doc: Optional[str] = None,
+            expression: bool = False,
+            expression_args: Optional[Sequence[str]] = None,
+    ):
+        super().__init__(
+            types=types,
+            default=default,
+            null=null,
+            doc=doc,
+            expression=expression,
+            expression_args=expression_args,
+        )
+        self.length = length
+
+    def convert(self, x: Any) -> Any:
+        if self.null and x is None:
+            return None
+
+        if isinstance(x, (list, tuple)):
+            sequence = list(x)
+        elif isinstance(x, str):
+            sequence = x.split() if "," not in x else x.split(",")
+        else:
+            sequence = [x]
+
+        if len(sequence) == 1 and self.length > 1:
+            sequence = sequence * self.length
+        elif len(sequence) == self.length:
+            pass
+        else:
+            length_str = "1"
+            if self.length > 1:
+                length_str += f" or {self.length}"
+            raise ValueError(f"expected list of length {length_str}, got {len(sequence)}")
+
+        return [
+            self._convert_value(i)
+            for i in sequence
+        ]
+
+
+class PlaceholderParameter(Parameter):
+    pass
 
 
 class EXPR_ARGS:
@@ -123,6 +255,53 @@ def int_or_float_converter(x):
 
 
 PARAMETERS = {
+    "verbose": Parameter(int, default=2),
+    "snapshot_interval": Parameter([int, float], default=20.),
+    "device": Parameter(str, default="auto"),
+    "learnrate": Parameter(float, default=1., expression=True, expression_args=EXPR_ARGS.LEARNRATE),
+    "learnrate_scale": Parameter(float, default=1., expression=True, expression_args=EXPR_ARGS.LEARNRATE),
+    "output": Parameter(str, default=f".{os.path.sep}"),
+    "epochs": Parameter(int, default=300),
+    "start_epoch": Parameter(int, default=0),
+    "resolution": SequenceParameter(int, length=2, default=[224, 224]),
+    "model": Parameter(str, default="ViT-B/32"),
+    "optimizer": Parameter(str, default="adam"),
+
+    "init": PlaceholderParameter(dict, default=dict()),
+    "init.mean": SequenceParameter(float, length=3, default=[.5, .5, .5]),
+    "init.std": SequenceParameter(float, length=3, default=[.1, .1, .1]),
+    "init.image": Parameter(str, null=True, default=None),
+    "init.image_tensor": Parameter(list, default=None),
+
+    "postproc": PlaceholderParameter(list, default=list()),
+    "postproc.active": Parameter(bool, default=True),
+    "postproc.start": FrameTimeParameter(default=0.0),
+    "postproc.end": FrameTimeParameter(default=1.0),
+    "postproc.blur.kernel_size": SequenceParameter(int, length=2, default=[3, 3]),
+    "postproc.blur.sigma": SequenceParameter(float, length=2, null=True, default=None),
+    "postproc.add": SequenceParameter(float, length=3, expression=True),
+    "postproc.multiply": SequenceParameter(float, length=3, expression=True),
+
+    "targets": PlaceholderParameter(list, default=list()),
+    "targets.active": Parameter(bool, default=True),
+    "targets.name": Parameter(str, default="target"),
+    "targets.start": FrameTimeParameter(default=0.0),
+    "targets.end": FrameTimeParameter(default=1.0),
+    "targets.weight": Parameter(float, default=1., expression=True, expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
+    "targets.batch_size": Parameter(int, default=1),
+    "targets.select": Parameter(str, default="all"),
+    "targets.features": PlaceholderParameter(list, default=list()),
+    "targets.features.weight": Parameter(float, default=1., expression=True, expression_args=EXPR_ARGS.TARGET_FEATURE),
+    "targets.features.loss": Parameter(str, default="cosine"),
+    "targets.features.text": Parameter(str, null=True),
+    "targets.features.image": Parameter(str, null=True),
+
+    # TODO: constraints
+
+}
+
+
+PARAMETERS_OLD = {
     "verbose": {"convert": int, "default": 2},
     "snapshot_interval": {"convert": int_or_float_converter, "default": 20.},
     "device": {"convert": str, "default": "auto"},
@@ -185,17 +364,21 @@ PARAMETERS = {
     "targets.constraints.blur.kernel_size": {"convert": sequence_converter(int, 2, expr=True, expression_args=EXPR_ARGS.TARGET_CONSTRAINT), "default": [3, 3]},
     "targets.constraints.blur.sigma": {"convert": sequence_converter(float, 2, expr=True, expression_args=EXPR_ARGS.TARGET_CONSTRAINT), "default": [.5, .5]},
     "targets.transforms": {"default": list()},
-    "targets.transforms.noise": {"convert": sequence_converter(float, 3), "default": None},
-    "targets.transforms.blur": {"convert": sequence_converter(float, 2), "default": None},
-    "targets.transforms.repeat": {"convert": sequence_converter(int, 2), "default": None},
-    "targets.transforms.resize": {"convert": sequence_converter(int, 2), "default": None},
-    "targets.transforms.edge": {"convert": sequence_converter(int, 2), "default": None},
-    "targets.transforms.center_crop": {"convert": sequence_converter(int, 2), "default": None},
-    "targets.transforms.random_translate": {"convert": sequence_converter(float, 2), "default": None},
-    "targets.transforms.random_scale": {"convert": sequence_converter(float, 2), "default": None},
-    "targets.transforms.random_rotate.degree": {"convert": sequence_converter(float, 2), "default": [-5, 5]},
-    "targets.transforms.random_rotate.center": {"convert": sequence_converter(float, 2), "default": None},
-    "targets.transforms.random_crop": {"convert": sequence_converter(int, 2), "default": None},
+    "targets.transforms.noise": {"convert": sequence_converter(float, 3, expr=True), "default": None},
+    "targets.transforms.blur.kernel_size": {"convert": sequence_converter(int, 2, expr=True), "default": None},
+    "targets.transforms.blur.sigma": {"convert": sequence_converter(float, 2, expr=True), "default": None},
+    "targets.transforms.repeat": {"convert": sequence_converter(int, 2, expr=True), "default": None},
+    "targets.transforms.resize": {"convert": sequence_converter(int, 2, expr=True), "default": None},
+    # "targets.transforms.edge": {"convert": sequence_converter(int, 2), "default": None},
+    "targets.transforms.center_crop": {"convert": sequence_converter(int, 2, expr=True), "default": None},
+    #"targets.transforms.random_translate": {"convert": sequence_converter(float, 2, expr=True), "default": None},
+    #"targets.transforms.random_scale": {"convert": sequence_converter(float, 2, expr=True), "default": None},
+    "targets.transforms.random_rotate.degree": {"convert": sequence_converter(float, 2, expr=True), "default": [-5, 5]},
+    "targets.transforms.random_rotate.center": {"convert": sequence_converter(float, 2, expr=True), "default": [.5, .5]},
+    "targets.transforms.random_crop": {"convert": sequence_converter(int, 2, expr=True), "default": None},
+    #"targets.transforms.border": {"default": None},
+    "targets.transforms.border.size": {"convert": sequence_converter(int, 2, expr=True), "default": [1, 1]},
+    "targets.transforms.border.color": {"convert": sequence_converter(float, 3, expr=True), "default": [0., 0., 0.]},
 }
 
 
@@ -281,7 +464,7 @@ def parse_arguments(gui_mode: bool = False) -> dict:
         elif "." not in output_name:
             output_name += ".png"
 
-    for key in ("optimizer", "learnrate", "epochs", "resolution", "device"):
+    for key in ("optimizer", "learnrate", "epochs", "resolution", "device", "snapshot_interval"):
         if getattr(args, key) is not None:
             parameters[key] = getattr(args, key)
 
@@ -367,8 +550,6 @@ def _recursive_export_ready(data):
         return data
 
 
-
-
 def convert_params(data: dict) -> dict:
     return _recursive_convert_and_validate(data, "")
 
@@ -378,7 +559,7 @@ def _recursive_convert_and_validate(data, parent_path: str):
         data = deepcopy(data)
         for key, value in data.items():
             path = key if not parent_path else f"{parent_path}.{key}"
-            if isinstance(value, list) and not PARAMETERS[path].get("convert"):
+            if isinstance(value, list) and isinstance(PARAMETERS[path], PlaceholderParameter):
                 for i, v in enumerate(value):
                     value[i] = _recursive_convert_and_validate(v, path)
             else:
@@ -391,12 +572,12 @@ def _recursive_convert_and_validate(data, parent_path: str):
 
         if path not in PARAMETERS:
             raise ValueError(f"unknown parameter '{path}'")
-        param = PARAMETERS[path]
+        param: Parameter = PARAMETERS[path]
 
         try:
-            if getattr(param["convert"], "is_expression", False) and isinstance(value, Expression):
+            if param.expression and isinstance(value, Expression):
                 return value
-            return param["convert"](value)
+            return param.convert(value)
         except Exception as e:
             e.args = (f"parameter '{path}': {e}", )
             raise

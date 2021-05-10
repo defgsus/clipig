@@ -34,7 +34,7 @@ class Statistics(QWidget):
 
         self.pbar.setMaximum(stats["epochs"])
         self.pbar.setValue(stats["epoch"])
-        
+
         e_per_s = 1. / stats['average_frame_rate'] if stats['average_frame_rate'] else 0.
         self.label_framerate.setText(f"{e_per_s:.2f} epochs/s")
         self.label_time.setText(

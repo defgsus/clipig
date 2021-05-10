@@ -178,68 +178,26 @@ class ImageTraining:
 
             is_random = False  # determine if the transform stack includes randomization
             transforms = []
-            final_resolution = self.parameters["resolution"].copy()
+
             for trans_param in target_param["transforms"]:
-                if trans_param.get("repeat"):
-                    transforms.append(
-                        transform_modules.RepeatTransform(trans_param["repeat"])
-                    )
+                for key, value in trans_param.items():
+                    if value is None:
+                        continue
+                    if key not in transform_modules.transformations:
+                        raise ValueError(f"Unknown transformation '{key}'")
+                    klass = transform_modules.transformations[key]
 
-                if trans_param.get("blur"):
-                    p = trans_param["blur"]
-                    transforms.append(VT.GaussianBlur(int(p[0]), [p[1], p[1]]))
+                    if isinstance(value, dict):
+                        t = klass(**value)
+                    else:
+                        t = klass(value)
 
-                affine_kwargs = dict()
-                if trans_param.get("random_translate"):
-                    is_random = True
-                    affine_kwargs["translate"] = trans_param["random_translate"]
-
-                if trans_param.get("random_scale"):
-                    is_random = True
-                    affine_kwargs["scale"] = trans_param["random_scale"]
-
-                if affine_kwargs:
-                    affine_kwargs["degrees"] = 0
-                    affine_kwargs["fillcolor"] = None
-                    transforms.append(VT.RandomAffine(**affine_kwargs))
-
-                if trans_param.get("random_rotate"):
-                    is_random = True
-                    transforms.append(
-                        VT.RandomRotation(
-                            degrees=trans_param["random_rotate"]["degree"],
-                            center=trans_param["random_rotate"]["center"],
-                        )
-                    )
-
-                if trans_param.get("random_crop"):
-                    is_random = True
-                    transforms.append(VT.RandomCrop(trans_param["random_crop"]))
-                    final_resolution = trans_param["random_crop"]
-
-                if trans_param.get("resize"):
-                    transforms.append(VT.Resize(trans_param["resize"]))
-                    final_resolution = trans_param["resize"]
-
-                if trans_param.get("center_crop"):
-                    transforms.append(VT.CenterCrop(trans_param["center_crop"]))
-                    final_resolution = trans_param["center_crop"]
-
-                if trans_param.get("noise"):
-                    is_random = True
-                    transforms.append(transform_modules.NoiseTransform(trans_param["noise"]))
-
-                if trans_param.get("edge"):
-                    transforms.append(transform_modules.EdgeTransform(trans_param["edge"]))
-
-            if final_resolution != self.clip_resolution:
-                transforms.append(VT.Resize(self.clip_resolution))
+                    transforms.append(t)
+                    is_random |= klass.IS_RANDOM
 
             if transforms:
                 target["is_random"] = is_random
-                target["transforms"] = torch.nn.Sequential(*transforms).to(self.device)
-                self.log(2, f"target '{target_param['name']}' transforms:")
-                self.log(2, target["transforms"])
+                target["transforms"] = transforms
 
             # --- setup constraints ---
 
@@ -359,8 +317,8 @@ class ImageTraining:
 
                         pixels = current_pixels
                         if target.get("transforms"):
-                            pixels = target["transforms"](pixels)
-                        # pixels = torch.clamp(pixels, 0, 1)
+                            for t in target["transforms"]:
+                                pixels = t(pixels, expression_context)
 
                         target_pixels.append(pixels.unsqueeze(0))
                         target_pixel_idx = len(target_pixels) - 1
