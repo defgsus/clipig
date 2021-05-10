@@ -68,8 +68,8 @@ class TestParameters(unittest.TestCase):
         self.assertEqual([1, 1, 1], params["init"]["mean"])
         self.assertEqual([1, 2, 3], params["init"]["std"])
 
-        self.assertEqual(Expression, type(params["targets"][0]["weight"]))
-        self.assertEqual(23., params["targets"][0]["weight"](t=0, epoch=0))
+        self.assertEqual(float, type(params["targets"][0]["weight"]))
+        self.assertEqual(23., params["targets"][0]["weight"])
 
         self.assertEqual(int, type(params["targets"][0]["start"]))
         self.assertEqual(1, params["targets"][0]["start"])

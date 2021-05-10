@@ -23,7 +23,7 @@ class Parameter:
             expression_args: Optional[Sequence[str]] = None,
     ):
         self.doc = doc
-        self.types = list(types) if isinstance(types, Sequence) else [type]
+        self.types = list(types) if isinstance(types, Sequence) else [types]
         self.null = null
         self.default = default
         self.expression = expression
@@ -34,11 +34,12 @@ class Parameter:
         assert len(self.types) == 1 or not self.expression
 
     def convert(self, x: Any) -> Any:
-        return self._convert_value(x)
-
-    def _convert_value(self, x: Any) -> Any:
         if self.null and x is None:
             return None
+
+        for t in self.types:
+            if t == type(x):
+                return x
 
         for t in self.types:
             try:
@@ -57,14 +58,7 @@ class Parameter:
                 )
 
         exp = Expression(self.types[0], x, *self.expression_args)
-        try:
-            arguments = {name: 0. for name in self.expression_args}
-            exp(**arguments)
-        except Exception as e:
-            raise ValueError(
-                f"{type(e).__name__} in expression '{x}': {e}"
-            )
-
+        exp.validate()
         return exp
 
 
@@ -82,13 +76,17 @@ class FrameTimeParameter(Parameter):
         )
 
     def convert(self, x: Any) -> Any:
-        factor = 1.
+        factor = None
         if isinstance(x, str):
-            if v.endswith("%"):
+            if x.endswith("%"):
                 x = x[:-1]
                 factor = 1. / 100.
 
-        return self._convert_value(x) * factor
+        value = super().convert(x)
+
+        if factor is not None:
+            value *= factor
+        return value
 
 
 class SequenceParameter(Parameter):
@@ -134,27 +132,30 @@ class SequenceParameter(Parameter):
             raise ValueError(f"expected list of length {length_str}, got {len(sequence)}")
 
         return [
-            self._convert_value(i)
+            super(SequenceParameter, self).convert(i)
             for i in sequence
         ]
 
 
 class PlaceholderParameter(Parameter):
+    """
+    Just a placeholder to open new sub-parameter lists or dicts
+    """
     pass
 
 
 class EXPR_ARGS:
+
+    MINIMAL = (
+        "epoch", "t",
+    )
 
     LEARNRATE = (
         "lr", "learnrate",
         "lrs", "learnrate_scale",
     )
 
-    DEFAULT = (
-        "epoch", "epoch_f",
-        "t",
-    ) + LEARNRATE
-
+    DEFAULT = MINIMAL + LEARNRATE
 
     TARGET_FEATURE = DEFAULT + (
         "sim", "similarity",
@@ -258,8 +259,8 @@ PARAMETERS = {
     "verbose": Parameter(int, default=2),
     "snapshot_interval": Parameter([int, float], default=20.),
     "device": Parameter(str, default="auto"),
-    "learnrate": Parameter(float, default=1., expression=True, expression_args=EXPR_ARGS.LEARNRATE),
-    "learnrate_scale": Parameter(float, default=1., expression=True, expression_args=EXPR_ARGS.LEARNRATE),
+    "learnrate": Parameter(float, default=1., expression=True, expression_args=EXPR_ARGS.MINIMAL),
+    "learnrate_scale": Parameter(float, default=1., expression=True, expression_args=EXPR_ARGS.MINIMAL),
     "output": Parameter(str, default=f".{os.path.sep}"),
     "epochs": Parameter(int, default=300),
     "start_epoch": Parameter(int, default=0),
@@ -297,8 +298,21 @@ PARAMETERS = {
     "targets.features.image": Parameter(str, null=True),
 
     # TODO: constraints
-
 }
+
+
+def _add_transform_parameters():
+    PARAMETERS["targets.transforms"] = PlaceholderParameter(list, default=list())
+    from .transforms import transformations
+    for name, klass in transformations.items():
+        params = klass.PARAMS
+        if len(params) == 1:
+            PARAMETERS[f"targets.transforms.{name}"] = next(iter(params.values()))
+        else:
+            for param_name, value in params.items():
+                PARAMETERS[f"targets.transforms.{name}.{param_name}"] = value
+
+_add_transform_parameters()
 
 
 PARAMETERS_OLD = {
@@ -629,9 +643,9 @@ def _recursive_parameter_defaults(params: dict, parent_path: str):
         param_name = param_path[0]
 
         if param_name not in params:
-            params[param_name] = deepcopy(param_info["default"])
+            params[param_name] = deepcopy(param_info.default)
 
-        if not param_info.get("convert"):
+        if isinstance(param_info, PlaceholderParameter):
             sub_params = params[param_name]
             path = param_name if not parent_path else f"{parent_path}.{param_name}"
             if isinstance(sub_params, list):

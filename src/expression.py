@@ -23,11 +23,16 @@ class Expression:
         return f"{self.__class__.__name__}('{self.expression}'{args})"
 
     def validate(self):
-        args = {
-            name: 0.
-            for name in self.arguments
-        }
-        self(**args)
+        try:
+            args = {
+                name: 0.
+                for name in self.arguments
+            }
+            self(**args)
+        except Exception as e:
+            raise ValueError(
+                f"{type(e).__name__} in expression '{self.expression}': {e}"
+            )
 
     def __call__(self, **arguments):
         return self.type(eval(self.code, globals())(**arguments))
