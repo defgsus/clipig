@@ -49,11 +49,11 @@ class Blur(TransformBase):
         self.sigma = sigma
 
     def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
-        kernel_size = context(self.kernel_size, type=int)
+        kernel_size = context(self.kernel_size)
         if self.sigma is None:
             sigma = None
         else:
-            sigma = context(self.sigma, type=float)
+            sigma = context(self.sigma)
         return VF.gaussian_blur(image, kernel_size, sigma)
 
 
@@ -69,7 +69,7 @@ class Resize(TransformBase):
         self.size = size
 
     def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
-        size = context(self.size, type=int)
+        size = context(self.size)
         return VF.resize(image, size)
 
 
@@ -85,7 +85,7 @@ class CenterCrop(TransformBase):
         self.size = size
 
     def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
-        size = context(self.size, type=int)
+        size = context(self.size)
         return VF.center_crop(image, size, fill=None)
 
 
@@ -101,7 +101,7 @@ class RandomCrop(TransformBase):
         self.size = size
 
     def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
-        size = context(self.size, type=int)
+        size = context(self.size)
         return VT.RandomCrop(size=size)(image)
 
 
@@ -117,7 +117,7 @@ class Repeat(TransformBase):
         self.count = count
 
     def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
-        count = context(self.count, type=int)
+        count = context(self.count)
         return image.repeat(1, 1, count[0]).repeat(1, count[1], 1)
 
 
@@ -183,11 +183,11 @@ class Edge(TransformBase):
         self.amount = amount
 
     def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
-        kernel_size = context(self.kernel_size, type=int)
+        kernel_size = context(self.kernel_size)
         if self.sigma is None:
             sigma = None
         else:
-            sigma = context(self.sigma, type=float)
+            sigma = context(self.sigma)
         amount = torch.Tensor(context(self.amount)).to(image.device)
         edge = VF.gaussian_blur(image, kernel_size, sigma)
         edge = torch.clamp((image - edge) * amount, 0, 1)

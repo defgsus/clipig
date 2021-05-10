@@ -46,7 +46,6 @@ class ExpressionContext:
     def __call__(
             self,
             expr: Union[int, float, Expression, List[Union[int, float, Expression]]],
-            type: Optional[Type] = None,
     ):
         def _convert(e):
             if isinstance(e, (int, float)):
@@ -55,8 +54,6 @@ class ExpressionContext:
                 value = e(**self.arguments)
             else:
                 raise TypeError(f"Can not evaluate expression of type '{type(e).__name__}': '{e}'")
-            if type is not None:
-                value = type(value)
             return value
 
         try:
