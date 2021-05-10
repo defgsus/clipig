@@ -47,14 +47,24 @@ class Parameter:
         if self.null and x is None:
             return None
 
+        # type matches?
         for t in self.types:
             if t == type(x):
                 return x
 
+        # is convertible to type?
         for t in self.types:
             try:
                 return t(x)
             except (TypeError, ValueError):
+                pass
+
+        # maybe an expression without variables?
+        if isinstance(x, str):
+            try:
+                exp = Expression(self.types[-1], x)
+                return self.types[-1](exp())
+            except:
                 pass
 
         if not self.expression:
@@ -193,8 +203,8 @@ PARAMETERS = {
     "verbose": Parameter(int, default=2),
     "snapshot_interval": Parameter([int, float], default=20.),
     "device": Parameter(str, default="auto"),
-    "learnrate": Parameter(float, default=1., expression=True, expression_args=EXPR_ARGS.MINIMAL),
-    "learnrate_scale": Parameter(float, default=1., expression=True, expression_args=EXPR_ARGS.MINIMAL),
+    "learnrate": Parameter(float, default=1., expression_args=EXPR_ARGS.MINIMAL),
+    "learnrate_scale": Parameter(float, default=1., expression_args=EXPR_ARGS.MINIMAL),
     "output": Parameter(str, default=f".{os.path.sep}"),
     "epochs": Parameter(int, default=300),
     "start_epoch": Parameter(int, default=0),
