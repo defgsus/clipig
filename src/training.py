@@ -416,6 +416,9 @@ class ImageTraining:
                     self.snapshot_callback(current_pixels)
 
     def _postproc(self, epoch: int, epoch_f: float, context: ExpressionContext):
+        image = self.pixel_model.pixels
+        changed = False
+
         for pp in self.parameters["postproc"]:
             if not pp["active"]:
                 continue
@@ -423,17 +426,18 @@ class ImageTraining:
             if not _check_start_end(pp["start"], pp["end"], epoch, epoch_f):
                 continue
 
-            if pp.get("blur"):
-                self.pixel_model.blur(
-                    int(context(pp["blur"][0])),
-                    context(pp["blur"][1]),
-                )
+            for name, klass in transform_modules.transformations.items():
+                if pp.get(name):
+                    param = pp[name]
+                    if isinstance(param, dict):
+                        image = klass(**param)(image, context)
+                    else:
+                        image = klass(param)(image, context)
+                    changed = True
 
-            if pp.get("add"):
-                self.pixel_model.add(context(pp["add"]))
-
-            if pp.get("multiply"):
-                self.pixel_model.multiply(context(pp["multiply"]))
+        if changed:
+            with torch.no_grad():
+                self.pixel_model.pixels[...] = image
 
     def _get_target_loss(
             self,

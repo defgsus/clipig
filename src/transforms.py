@@ -24,6 +24,7 @@ transformations = dict()
 class TransformBase:
     NAME = None
     IS_RANDOM = False
+    IS_RESIZE = False
     PARAMS = None
 
     def __init_subclass__(cls, **kwargs):
@@ -38,8 +39,8 @@ class TransformBase:
 class Blur(TransformBase):
     NAME = "blur"
     PARAMS = {
-        "kernel_size": SequenceParameter(int, length=2, default=[3, 3], expression=True),
-        "sigma": SequenceParameter(float, length=2, null=True, default=None, expression=True),
+        "kernel_size": SequenceParameter(int, length=2, default=[3, 3]),
+        "sigma": SequenceParameter(float, length=2, null=True, default=None),
     }
 
     def __init__(self, kernel_size: List[Int], sigma: List[float]):
@@ -58,8 +59,9 @@ class Blur(TransformBase):
 
 class Resize(TransformBase):
     NAME = "resize"
+    IS_RESIZE = True
     PARAMS = {
-        "size": SequenceParameter(int, length=2, default=None, expression=True),
+        "size": SequenceParameter(int, length=2, default=None),
     }
 
     def __init__(self, size: List[Int]):
@@ -73,8 +75,9 @@ class Resize(TransformBase):
 
 class CenterCrop(TransformBase):
     NAME = "center_crop"
+    IS_RESIZE = True
     PARAMS = {
-        "size": SequenceParameter(int, length=2, default=None, expression=True),
+        "size": SequenceParameter(int, length=2, default=None),
     }
 
     def __init__(self, size: List[Int]):
@@ -88,8 +91,9 @@ class CenterCrop(TransformBase):
 
 class RandomCrop(TransformBase):
     NAME = "random_crop"
+    IS_RESIZE = True
     PARAMS = {
-        "size": SequenceParameter(int, length=2, default=None, expression=True),
+        "size": SequenceParameter(int, length=2, default=None),
     }
 
     def __init__(self, size: List[Int]):
@@ -103,8 +107,9 @@ class RandomCrop(TransformBase):
 
 class Repeat(TransformBase):
     NAME = "repeat"
+    IS_RESIZE = True
     PARAMS = {
-        "size": SequenceParameter(int, length=2, default=None, expression=True),
+        "size": SequenceParameter(int, length=2, default=None),
     }
 
     def __init__(self, count: List[Int]):
@@ -119,8 +124,8 @@ class Repeat(TransformBase):
 class Border(TransformBase):
     NAME = "border"
     PARAMS = {
-        "size": SequenceParameter(int, length=2, default=[1, 1], expression=True),
-        "color": SequenceParameter(float, length=3, default=[1., 1., 1.], expression=True),
+        "size": SequenceParameter(int, length=2, default=[1, 1]),
+        "color": SequenceParameter(float, length=3, default=[1., 1., 1.]),
     }
 
     def __init__(self, size: List[Int], color: List[Float]):
@@ -150,7 +155,7 @@ class Noise(TransformBase):
     NAME = "noise"
     IS_RANDOM = True
     PARAMS = {
-        "std": SequenceParameter(float, length=3, default=None, expression=True),
+        "std": SequenceParameter(float, length=3, default=None),
     }
 
     def __init__(self, std: List[Float]):
@@ -166,9 +171,9 @@ class Noise(TransformBase):
 class Edge(TransformBase):
     NAME = "edge"
     PARAMS = {
-        "kernel_size": SequenceParameter(int, length=2, default=[3, 3], expression=True),
-        "sigma": SequenceParameter(float, length=2, null=True, default=None, expression=True),
-        "amount": SequenceParameter(float, length=3, default=[1., 1., 1.], expression=True),
+        "kernel_size": SequenceParameter(int, length=2, default=[3, 3]),
+        "sigma": SequenceParameter(float, length=2, null=True, default=None),
+        "amount": SequenceParameter(float, length=3, default=[1., 1., 1.]),
     }
 
     def __init__(self, kernel_size: List[Int], sigma: List[float], amount: List[float]):
@@ -192,8 +197,8 @@ class Edge(TransformBase):
 class Rotate(TransformBase):
     NAME = "rotate"
     PARAMS = {
-        "degree": Parameter(float, default=None, expression=True),
-        "center": SequenceParameter(float, length=2, default=[0.5, 0.5], expression=True),
+        "degree": Parameter(float, default=None),
+        "center": SequenceParameter(float, length=2, default=[0.5, 0.5]),
     }
 
     def __init__(self, degree: Float, center: List[Float]):
@@ -215,8 +220,8 @@ class RandomRotate(TransformBase):
     NAME = "random_rotate"
     IS_RANDOM = True
     PARAMS = {
-        "degree": SequenceParameter(float, length=2, default=[-1, 1], expression=True),
-        "center": SequenceParameter(float, length=2, default=[0.5, 0.5], expression=True),
+        "degree": SequenceParameter(float, length=2, default=[-1, 1]),
+        "center": SequenceParameter(float, length=2, default=[0.5, 0.5]),
     }
 
     def __init__(self, degree: List[Float], center: List[Float]):
@@ -238,7 +243,7 @@ class RandomRotate(TransformBase):
 class RandomScale(TransformBase):
     NAME = "random_scale"
     PARAMS = {
-        "scale": SequenceParameter(float, length=2, default=None, expression=True),
+        "scale": SequenceParameter(float, length=2, default=None),
     }
 
     def __init__(self, scale: List[Float]):
@@ -253,7 +258,7 @@ class RandomScale(TransformBase):
 class RandomTranslate(TransformBase):
     NAME = "random_translate"
     PARAMS = {
-        "offset": SequenceParameter(float, length=2, default=None, expression=True),
+        "offset": SequenceParameter(float, length=2, default=None),
     }
 
     def __init__(self, offset: List[Float]):
@@ -268,7 +273,7 @@ class RandomTranslate(TransformBase):
 class Shift(TransformBase):
     NAME = "shift"
     PARAMS = {
-        "offset": SequenceParameter(float, length=2, default=None, expression=True),
+        "offset": SequenceParameter(float, length=2, default=None),
     }
 
     def __init__(self, offset: List[Float]):
@@ -285,13 +290,58 @@ class Shift(TransformBase):
         y = int(y) % image.shape[-2]
 
         if x > 0:
-            image = torch.cat([image[:, :, -x:], image[:, :, x:]], -1)
+            image = torch.cat([image[:, :, -x:], image[:, :, :-x]], -1)
         elif x < 0:
             image = torch.cat([image[:, :, -x:], image[:, :, :-x]], -1)
 
         if y > 0:
-            image = torch.cat([image[:, -y:, :], image[:, x:, :]], -2)
+            image = torch.cat([image[:, -y:, :], image[:, :-y, :]], -2)
         elif y < 0:
             image = torch.cat([image[:, -y:, :], image[:, :-x, :]], -2)
 
         return image
+
+
+class Add(TransformBase):
+    NAME = "add"
+    PARAMS = {
+        "color": SequenceParameter(float, length=3, default=None),
+    }
+
+    def __init__(self, color: List[float]):
+        super().__init__()
+        self.color = color
+
+    def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+        color = torch.Tensor(context(self.color)).to(image.device).reshape(3, -1)
+        return (image.reshape(3, -1) + color).reshape(image.shape)
+
+
+class Multiply(TransformBase):
+    NAME = "mul"
+    PARAMS = {
+        "color": SequenceParameter(float, length=3, default=None),
+    }
+
+    def __init__(self, color: List[float]):
+        super().__init__()
+        self.color = color
+
+    def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+        color = torch.Tensor(context(self.color)).to(image.device).reshape(3, -1)
+        return (image.reshape(3, -1) * color).reshape(image.shape)
+
+
+class Clamp(TransformBase):
+    NAME = "clamp"
+    PARAMS = {
+        "range": SequenceParameter(float, length=2, default=None),
+    }
+
+    def __init__(self, range: List[float]):
+        super().__init__()
+        self.range = range
+
+    def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+        range = context(self.range)
+        return torch.clamp(image, range[0], range[1])

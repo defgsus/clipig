@@ -33,6 +33,16 @@ class Parameter:
         assert len(self.types)
         assert len(self.types) == 1 or not self.expression
 
+    def copy(self):
+        return self.__class__(
+            types=self.types,
+            default=self.default,
+            null=self.null,
+            doc=self.doc,
+            expression=self.expression,
+            expression_args=self.expression_args,
+        )
+
     def convert(self, x: Any) -> Any:
         if self.null and x is None:
             return None
@@ -110,6 +120,17 @@ class SequenceParameter(Parameter):
         )
         self.length = length
 
+    def copy(self):
+        return self.__class__(
+            types=self.types,
+            length=self.length,
+            default=self.default,
+            null=self.null,
+            doc=self.doc,
+            expression=self.expression,
+            expression_args=self.expression_args,
+        )
+
     def convert(self, x: Any) -> Any:
         if self.null and x is None:
             return None
@@ -157,6 +178,8 @@ class EXPR_ARGS:
 
     DEFAULT = MINIMAL + LEARNRATE
 
+    TARGET_TRANSFORM = DEFAULT
+
     TARGET_FEATURE = DEFAULT + (
         "sim", "similarity",
     )
@@ -185,15 +208,6 @@ PARAMETERS = {
     "init.image": Parameter(str, null=True, default=None),
     "init.image_tensor": Parameter(list, default=None),
 
-    "postproc": PlaceholderParameter(list, default=list()),
-    "postproc.active": Parameter(bool, default=True),
-    "postproc.start": FrameTimeParameter(default=0.0),
-    "postproc.end": FrameTimeParameter(default=1.0),
-    "postproc.blur.kernel_size": SequenceParameter(int, length=2, default=[3, 3]),
-    "postproc.blur.sigma": SequenceParameter(float, length=2, null=True, default=None),
-    "postproc.add": SequenceParameter(float, length=3, expression=True),
-    "postproc.multiply": SequenceParameter(float, length=3, expression=True),
-
     "targets": PlaceholderParameter(list, default=list()),
     "targets.active": Parameter(bool, default=True),
     "targets.name": Parameter(str, default="target"),
@@ -210,24 +224,53 @@ PARAMETERS = {
 }
 
 
-def _add_parameters(prefix: str, classes: dict):
-    for name, klass in classes.items():
-        params = klass.PARAMS
+def _add_parameters(prefix: str, classes: dict, expr_args: Tuple[str, ...] = None):
+    def _add_args(p: Parameter) -> Parameter:
+        if not expr_args:
+            return p
+        p = p.copy()
+        p.expression = True
+        p.expression_args = expr_args
+        return p
+
+    for name in sorted(classes.keys()):
+        params = classes[name].PARAMS
         if len(params) == 1:
-            PARAMETERS[f"{prefix}.{name}"] = next(iter(params.values()))
+            PARAMETERS[f"{prefix}.{name}"] = _add_args(next(iter(params.values())))
         else:
             for param_name, value in params.items():
-                PARAMETERS[f"{prefix}.{name}.{param_name}"] = value
+                PARAMETERS[f"{prefix}.{name}.{param_name}"] = _add_args(value)
 
 
 def _add_class_parameters():
     from .transforms import transformations
     from .constraints import constraints
     PARAMETERS["targets.transforms"] = PlaceholderParameter(list, default=list())
-    _add_parameters("targets.transforms", transformations)
+    _add_parameters("targets.transforms", transformations, expr_args=EXPR_ARGS.TARGET_TRANSFORM)
 
     PARAMETERS["targets.constraints"] = PlaceholderParameter(list, default=list())
-    _add_parameters("targets.constraints", constraints)
+    _add_parameters("targets.constraints", constraints, expr_args=EXPR_ARGS.TARGET_CONSTRAINT)
+
+    postprocs = {
+        name: klass
+        for name, klass in transformations.items()
+        if not klass.IS_RESIZE
+    }
+    PARAMETERS.update({
+        "postproc": PlaceholderParameter(list, default=list()),
+        "postproc.active": Parameter(bool, default=True),
+        "postproc.start": FrameTimeParameter(default=0.0),
+        "postproc.end": FrameTimeParameter(default=1.0),
+    })
+    _add_parameters("postproc", postprocs, expr_args=EXPR_ARGS.DEFAULT)
+
+    """
+    "postproc": PlaceholderParameter(list, default=list()),
+    "postproc.blur.kernel_size": SequenceParameter(int, length=2, default=[3, 3]),
+    "postproc.blur.sigma": SequenceParameter(float, length=2, null=True, default=None),
+    "postproc.add": SequenceParameter(float, length=3, expression=True),
+    "postproc.multiply": SequenceParameter(float, length=3, expression=True),
+    """
 
 
 _add_class_parameters()
@@ -246,7 +289,7 @@ def parse_arguments(gui_mode: bool = False) -> dict:
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "config", type=str, nargs="*" if gui_mode else "+", default=[],
+        "config", type=str, nargs="*", default=[],
         help="Configuration yaml file(s). When several files, "
              "parameters will be merged together where later config files "
              "will overwrite previous parameters. All other command line "
@@ -280,21 +323,26 @@ def parse_arguments(gui_mode: bool = False) -> dict:
              "defaults to %s" % PARAMETERS["snapshot_interval"].default,
     )
     parser.add_argument(
-        "-v", "--verbose", type=int, default=None,
-        help="Verbosity. Default is %s" % PARAMETERS["verbose"].default,
-    )
-    parser.add_argument(
         "-d", "--device", type=str, default=None,
         help="Device to run on, either 'auto', 'cuda' or 'cuda:1', etc... "
              "Default is %s" % PARAMETERS["device"].default,
     )
-
     parser.add_argument(
         "--repeat", type=int, default=1,
         help="Number of times to run",
     )
+    parser.add_argument(
+        "-v", "--verbose", type=int, default=None,
+        help="Verbosity. Default is %s" % PARAMETERS["verbose"].default,
+    )
 
     args = parser.parse_args()
+
+    if not args.config and not gui_mode:
+        from .doc import dump_parameters_text
+        dump_parameters_text(PARAMETERS)
+        print("\nPlease specify a yaml configuration file")
+        exit(-1)
 
     output_name = ""
     parameters = dict()

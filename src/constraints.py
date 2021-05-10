@@ -19,7 +19,7 @@ class ConstraintBase(torch.nn.Module):
     PARAMS = None
 
     def __init_subclass__(cls, **kwargs):
-        if cls.PARAMS is not None:
+        if cls.NAME is not None:
             constraints[cls.NAME] = cls
 
     def __init__(
