@@ -185,8 +185,15 @@ class BlurConstraint(ConstraintBase):
         self.sigma = sigma
 
     def forward(self, image: torch.Tensor, context: ExpressionContext):
-        kernel_size = [int(k) for k in context(self.kernel_size)]
-        sigma = context(self.sigma)
+        kernel_size = context(self.kernel_size)
+        kernel_size = [
+            max(1, k+1 if k % 2 == 0 else k)
+            for k in kernel_size
+        ]
+        if self.sigma is None:
+            sigma = None
+        else:
+            sigma = [max(0.0001, s) for s in context(self.sigma)]
 
         blurred_image = VF.gaussian_blur(image, kernel_size, sigma)
 

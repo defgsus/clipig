@@ -50,10 +50,14 @@ class Blur(TransformBase):
 
     def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
         kernel_size = context(self.kernel_size)
+        kernel_size = [
+            max(1, k+1 if k % 2 == 0 else k)
+            for k in kernel_size
+        ]
         if self.sigma is None:
             sigma = None
         else:
-            sigma = context(self.sigma)
+            sigma = [max(0.0001, s) for s in context(self.sigma)]
         return VF.gaussian_blur(image, kernel_size, sigma)
 
 
@@ -252,7 +256,7 @@ class RandomScale(TransformBase):
 
     def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
         scale = context(self.scale)
-        return VT.RandomAffine(degrees=0, scale=scale, fill=None)(image)
+        return VT.RandomAffine(degrees=0, scale=scale, fillcolor=None)(image)
 
 
 class RandomTranslate(TransformBase):
@@ -267,7 +271,7 @@ class RandomTranslate(TransformBase):
 
     def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
         offset = context(self.offset)
-        return VT.RandomAffine(degrees=0, translate=offset, fill=None)(image)
+        return VT.RandomAffine(degrees=0, translate=offset, fillcolor=None)(image)
 
 
 class Shift(TransformBase):
@@ -282,6 +286,9 @@ class Shift(TransformBase):
 
     def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
         x, y = context(self.offset)
+        return self._shift(image, x, y)
+
+    def _shift(self, image: torch.Tensor, x: Union[int, float], y: Union[int, float]) -> torch.Tensor:
         if abs(x) < 1:
             x = x * image.shape[-1]
         if abs(y) < 1:
@@ -296,6 +303,22 @@ class Shift(TransformBase):
             image = torch.cat([image[:, -y:, :], image[:, :-y, :]], -2)
 
         return image
+
+
+class RandomShift(Shift):
+    NAME = "random_shift"
+    PARAMS = {
+        "offset": SequenceParameter(float, length=2, default=None),
+    }
+
+    def __init__(self, offset: List[Float]):
+        super().__init__(offset)
+
+    def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+        mi, ma = context(self.offset)
+        x = random.uniform(mi, ma)
+        y = random.uniform(mi, ma)
+        return self._shift(image, x, y)
 
 
 class Add(TransformBase):

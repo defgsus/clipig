@@ -296,7 +296,13 @@ class ImageTraining:
             expression_context = ExpressionContext(
                 epoch=epoch,
                 t=epoch_f,
-                t1=1. - epoch_f,
+                t2=math.pow(epoch_f, 2),
+                t3=math.pow(epoch_f, 3),
+                t4=math.pow(epoch_f, 4),
+                ti=1. - epoch_f,
+                ti2=math.pow(1.-epoch_f, 2),
+                ti3=math.pow(1.-epoch_f, 3),
+                ti4=math.pow(1.-epoch_f, 4),
             )
 
             # --- update learnrate ---
@@ -342,6 +348,9 @@ class ImageTraining:
                         if target.get("transforms"):
                             for t in target["transforms"]:
                                 pixels = t(pixels, expression_context)
+
+                        if pixels.shape != [3, 224, 224]:
+                            pixels = VF.resize(pixels, [224, 224])
 
                         target_pixels.append(pixels.unsqueeze(0))
                         target_pixel_idx = len(target_pixels) - 1

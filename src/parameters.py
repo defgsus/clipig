@@ -178,7 +178,9 @@ class PlaceholderParameter(Parameter):
 class EXPR_ARGS:
 
     MINIMAL = (
-        "epoch", "t", "t1",
+        "epoch",
+        "t", "t2", "t3", "t4",
+        "ti", "ti2", "ti3", "ti4",
     )
 
     LEARNRATE = (
