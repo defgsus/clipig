@@ -6,6 +6,7 @@ from copy import deepcopy
 from typing import Union, Sequence, List, Type, Tuple, Optional, Callable, Any
 
 import yaml
+import clip
 
 from .files import prepare_output_name
 from .expression import Expression
@@ -202,17 +203,66 @@ class EXPR_ARGS:
 
 
 PARAMETERS = {
-    "verbose": Parameter(int, default=2),
-    "snapshot_interval": Parameter([int, float], default=20.),
-    "device": Parameter(str, default="auto"),
-    "learnrate": Parameter(float, default=1., expression_args=EXPR_ARGS.MINIMAL),
-    "learnrate_scale": Parameter(float, default=1., expression_args=EXPR_ARGS.MINIMAL),
-    "output": Parameter(str, default=f".{os.path.sep}"),
-    "epochs": Parameter(int, default=300),
-    "start_epoch": Parameter(int, default=0),
-    "resolution": SequenceParameter(int, length=2, default=[224, 224]),
-    "model": Parameter(str, default="ViT-B/32"),
-    "optimizer": Parameter(str, default="adam"),
+    "verbose": Parameter(
+        int, default=2,
+        doc="Verbosity level, 0 = off, 1 = show progress, 2 = show statistics"
+    ),
+    "output": Parameter(
+        str, default=f".{os.path.sep}",
+        doc=f"Directory or filename of the output. If a directory, it must end with `{os.path.sep}`. "
+            f"In that case, the filename will be the name of the yaml config file. "
+            f"If a filename, it must end with `.png`. Note that a number is attached to the "
+            f"filename or is automatically increased, if the file already exists."
+    ),
+    "snapshot_interval": Parameter(
+        [int, float], default=20.,
+        doc="Interval after which a snapshot of the currently trained image is saved. "
+            "A float number specifies the interval in seconds. An integer number specifies "
+            "the interval in number-of-epochs.",
+    ),
+    "epochs": Parameter(
+        int, default=300,
+        doc="The number of training steps before stopping the training not including batch sizes. "
+            "For example, if the number of epochs is `100` and a target has a batch_size of `10`, "
+            "then `1000` training steps will be performed."
+    ),
+    "start_epoch": Parameter(
+        int, default=0,
+        doc="The number of epochs to skip in the beginning. This is used by the GUI application to "
+            "restart training after config changes."
+    ),
+    "resolution": SequenceParameter(
+        int, length=2, default=[224, 224],
+        doc="Resolution of the image to create. A single number for square images or two "
+            "numbers for width and height."
+    ),
+    "model": Parameter(
+        str, default="ViT-B/32",
+        doc=("The pre-trained CLIP model to use. Options are " +
+             ", ".join(f"`{m}`" for m in clip.available_models()))
+    ),
+    "device": Parameter(
+        str, default="auto",
+        doc="The device to run the training on. Can be `cpu`, `cuda`, `cuda:1` etc.",
+    ),
+    "learnrate": Parameter(
+        float, default=1., expression_args=EXPR_ARGS.MINIMAL,
+        doc="The learning rate of the optimizer. Different optimizers have different "
+            "learning rates that work well. However, this value is scaled automatically "
+            "so that a `1.0` translates to about the same learning rate for each optimizer. "
+            "The learnrate value is available to other expressions as `lr` or `learnrate`."
+    ),
+    "learnrate_scale": Parameter(
+        float, default=1., expression_args=EXPR_ARGS.MINIMAL,
+        doc="A scaling parameter for the actual learning rate. It might be convenient if "
+            "the learnrate_scale is an expression like `1. - t` and the actual learnrate "
+            "can be overridden with fixed values like `2.0`. The learnrate_scale value "
+            "is available to other expressions as `lrs` or `learnrate_scale`."
+    ),
+    "optimizer": Parameter(
+        str, default="adam",
+        doc="The torch optimizer to perform the gradient descent."
+    ),
 
     "init": PlaceholderParameter(dict, default=dict()),
     "init.mean": SequenceParameter(float, length=3, default=[.5, .5, .5]),
