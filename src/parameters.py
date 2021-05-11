@@ -205,31 +205,48 @@ class EXPR_ARGS:
 PARAMETERS = {
     "verbose": Parameter(
         int, default=2,
-        doc="Verbosity level, 0 = off, 1 = show progress, 2 = show statistics"
+        doc="""
+        Verbosity level
+        - `0` = off
+        - `1` = show progress
+        - `2` = show statistics
+        """
     ),
     "output": Parameter(
         str, default=f".{os.path.sep}",
-        doc=f"Directory or filename of the output. If a directory, it must end with `{os.path.sep}`. "
-            f"In that case, the filename will be the name of the yaml config file. "
-            f"If a filename, it must end with `.png`. Note that a number is attached to the "
-            f"filename or is automatically increased, if the file already exists."
+        doc=f"""
+        Directory or filename of the output. 
+        - If a directory, it must end with `{os.path.sep}`. 
+          In that case, the filename will be the name of the yaml config file. 
+        - If a filename, it must end with `.png`. Note that a number is attached to the 
+          filename or is automatically increased, if the file already exists.
+        """
     ),
     "snapshot_interval": Parameter(
         [int, float], default=20.,
-        doc="Interval after which a snapshot of the currently trained image is saved. "
-            "A float number specifies the interval in seconds. An integer number specifies "
-            "the interval in number-of-epochs.",
+        doc="""
+        Interval after which a snapshot of the currently trained image is saved. 
+        
+        A float number specifies the interval in seconds. An integer number specifies 
+        the interval in number-of-epochs.
+        """
     ),
     "epochs": Parameter(
         int, default=300,
-        doc="The number of training steps before stopping the training not including batch sizes. "
-            "For example, if the number of epochs is `100` and a target has a batch_size of `10`, "
-            "then `1000` training steps will be performed."
+        doc="""
+        The number of training steps before stopping the training, not including batch sizes. 
+        
+        For example, if the number of epochs is `100` and a target has a batch_size of `10`, 
+        then `1000` training steps will be performed.
+        """
     ),
     "start_epoch": Parameter(
         int, default=0,
-        doc="The number of epochs to skip in the beginning. This is used by the GUI application to "
-            "restart training after config changes."
+        doc="""
+        The number of epochs to skip in the beginning. 
+        
+        This is used by the GUI application to continue training after config changes.
+        """
     ),
     "resolution": SequenceParameter(
         int, length=2, default=[224, 224],
@@ -239,7 +256,10 @@ PARAMETERS = {
     "model": Parameter(
         str, default="ViT-B/32",
         doc=("The pre-trained CLIP model to use. Options are " +
-             ", ".join(f"`{m}`" for m in clip.available_models()))
+             ", ".join(f"`{m}`" for m in clip.available_models()) +
+             "\n\nThe models are downloaded from `openaipublic.azureedge.net` and stored "
+             "in the current user's cache directory"
+             )
     ),
     "device": Parameter(
         str, default="auto",
@@ -247,33 +267,121 @@ PARAMETERS = {
     ),
     "learnrate": Parameter(
         float, default=1., expression_args=EXPR_ARGS.MINIMAL,
-        doc="The learning rate of the optimizer. Different optimizers have different "
-            "learning rates that work well. However, this value is scaled automatically "
-            "so that a `1.0` translates to about the same learning rate for each optimizer. "
-            "The learnrate value is available to other expressions as `lr` or `learnrate`."
+        doc="""
+        The learning rate of the optimizer. 
+        
+        Different optimizers have different learning rates that work well. 
+        However, this value is scaled *by hand* so that `1.0` translates to 
+        about the same learning rate for each optimizer. 
+        
+        The learnrate value is available to other expressions as `lr` or `learnrate`.
+        """
     ),
     "learnrate_scale": Parameter(
         float, default=1., expression_args=EXPR_ARGS.MINIMAL,
-        doc="A scaling parameter for the actual learning rate. It might be convenient if "
-            "the learnrate_scale is an expression like `1. - t` and the actual learnrate "
-            "can be overridden with fixed values like `2.0`. The learnrate_scale value "
-            "is available to other expressions as `lrs` or `learnrate_scale`."
+        doc="""
+        A scaling parameter for the actual learning rate.
+        
+        It's for convenience in the case when learnrate_scale is an expression like `1. - t`. 
+        The actual learnrate can be overridden with fixed values like `2` or `3` in 
+        different experiments.
+        
+        The learnrate_scale value is available to other expressions as `lrs` or `learnrate_scale`.
+        """
     ),
     "optimizer": Parameter(
         str, default="adam",
         doc="The torch optimizer to perform the gradient descent."
     ),
 
-    "init": PlaceholderParameter(dict, default=dict()),
-    "init.mean": SequenceParameter(float, length=3, default=[.5, .5, .5]),
-    "init.std": SequenceParameter(float, length=3, default=[.1, .1, .1]),
-    "init.image": Parameter(str, null=True, default=None),
-    "init.image_tensor": Parameter(list, default=None),
+    "init": PlaceholderParameter(
+        dict, default=dict(),
+        doc="""
+        Defines the way, the pixels are initialized. Default is random pixels.
+        """
+    ),
+    "init.mean": SequenceParameter(
+        float, length=3, default=[.5, .5, .5],
+        doc="""
+        The mean (brightness) of the initial pixel noise. 
+        
+        Can be a single number for gray or three numbers for RGB.
+        """
+    ),
+    "init.std": SequenceParameter(
+        float, length=3, default=[.1, .1, .1],
+        doc="""
+        The standard deviation (randomness) of the initial pixel noise. 
+        
+        A single number will be copied to the RGB values.
+        """
+    ),
+    "init.image": Parameter(
+        str, null=True, default=None,
+        doc="""
+        A filename of an image to use as starting point.
+        
+        The image will be scaled to the desired resolution if necessary.
+        """
+    ),
+    "init.image_tensor": Parameter(
+        list, null=True, default=None,
+        doc="""
+        A 3-dimensional matrix of pixel values in the range [0, 1]  
+        
+        The layout is the same as used in 
+        [torchvision](https://pytorch.org/vision/stable/index.html), 
+        namely `[C, H, W]`, where `C` is number of colors (3), 
+        `H` is height and `W` is width.
+        
+        This is used by the GUI application to continue training after config changes.
+        """
+    ),
 
-    "targets": PlaceholderParameter(list, default=list()),
-    "targets.active": Parameter(bool, default=True),
-    "targets.name": Parameter(str, default="target"),
-    "targets.start": FrameTimeParameter(default=0.0),
+    "targets": PlaceholderParameter(
+        list, default=list(),
+        doc="""
+        This is a list of *targets* that define the desired image. 
+        
+        Most important are the [features](#target-features) where
+        texts or images are defined which get converted into CLIP
+        features and then drive the image creation process.
+        
+        It's possible to add additional [constraints](#targets-constraints)
+        which alter image creation without using CLIP, 
+        e.g. the image mean, saturation or gaussian blur.
+        """
+    ),
+    "targets.active": Parameter(
+        bool, default=True,
+        doc="""
+        A boolean to turn of the target during development. 
+        
+        This is just a convenience parameter. To turn of a target
+        during testing without deleting all the parameters, simply 
+        put `active: false` inside.
+        """
+    ),
+    "targets.name": Parameter(
+        str, default="target",
+        doc="""
+        The name of the target. 
+        
+        Currently this is just displayed in the statistics dump and has no
+        functionality. 
+        """
+    ),
+    "targets.start": FrameTimeParameter(
+        default=0.0,
+        doc="""
+        Start frame of the target. 
+        
+        - an `int` number defines the time as epoch frame
+        - a `float` number defines the time as ratio between 0.0 and 1.0, 
+          where 1.0 is the final epoch.
+        - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs. 
+        """
+    ),
     "targets.end": FrameTimeParameter(default=1.0),
     "targets.weight": Parameter(float, default=1., expression=True, expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
     "targets.batch_size": Parameter(int, default=1),

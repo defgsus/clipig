@@ -2,6 +2,7 @@ import json
 import datetime
 import pathlib
 import time
+import sys
 
 from src.parameters import parse_arguments, save_yaml_config
 from src.files import make_filename_dir, change_extension
@@ -9,6 +10,13 @@ from src.training import ImageTraining
 
 
 if __name__ == "__main__":
+
+    if len(sys.argv) > 1 and sys.argv[1] == "render-documentation":
+        from src.doc import dump_parameters_md
+        with open("parameters.md", "w") as file:
+            dump_parameters_md(file=file)
+        exit()
+
     parameters = parse_arguments()
     # print(parameters); exit()
     # print(json.dumps(parameters, indent=2)); exit()
