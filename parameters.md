@@ -138,11 +138,11 @@ This is used by the GUI application to continue training after config changes.
 
 This is a list of *targets* that define the desired image. 
 
-Most important are the [features](#target-features) where
+Most important are the [features](#targetsfeatures) where
 texts or images are defined which get converted into CLIP
 features and then drive the image creation process.
 
-It's possible to add additional [constraints](#targets-constraints)
+It's possible to add additional [constraints](#targetsconstraints)
 which alter image creation without using CLIP, 
 e.g. the image mean, saturation or gaussian blur.
 
