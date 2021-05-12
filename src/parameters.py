@@ -48,6 +48,9 @@ class Parameter:
         if self.null and x is None:
             return None
 
+        if isinstance(x, Expression):
+            return x
+
         # type matches?
         for t in self.types:
             if t == type(x):
@@ -180,8 +183,8 @@ class EXPR_ARGS:
 
     MINIMAL = (
         "epoch",
-        "t", "t2", "t3", "t4",
-        "ti", "ti2", "ti3", "ti4",
+        "t", "t2", "t3", "t4", "t5",
+        "ti", "ti2", "ti3", "ti4", "ti5",
     )
 
     LEARNRATE = (
