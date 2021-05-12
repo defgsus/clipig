@@ -99,6 +99,12 @@ class FrameTimeParameter(Parameter):
             doc=doc
         )
 
+    def copy(self):
+        return self.__class__(
+            default=self.default,
+            doc=self.doc,
+        )
+
     def convert(self, x: Any) -> Any:
         factor = None
         if isinstance(x, str):

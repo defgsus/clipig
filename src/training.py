@@ -63,6 +63,7 @@ class ImageTraining:
         self.pixel_model = PixelsRGB(parameters["resolution"]).to(self.device)
 
         self.epoch = self.parameters["start_epoch"]
+        self.epoch_f = self.epoch / max(1, self.parameters["epochs"] - 1)
 
         # for threaded access
         self._stop = False
@@ -229,14 +230,15 @@ class ImageTraining:
             for constr_param in target_param["constraints"]:
                 for name, Module in constraint_modules.constraints.items():
                     if constr_param.get(name):
-                        kwargs = constr_param[name].copy()
-                        kwargs.pop("weight")
+                        kwargs = Module.strip_parameters(constr_param[name])
                         constraint = Module(**kwargs)
 
                         target["constraints"].append({
                             "params": constr_param,
                             "model": constraint.to(self.device),
                             "weight": constr_param[name]["weight"],
+                            "start": constr_param[name]["start"],
+                            "end": constr_param[name]["end"],
                             # statistics ...
                             "losses": ValueQueue(),
                         })
@@ -291,7 +293,7 @@ class ImageTraining:
                 break
 
             self.epoch = epoch
-            epoch_f = epoch / max(1, self.parameters["epochs"] - 1)
+            self.epoch_f = epoch_f = epoch / max(1, self.parameters["epochs"] - 1)
 
             expression_context = ExpressionContext(
                 epoch=epoch,
@@ -299,10 +301,12 @@ class ImageTraining:
                 t2=math.pow(epoch_f, 2),
                 t3=math.pow(epoch_f, 3),
                 t4=math.pow(epoch_f, 4),
+                t5=math.pow(epoch_f, 5),
                 ti=1. - epoch_f,
                 ti2=math.pow(1.-epoch_f, 2),
                 ti3=math.pow(1.-epoch_f, 3),
                 ti4=math.pow(1.-epoch_f, 4),
+                ti5=math.pow(1.-epoch_f, 5),
             )
 
             # --- update learnrate ---
@@ -341,7 +345,7 @@ class ImageTraining:
                     active_targets.append(target)
                     target_idx = len(active_targets) - 1
                     for batch_idx in range(target["params"]["batch_size"]):
-                        if not target["is_random"] and target_idx in target_to_pixels_mapping:
+                        if not target.get("is_random") and target_idx in target_to_pixels_mapping:
                             continue
 
                         pixels = current_pixels
@@ -507,7 +511,14 @@ class ImageTraining:
         else:
             context = context.add(sim=0., similarity=0.)
 
+        # --- apply constraints ---
+
         for constraint in target.get("constraints", []):
+            if not _check_start_end(
+                    constraint["start"], constraint["end"],
+                    self.epoch, self.epoch_f
+            ):
+                continue
             loss = constraint["model"].forward(pixels, context)
             loss = loss * context(constraint["weight"])
             constraint["losses"].append(float(loss))

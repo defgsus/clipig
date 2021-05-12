@@ -8,7 +8,7 @@ import torchvision.transforms as VT
 import torchvision.transforms.functional as VF
 
 from .expression import Expression, ExpressionContext
-from .parameters import Parameter, SequenceParameter, EXPR_ARGS
+from .parameters import Parameter, SequenceParameter, FrameTimeParameter, EXPR_ARGS
 
 
 Int = Union[int, Expression]
@@ -25,11 +25,13 @@ class ConstraintBase(torch.nn.Module):
     and which must return a scalar tensor with the loss.
 
     The constructor must accept all defined parameters
-    except the `weight` parameter, which is handled
-    by ImageTrainer.
+    except the `weight`, `start` and `end` parameters,
+    which are handled by ImageTrainer.
     """
     NAME = None
     PARAMS = None
+
+    OUTER_PARAMS = ("weight", "start", "end")
 
     def __init_subclass__(cls, **kwargs):
         if cls.NAME is not None:
@@ -37,8 +39,17 @@ class ConstraintBase(torch.nn.Module):
         if cls.PARAMS is not None:
             cls.PARAMS = {
                 "weight": Parameter(float, default=1.),
+                "start": FrameTimeParameter(default=0.),
+                "end": FrameTimeParameter(default=1.),
                 **cls.PARAMS,
             }
+
+    @classmethod
+    def strip_parameters(cls, params: dict):
+        params = params.copy()
+        for name in cls.OUTER_PARAMS:
+            params.pop(name, None)
+        return params
 
     def forward(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
         raise NotImplementedError
@@ -49,7 +60,7 @@ class ConstraintBase(torch.nn.Module):
 
         param_strs = []
         for name, param in self.PARAMS.items():
-            if name == "weight":
+            if name in self.OUTER_PARAMS:
                 continue
             value = getattr(self, name)
             if value is None:
