@@ -90,7 +90,7 @@ class CenterCrop(TransformBase):
 
     def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
         size = context(self.size)
-        return VF.center_crop(image, size, fill=None)
+        return VF.center_crop(image, size)
 
 
 class RandomCrop(TransformBase):
