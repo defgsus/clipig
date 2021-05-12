@@ -1,3 +1,4 @@
+from copy import deepcopy
 from functools import partial
 from queue import Queue, Empty
 from typing import Any, Optional
@@ -23,6 +24,7 @@ class Experiment(QWidget):
         super().__init__(*args, **kwargs)
         self._queue = Queue()
         self.trainer = ImageTrainingThread(self._queue)
+        self._training_parameters = None
         self._create_widgets()
         self._call_queue_processing()
 
@@ -39,6 +41,9 @@ class Experiment(QWidget):
 
         self.log_display = QPlainTextEdit()
         self.log_display.setMaximumHeight(200)
+        font = QFont("Mono")
+        font.setPointSize(7)
+        self.log_display.setFont(font)
         l.addWidget(self.log_display)
         #grid.addWidget(self.log_display, 2, 0, 1, 2)
 
@@ -65,7 +70,20 @@ class Experiment(QWidget):
         grid.addWidget(self.statistics, 1, 0, 1, 2)
 
     def get_parameters(self) -> Optional[dict]:
-        return self._get_parameters(for_training=False)
+        """
+        Return the currently trained parameters
+        """
+        if self._training_parameters:
+            params = deepcopy(self._training_parameters)
+        else:
+            params = self._get_parameters(for_training=False)
+        if params:
+            for key in (
+                    "verbose", "output", "snapshot_interval",
+                    "start_epoch", "device"
+            ):
+                params.pop(key, None)
+        return params
 
     def get_image(self) -> Optional[QImage]:
         return self.image_display.image
@@ -86,10 +104,12 @@ class Experiment(QWidget):
         if id == "start" and parameters:
             self.trainer.create()
             self.trainer.start_training(parameters)
+            self._training_parameters = deepcopy(parameters)
 
         elif id == "update" and parameters:
             self.trainer.create()
             self.trainer.update_parameters(parameters)
+            self._training_parameters = deepcopy(parameters)
 
         elif id == "stop":
             self.trainer.pause_training()
