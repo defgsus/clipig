@@ -9,6 +9,7 @@ import torchvision.transforms.functional as VF
 
 from .expression import Expression, ExpressionContext
 from .parameters import Parameter, SequenceParameter, FrameTimeParameter, EXPR_ARGS
+from .strings import value_str
 
 
 Int = Union[int, Expression]
@@ -38,11 +39,16 @@ class ConstraintBase(torch.nn.Module):
             constraints[cls.NAME] = cls
         if cls.PARAMS is not None:
             cls.PARAMS = {
+                **cls.PARAMS,
                 "weight": Parameter(float, default=1.),
                 "start": FrameTimeParameter(default=0.),
                 "end": FrameTimeParameter(default=1.),
-                **cls.PARAMS,
+                "loss": Parameter(str, default="l2"),
             }
+
+    def __init__(self, loss: Union[str, Expression]):
+        super().__init__()
+        self.loss = loss
 
     @classmethod
     def strip_parameters(cls, params: dict):
@@ -50,6 +56,21 @@ class ConstraintBase(torch.nn.Module):
         for name in cls.OUTER_PARAMS:
             params.pop(name, None)
         return params
+
+    def loss_function(
+            self,
+            value: torch.Tensor,
+            target: torch.Tensor,
+            context: ExpressionContext,
+    ) -> torch.Tensor:
+        loss = context(self.loss)
+        if loss in ("l1", "mae"):
+            return F.l1_loss(value, target)
+
+        elif loss in ("l2", "mse"):
+            return F.mse_loss(value, target)
+
+        raise ValueError(f"Invalid loss function '{loss}' for constraint")
 
     def forward(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
         raise NotImplementedError
@@ -66,20 +87,7 @@ class ConstraintBase(torch.nn.Module):
             if value is None:
                 continue
             value = context(value)
-            if isinstance(value, float):
-                value = str(round(value, 3))
-            elif isinstance(value, list):
-                if all(v == value[0] for v in value):
-                    value = str(round(value[0], 3))
-                else:
-                    value = ", ".join(
-                        str(round(v, 3) if isinstance(v, float) else v)
-                        for v in value
-                    )
-                    value = f"[{value}]"
-            else:
-                value = str(value)
-            param_strs.append(f"{name}={value}")
+            param_strs.append(f"{name}={value_str(value)}")
 
         param_strs = ", ".join(param_strs)
         return f"{self.NAME}({param_strs})"
@@ -89,26 +97,6 @@ class AboveBelowConstraintBase(ConstraintBase):
 
     WEIGHT_FACTOR = 1.
 
-    def get_image_value(self, image: torch.Tensor):
-        raise NotImplementedError
-
-    def forward(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
-        value = self.get_image_value(image)
-
-        loss_sum = torch.tensor(0)
-
-        if self.above is not None:
-            target = torch.tensor(context(self.above)).to(image.device)
-            loss_sum = loss_sum + torch.clamp_min(target - value, 0).pow(2).mean()
-
-        if self.below is not None:
-            target = torch.tensor(context(self.below)).to(image.device)
-            loss_sum = loss_sum + torch.clamp_min(value - target, 0).pow(2).mean()
-
-        return loss_sum * self.WEIGHT_FACTOR
-
-
-class AboveBelow3ConstraintBase(AboveBelowConstraintBase):
     PARAMS = {
         "above": SequenceParameter(float, length=3, default=None),
         "below": SequenceParameter(float, length=3, default=None),
@@ -116,64 +104,66 @@ class AboveBelow3ConstraintBase(AboveBelowConstraintBase):
 
     def __init__(
             self,
-            above: List[Union[float, Expression]] = None,
-            below: List[Union[float, Expression]] = None
+            above: List[Union[float, Expression]],
+            below: List[Union[float, Expression]],
+            loss: str,
     ):
-        super().__init__()
+        super().__init__(loss=loss)
         assert above is not None or below is not None, "Must specify at least one of 'above' and 'below'"
         self.below = below
         self.above = above
 
+    def get_image_value(self, image: torch.Tensor, context: ExpressionContext):
+        raise NotImplementedError
 
-class AboveBelow1ConstraintBase(AboveBelowConstraintBase):
-    PARAMS = {
-        "above": Parameter(float, default=None, expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
-        "below": Parameter(float, default=None, expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
-    }
+    def forward(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+        value = self.get_image_value(image, context)
 
-    def __init__(
-            self,
-            above: Union[float, Expression] = None,
-            below: Union[float, Expression] = None
-    ):
-        super().__init__()
-        assert above is not None or below is not None, "Must specify at least one of 'above' and 'below'"
-        self.below = below
-        self.above = above
+        loss_sum = torch.tensor(0)
+
+        if self.above is not None:
+            target = torch.tensor(context(self.above)).to(image.device)
+            loss = self.loss_function(target - value, torch.zeros(3).to(image.device), context)
+            loss_sum = loss_sum + loss
+
+        if self.below is not None:
+            target = torch.tensor(context(self.below)).to(image.device)
+            loss = self.loss_function(value - target, torch.zeros(3).to(image.device), context)
+            loss_sum = loss_sum + loss
+
+        return loss_sum * self.WEIGHT_FACTOR
 
 
-class MeanConstraint(AboveBelow3ConstraintBase):
+class MeanConstraint(AboveBelowConstraintBase):
     NAME = "mean"
     WEIGHT_FACTOR = 100.
 
-    def get_image_value(self, image: torch.Tensor):
+    def get_image_value(self, image: torch.Tensor, context: ExpressionContext):
         image = image.reshape(3, -1)
-        return image.mean()
+        return image.mean(-1)
 
 
-class StdConstraint(AboveBelow3ConstraintBase):
+class StdConstraint(AboveBelowConstraintBase):
     NAME = "std"
     WEIGHT_FACTOR = 100.
 
-    def get_image_value(self, image: torch.Tensor):
+    def get_image_value(self, image: torch.Tensor, context: ExpressionContext):
         image = image.reshape(3, -1)
-        return image.std()
+        return image.std(-1)
 
 
-class SaturationConstraint(AboveBelow1ConstraintBase):
+class SaturationConstraint(AboveBelowConstraintBase):
     NAME = "saturation"
     WEIGHT_FACTOR = 100.
 
-    def get_image_value(self, image: torch.Tensor):
-        image = image.reshape(3, -1)
+    def get_image_value(self, image: torch.Tensor, context: ExpressionContext):
         return get_mean_saturation(image)
 
 
 def get_mean_saturation(image: torch.Tensor) -> torch.Tensor:
     color_planes = image.reshape(3, -1)
-    mean_plane = color_planes.mean(dim=0, keepdim=True)
-    saturation_plane = torch.abs(mean_plane.repeat(3, 1) - color_planes).sum(0, keepdim=True) / 3.
-    return saturation_plane.mean()
+    mean_plane = color_planes.mean(0)
+    return torch.abs(mean_plane.repeat(3, 1) - color_planes).mean(1)
 
 
 class BlurConstraint(ConstraintBase):
@@ -185,10 +175,11 @@ class BlurConstraint(ConstraintBase):
 
     def __init__(
             self,
-            kernel_size: List[Union[int, Expression]] = (3, 3),
-            sigma: List[Union[float, Expression]] = (.5, .5),
+            kernel_size: List[Union[int, Expression]],
+            sigma: List[Union[float, Expression]],
+            loss: Union[str, Expression],
     ):
-        super().__init__()
+        super().__init__(loss=loss)
         self.kernel_size = kernel_size
         self.sigma = sigma
 
@@ -205,30 +196,29 @@ class BlurConstraint(ConstraintBase):
 
         blurred_image = VF.gaussian_blur(image, kernel_size, sigma)
 
-        loss = F.mse_loss(
+        loss = self.loss_function(
             image.reshape(3, -1),
             blurred_image.reshape(3, -1),
+            context,
         )
 
         return 100. * loss
 
 
-class EdgeMeanConstraint(AboveBelow3ConstraintBase):
+class EdgeMeanConstraint(AboveBelowConstraintBase):
     NAME = "edge_mean"
     WEIGHT_FACTOR = 100.
 
-    def get_image_value(self, image: torch.Tensor):
+    def get_image_value(self, image: torch.Tensor, context: ExpressionContext):
         return get_edge_mean(image)
 
-    def description(self, context: ExpressionContext) -> str:
-        return f"edge_mean({super().description(context)})"
 
-
-class EdgeMaxConstraint(AboveBelow3ConstraintBase):
+# TODO: this one's not working good, rather remove it
+class EdgeMaxConstraint(AboveBelowConstraintBase):
     NAME = "edge_max"
     WEIGHT_FACTOR = 100.
 
-    def get_image_value(self, image: torch.Tensor):
+    def get_image_value(self, image: torch.Tensor, context: ExpressionContext):
         return get_edge_max(image)
 
 
@@ -259,11 +249,10 @@ class BorderConstraint(ConstraintBase):
         "color": SequenceParameter(float, length=3, default=[1., 1., 1.]),
     }
 
-    def __init__(self, size: List[Int], color: List[Float]):
-        super().__init__()
+    def __init__(self, size: List[Int], color: List[Float], loss: Union[str, Expression],):
+        super().__init__(loss=loss)
         self.size = size
         self.color = color
-        self.loss_function = torch.nn.L1Loss()
 
     def forward(self, image: torch.Tensor, context: ExpressionContext):
         size = context(self.size)
@@ -281,7 +270,7 @@ class BorderConstraint(ConstraintBase):
         image_border[:, :, -s:] = color_s
 
         return 100. * self.loss_function(
-            image, image_border
+            image, image_border, context
         )
 
 
@@ -292,11 +281,10 @@ class NormalizeConstraint(ConstraintBase):
         "max": SequenceParameter(float, length=3, default=[1., 1., 1.]),
     }
 
-    def __init__(self, min: List[Float], max: List[Float]):
-        super().__init__()
+    def __init__(self, min: List[Float], max: List[Float], loss: Union[str, Expression]):
+        super().__init__(loss=loss)
         self.min = min
         self.max = max
-        self.loss_function = torch.nn.L1Loss()
 
     def forward(self, image: torch.Tensor, context: ExpressionContext):
         mi = image.min(-1).values.min(-1).values.reshape(3, 1, 1)
@@ -311,18 +299,43 @@ class NormalizeConstraint(ConstraintBase):
         normed_image = desired_min + normed_image * (desired_max - desired_min)
 
         return 10. * self.loss_function(
-            image, normed_image
+            image, normed_image, context
         )
 
 
-class ContrastConstraint(AboveBelow3ConstraintBase):
+class ContrastConstraint(AboveBelowConstraintBase):
     NAME = "contrast"
     # WEIGHT_FACTOR = 100.
 
-    def get_image_value(self, image: torch.Tensor):
-        mean = image.mean(-1).mean(-1).reshape(3, 1, 1)
-        low_mean = image[image < mean].mean(-1).mean(-1)
-        high_mean = image[image > mean].mean(-1).mean(-1)
+    PARAMS = {
+        "above": SequenceParameter(float, length=3, default=None),
+        "below": SequenceParameter(float, length=3, default=None),
+    }
+
+    def get_image_value(self, image: torch.Tensor, context: ExpressionContext):
+        mean = image.mean(-1).mean(-1)
+        mean = mean.reshape(3, 1, 1)
+
+        low_mean = torch.cat([
+            image[0][image[0] < mean[0]].mean(-1).unsqueeze(0),
+            image[1][image[1] < mean[1]].mean(-1).unsqueeze(0),
+            image[2][image[2] < mean[2]].mean(-1).unsqueeze(0),
+        ])
+        low_mean[torch.isnan(low_mean)] = mean.mean()
+
+        high_mean = torch.cat([
+            image[0][image[0] > mean[0]].mean(-1).unsqueeze(0),
+            image[1][image[1] > mean[1]].mean(-1).unsqueeze(0),
+            image[2][image[2] > mean[2]].mean(-1).unsqueeze(0),
+        ])
+        high_mean[torch.isnan(high_mean)] = mean.mean()
+
+        # low_mean = image[image < mean].mean(-1).mean(-1)
+        # high_mean = image[image > mean].mean(-1).mean(-1)
+        if not low_mean.shape:
+            low_mean = mean
+        if not high_mean.shape:
+            high_mean = mean
 
         spread = high_mean - low_mean
         return spread

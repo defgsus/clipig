@@ -396,6 +396,14 @@ PARAMETERS = {
     "targets.batch_size": Parameter(int, default=1),
     "targets.select": Parameter(str, default="all"),
     "targets.features": PlaceholderParameter(list, default=list()),
+    "targets.features.start": FrameTimeParameter(
+        default=0.0,
+        doc="Start frame of the specific feature"
+    ),
+    "targets.features.end": FrameTimeParameter(
+        default=1.0,
+        doc="End frame of the specific feature"
+    ),
     "targets.features.weight": Parameter(float, default=1., expression=True, expression_args=EXPR_ARGS.TARGET_FEATURE),
     "targets.features.loss": Parameter(str, default="cosine"),
     "targets.features.text": Parameter(str, null=True),

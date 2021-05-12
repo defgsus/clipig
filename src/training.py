@@ -25,6 +25,7 @@ from . import transforms as transform_modules
 from . import constraints as constraint_modules
 from .constraints import get_mean_saturation
 from .clip_singleton import ClipSingleton
+from .strings import value_str
 
 
 torch.autograd.set_detect_anomaly(True)
@@ -171,6 +172,7 @@ class ImageTraining:
 
             features = []
             feature_loss_functions = []
+            feature_start_ends = []
             for feature_param in target_param["features"]:
                 if feature_param.get("text"):
                     tokens = clip.tokenize([feature_param["text"]]).to(self.device)
@@ -181,9 +183,11 @@ class ImageTraining:
                     feature = self.clip_model.encode_image(image.unsqueeze(0))
 
                 features.append(feature)
-
                 feature_loss_functions.append(get_feature_loss_function(feature_param["loss"]))
-
+                feature_start_ends.append((
+                    feature_param.get("start") or 0.,
+                    feature_param.get("end") or 0.,
+                ))
             if features:
                 features = torch.cat(features)
                 features = features / features.norm(dim=-1, keepdim=True)
@@ -192,6 +196,7 @@ class ImageTraining:
                 "params": target_param,
                 "features": features,
                 "feature_loss_functions": feature_loss_functions,
+                "feature_start_ends": feature_start_ends,
 
                 # statistics ...
                 "count": 0,
@@ -326,7 +331,7 @@ class ImageTraining:
 
             # --- post process pixels ---
 
-            self._postproc(epoch, epoch_f, expression_context)
+            self._postproc(expression_context)
 
             # --- get pixels ---
 
@@ -338,9 +343,8 @@ class ImageTraining:
             target_pixels = []
             target_to_pixels_mapping = dict()
             for target in self.targets:
-                if _check_start_end(
+                if self._check_start_end(
                         target["params"]["start"], target["params"]["end"],
-                        epoch, epoch_f
                 ):
                     active_targets.append(target)
                     target_idx = len(active_targets) - 1
@@ -420,10 +424,10 @@ class ImageTraining:
 
             if self.verbose >= 2 and (cur_time - last_stats_time > 4) or epoch == self.parameters["epochs"] - 1:
                 last_stats_time = cur_time
-                mean = [round(float(f), 3) for f in current_pixels.reshape(3, -1).mean(1)]
-                std = [round(float(f), 3) for f in current_pixels.reshape(3, -1).std(1)]
-                sat = round(float(get_mean_saturation(current_pixels)), 3)
-                edge_mean = [round(float(f), 3) for f in constraint_modules.get_edge_mean(current_pixels)]
+                mean = value_str(current_pixels.reshape(3, -1).mean(1))
+                std = value_str(current_pixels.reshape(3, -1).std(1))
+                sat = value_str(get_mean_saturation(current_pixels))
+                edge_mean = value_str(constraint_modules.get_edge_mean(current_pixels))
                 self.log(2, f"--- train step {epoch+1} / {self.parameters['epochs']} ---")
                 self.log(2, f"device: {self.device}")
                 self.log(2, f"image: res {self.parameters['resolution']}, "
@@ -451,13 +455,13 @@ class ImageTraining:
                 else:
                     self.snapshot_callback(current_pixels)
 
-    def _postproc(self, epoch: int, epoch_f: float, context: ExpressionContext):
+    def _postproc(self, context: ExpressionContext):
         image = self.pixel_model.pixels
         changed = False
 
         for pp in self.postprocs:
 
-            if not _check_start_end(pp["params"]["start"], pp["params"]["end"], epoch, epoch_f):
+            if not self._check_start_end(pp["params"]["start"], pp["params"]["end"]):
                 continue
 
             image = pp["transform"](image, context)
@@ -514,9 +518,8 @@ class ImageTraining:
         # --- apply constraints ---
 
         for constraint in target.get("constraints", []):
-            if not _check_start_end(
+            if not self._check_start_end(
                     constraint["start"], constraint["end"],
-                    self.epoch, self.epoch_f
             ):
                 continue
             loss = constraint["model"].forward(pixels, context)
@@ -531,22 +534,27 @@ class ImageTraining:
             target: dict,
             similarities: torch.Tensor,
             context: ExpressionContext
-    ) -> List[Tuple[float, bool]]:
+    ) -> List[List[Union[float, bool]]]:
         mode = target["params"]["select"]
+
         feature_weights = []
+        for i, target_feature in enumerate(target["features"]):
+            feature_context = context.add(sim=float(similarities[i]), similarity=float(similarities[i]))
+            weight = feature_context(target["params"]["features"][i]["weight"])
+            enable = self._check_start_end(*target["feature_start_ends"][i])
+            feature_weights.append([weight, enable])
 
         if mode == "all":
-            for i, target_feature in enumerate(target["features"]):
-                feature_context = context.add(sim=float(similarities[i]), similarity=float(similarities[i]))
-                weight = feature_context(target["params"]["features"][i]["weight"])
-                feature_weights.append((weight, True))
+            pass
 
         elif mode == "best":
-            best_index = int(torch.argmax(similarities))
-            for i, target_feature in enumerate(target["features"]):
-                feature_context = context.add(sim=float(similarities[i]), similarity=float(similarities[i]))
-                weight = feature_context(target["params"]["features"][i]["weight"])
-                feature_weights.append((weight, i == best_index))
+            set_false = False
+            for i in torch.argsort(similarities):
+                if set_false:
+                    feature_weights[i][1] = False
+
+                if feature_weights[i][1]:
+                    set_false = True
 
         else:
             raise ValueError(f"Unknown feature selection mode '{mode}'")
@@ -648,23 +656,21 @@ class ImageTraining:
                 )
             self.log(0, line)
 
+    def _check_start_end(
+            self,
+            start: Union[int, float],
+            end: Union[int, float],
+    ):
+        if isinstance(start, int) and start > self.epoch:
+            return False
+        elif isinstance(start, float) and start > self.epoch_f:
+            return False
+        if isinstance(end, int) and end < self.epoch:
+            return False
+        elif isinstance(end, float) and end < self.epoch_f:
+            return False
 
-def _check_start_end(
-        start: Union[int, float],
-        end: Union[int, float],
-        epoch: int,
-        epoch_f: float,
-):
-    if isinstance(start, int) and start > epoch:
-        return False
-    elif isinstance(start, float) and start > epoch_f:
-        return False
-    if isinstance(end, int) and end < epoch:
-        return False
-    elif isinstance(end, float) and end < epoch_f:
-        return False
-
-    return True
+        return True
 
 
 def _short_str(s: str, max_length: int, front: bool = False) -> str:

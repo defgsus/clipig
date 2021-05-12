@@ -48,7 +48,7 @@ class ExpressionContext:
             expr: Union[int, float, Expression, List[Union[int, float, Expression]]],
     ):
         def _convert(e):
-            if isinstance(e, (int, float)):
+            if isinstance(e, (int, float, str)):
                 value = e
             elif isinstance(e, Expression):
                 value = e(**self.arguments)

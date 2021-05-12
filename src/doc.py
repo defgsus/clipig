@@ -54,7 +54,10 @@ def dump_parameters_md(file: Optional[TextIO] = None):
         if is_list:
             type_str = f"list of length {param.length} {type_str}"
 
-        default_str = f"default: **{param.default}**"
+        if param.default is None:
+            default_str = "no default"
+        else:
+            default_str = f"default: **{param.default}**"
 
         print(f"`{type_str}` {default_str}\n", file=file)
 
