@@ -590,12 +590,14 @@ class ImageTraining:
         if mode in ("all", "mix"):
             pass
 
-        elif mode == "best":
+        elif mode in ("best", "worst"):
+            best_indices = torch.argsort(similarities, descending=mode == "best")
             set_false = False
-            for i in torch.argsort(similarities):
+            for i in best_indices:
                 if set_false:
                     feature_weights[i][1] = False
 
+                # catch the best active feature and deactivate all others
                 if feature_weights[i][1]:
                     set_false = True
 

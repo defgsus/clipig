@@ -93,6 +93,14 @@ class FrameTimeParameter(Parameter):
             default,
             doc: Optional[str] = None,
     ):
+        if doc:
+            doc = doc + """
+        
+        - an `int` number defines the time as epoch frame
+        - a `float` number defines the time as ratio between 0.0 and 1.0, 
+          where 1.0 is the final epoch.
+        - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs. 
+        """
         super().__init__(
             types=[int, float],
             default=default,
@@ -382,20 +390,96 @@ PARAMETERS = {
     ),
     "targets.start": FrameTimeParameter(
         default=0.0,
+        doc="""Start frame of the target. The whole target is inactive before this time."""
+    ),
+    "targets.end": FrameTimeParameter(
+        default=1.0,
+        doc="""End frame of the target. The whole target is inactive after this time."""
+    ),
+    "targets.weight": Parameter(
+        float, default=1., expression=True, expression_args=EXPR_ARGS.TARGET_CONSTRAINT,
         doc="""
-        Start frame of the target. 
-        
-        - an `int` number defines the time as epoch frame
-        - a `float` number defines the time as ratio between 0.0 and 1.0, 
-          where 1.0 is the final epoch.
-        - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs. 
+        Weight factor that is multiplied with all the weights of [features](#targetsfeatures)
+        and [constraints](#targetsconstraints). 
         """
     ),
-    "targets.end": FrameTimeParameter(default=1.0),
-    "targets.weight": Parameter(float, default=1., expression=True, expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
-    "targets.batch_size": Parameter(int, default=1),
-    "targets.select": Parameter(str, default="all"),
-    "targets.features": PlaceholderParameter(list, default=list()),
+    "targets.batch_size": Parameter(
+        int, default=1,
+        doc="""
+        The number of image frames to process during one [epoch](#epochs). 
+        
+        In machine learning the batch size is one of the important and magic hyper-parameters.
+        They control how many different training samples are included into one weight update.
+        
+        With CLIPig we are not training a neuronal network or anything complicated, we just
+        adjust pixel colors, so different batch sizes probably do not make as much 
+        difference to the outcome.
+        
+        However, increasing the batch size certainly reduces the overall computation time. 
+        E.g. you can run an experiment for 1000 epochs with batch size 1, or for 100 epochs
+        with a batch size of 10. The latter is much faster. Basically, you can increase 
+        the batch size until memory is exhausted.
+        """
+    ),
+    "targets.select": Parameter(
+        str, default="all",
+        doc="""
+        Selects the way how multiple [features](#targetsfeatures) are handled.
+        
+        - `all`: All feature losses (multiplied with their individual [weights](#targetsfeaturesweight)) 
+          are added together.
+        - `best`: The [similarity](https://en.wikipedia.org/wiki/Cosine_similarity) between the 
+          features of the current image pixels and each desired feature is calculated and the 
+          feature with the highest similarity is chosen to adjust the pixels in it's direction.
+        - `worst`: Similar to the `best` selection mode, the current similarity is calculated
+          and then the worst matching feature is selected. While `best` mode will generally 
+          increase the influence of one or a few features, the `worst` mode will try to increase
+          the influence of all features equally.
+        - 'mix': All individual features are averaged together 
+          (respecting their individual [weights](#targetsfeaturesweight))
+          and the resulting feature is compared with the features of the current image.
+          This actually works quite well!  
+        """
+    ),
+    "targets.features": PlaceholderParameter(
+        list, default=list(),
+        doc="""
+        A list of features to drive the image creation. 
+        
+        The CLIP network is used to convert texts or images
+        into a 512-dimensional vector of [latent variables](https://en.wikipedia.org/wiki/Latent_variable).
+        
+        In the image creation process each [target](#targets) takes a section of the current image, 
+        shows it to CLIP and compares the resulting feature vector with the vector of each defined feature.
+        
+        Through [backpropagation](https://en.wikipedia.org/wiki/Backpropagation) each pixel is then 
+        slightly adjusted in a way that would make the CLIP feature more similar to the defined features.
+        """
+    ),
+    "targets.features.text": Parameter(
+        str, null=True,
+        doc="""
+        A word, sentence or paragraph that describes the desired image contents. 
+        
+        CLIP does understand english language fairly good, also *some* phrases in other languages.  
+        """
+    ),
+    "targets.features.image": Parameter(
+        str, null=True,
+        doc="""
+        Path or URL to an image file 
+        ([supported formats](https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html)).
+        
+        Alternatively to [text](#targetsfeaturestext) an image can be converted into the
+        [target feature](#targetsfeatures). 
+        
+        Currently the image is **resized to 224x224, ignoring the aspect-ratio** 
+        to fit into the CLIP input window.
+        
+        If the path starts with `http://` or `https://` it's treated as an URL and the image 
+        is downloaded and cached in `~/.cache/img/<md5-hash-of-url>`.   
+        """
+    ),
     "targets.features.start": FrameTimeParameter(
         default=0.0,
         doc="Start frame of the specific feature"
@@ -404,10 +488,30 @@ PARAMETERS = {
         default=1.0,
         doc="End frame of the specific feature"
     ),
-    "targets.features.weight": Parameter(float, default=1., expression=True, expression_args=EXPR_ARGS.TARGET_FEATURE),
-    "targets.features.loss": Parameter(str, default="cosine"),
-    "targets.features.text": Parameter(str, null=True),
-    "targets.features.image": Parameter(str, null=True),
+    "targets.features.weight": Parameter(
+        float, default=1., expression=True, expression_args=EXPR_ARGS.TARGET_FEATURE,
+        doc="""
+        A weight parameter to control the influence of a specific feature of a target.
+        """
+    ),
+    "targets.features.loss": Parameter(
+        str, default="cosine",
+        doc="""
+        The [loss function](https://en.wikipedia.org/wiki/Loss_function) used to calculated the 
+        difference (or error) between current and desired [feature](#targetsfeatures).
+        
+        - `cosine`: The loss function is `1 - cosine_similarity(current, target)`.
+          The CLIP network was trained using 
+          [cosine similarity](https://en.wikipedia.org/wiki/Cosine_similarity) 
+          so that is the default setting.
+        - `l1` or `mae`: [Mean absolute error](https://en.wikipedia.org/wiki/Mean_absolute_error)
+          is the mean of the absolute difference of each vector variable.
+        - `l2` or `mse`: [Mean squared error](https://en.wikipedia.org/wiki/Mean_squared_error)
+          is the mean of the squared difference of each vector variable. Compared to 
+          *mean absolute error*, it produces a smaller loss for small differences and 
+          a larger loss for large differences.
+        """
+    ),
 }
 
 

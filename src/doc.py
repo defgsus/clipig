@@ -65,6 +65,11 @@ def dump_parameters_md(file: Optional[TextIO] = None):
             print(strip_doc(param.doc) + "\n", file=file)
 
 
+def prepare_doc_string(doc: str) -> str:
+    # [CLIP](https://github.com/openai/CLIP/)
+    return doc
+
+
 def strip_doc(doc: Optional[str]) -> Optional[str]:
     if not doc:
         return doc
