@@ -492,6 +492,9 @@ PARAMETERS = {
         float, default=1., expression=True, expression_args=EXPR_ARGS.TARGET_FEATURE,
         doc="""
         A weight parameter to control the influence of a specific feature of a target.
+        
+        Note that you can use negative weights as well which translates roughly to:
+        Generate an image that is the least likely to that feature.
         """
     ),
     "targets.features.loss": Parameter(
