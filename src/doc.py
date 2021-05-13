@@ -1,3 +1,4 @@
+import re
 from typing import TextIO, Optional
 
 
@@ -37,7 +38,7 @@ def dump_parameters_md(file: Optional[TextIO] = None):
         if is_section:
             print(f"### {path}\n", file=file)
             if param.doc:
-                print(strip_doc(param.doc) + "\n", file=file)
+                print(prepare_doc_string(param.doc) + "\n", file=file)
             continue
 
         print(f"#### {path}\n", file=file)
@@ -62,11 +63,17 @@ def dump_parameters_md(file: Optional[TextIO] = None):
         print(f"`{type_str}` {default_str}\n", file=file)
 
         if param.doc:
-            print(strip_doc(param.doc) + "\n", file=file)
+            print(prepare_doc_string(param.doc) + "\n", file=file)
 
 
 def prepare_doc_string(doc: str) -> str:
-    # [CLIP](https://github.com/openai/CLIP/)
+    clip_link = "[CLIP](https://github.com/openai/CLIP/)"
+    blur_link = "[gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur)"
+    doc = strip_doc(doc)
+    doc = doc.replace("CLIP ", clip_link + " ")
+    doc = doc.replace("CLIP-", clip_link + "-")
+    doc = doc.replace("CLIP.", clip_link + ".")
+    doc = doc.replace("gaussian blur", blur_link)
     return doc
 
 

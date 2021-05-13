@@ -93,14 +93,14 @@ class FrameTimeParameter(Parameter):
             default,
             doc: Optional[str] = None,
     ):
+        from .doc import strip_doc
         if doc:
-            doc = doc + """
-        
+            doc = strip_doc(doc) + "\n\n" + strip_doc("""
         - an `int` number defines the time as epoch frame
         - a `float` number defines the time as ratio between 0.0 and 1.0, 
           where 1.0 is the final epoch.
         - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs. 
-        """
+        """)
         super().__init__(
             types=[int, float],
             default=default,
@@ -516,6 +516,7 @@ PARAMETERS = {
 
 
 def _add_parameters(prefix: str, classes: dict, expr_args: Tuple[str, ...] = None):
+    from .doc import strip_doc
     def _add_args(p: Parameter) -> Parameter:
         if not expr_args:
             return p
@@ -527,9 +528,16 @@ def _add_parameters(prefix: str, classes: dict, expr_args: Tuple[str, ...] = Non
     for name in sorted(classes.keys()):
         params = classes[name].PARAMS
         if len(params) == 1:
-            PARAMETERS[f"{prefix}.{name}"] = _add_args(next(iter(params.values())))
+            param: Parameter = next(iter(params.values()))
+            doc_main = strip_doc(classes[name].__doc__)
+            if param.doc:
+                param = param.copy()
+                param.doc = strip_doc(doc_main) + "\n\n" + strip_doc(param.doc)
+            PARAMETERS[f"{prefix}.{name}"] = _add_args(param)
         else:
-            PARAMETERS[f"{prefix}.{name}"] = PlaceholderParameter(dict, default=None)
+            PARAMETERS[f"{prefix}.{name}"] = PlaceholderParameter(
+                dict, default=None, doc=classes[name].__doc__
+            )
             for param_name, value in params.items():
                 PARAMETERS[f"{prefix}.{name}.{param_name}"] = _add_args(value)
 
