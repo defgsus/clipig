@@ -26,6 +26,7 @@ from . import constraints as constraint_modules
 from .constraints import get_mean_saturation
 from .clip_singleton import ClipSingleton
 from .strings import value_str
+from .images import load_image
 
 
 torch.autograd.set_detect_anomaly(True)
@@ -164,6 +165,8 @@ class ImageTraining:
                     "transform": t,
                 })
 
+        # --- targets ---
+
         for target_param in self.parameters["targets"]:
             if not target_param["active"]:
                 continue
@@ -178,7 +181,7 @@ class ImageTraining:
                     tokens = clip.tokenize([feature_param["text"]]).to(self.device)
                     feature = self.clip_model.encode_text(tokens)
                 else:
-                    image = PIL.Image.open(feature_param["image"])
+                    image = load_image(feature_param["image"])
                     image = self.clip_preprocess(image)
                     feature = self.clip_model.encode_image(image.unsqueeze(0))
 
@@ -188,6 +191,7 @@ class ImageTraining:
                     feature_param.get("start") or 0.,
                     feature_param.get("end") or 0.,
                 ))
+
             if features:
                 features = torch.cat(features)
                 features = features / features.norm(dim=-1, keepdim=True)
@@ -490,25 +494,64 @@ class ImageTraining:
             feature_weights = self._get_target_feature_weights(target, similarities, context)
 
             target["applied_feature_weights"] = []
-            for i, target_feature in enumerate(target_features):
-                feature_weight, apply_feature = feature_weights[i]
 
-                if not apply_feature:
-                    target["applied_feature_weights"].append(feature_weight)
-                    target["feature_losses"][i].append(0, count=False)
-                    target["feature_similarities"][i].append(float(similarities[i]), count=False)
+            if target["params"]["select"] != "mix":
 
+                for i, target_feature in enumerate(target_features):
+                    feature_weight, apply_feature = feature_weights[i]
+
+                    if not apply_feature:
+                        target["applied_feature_weights"].append(feature_weight)
+                        target["feature_losses"][i].append(0, count=False)
+                        target["feature_similarities"][i].append(float(similarities[i]), count=False)
+
+                    else:
+                        loss_function = target["feature_loss_functions"][i]
+
+                        loss = loss_function(clip_feature, target_feature)
+
+                        loss_sum += feature_weight * loss
+
+                        # track statistics
+                        target["applied_feature_weights"].append(feature_weight)
+                        target["feature_losses"][i].append(float(loss))
+                        target["feature_similarities"][i].append(float(similarities[i]))
+
+            # mix features together
+            else:
+                mixed_features = []
+                mixed_weight = 0.
+                for i, target_feature in enumerate(target_features):
+                    feature_weight, apply_feature = feature_weights[i]
+                    if apply_feature:
+                        mixed_features.append(feature_weight * target_feature.unsqueeze(0))
+                        mixed_weight += abs(feature_weight)
+
+                if mixed_features and mixed_weight:
+                    mixed_features = torch.cat(mixed_features)
+                    mixed_features = mixed_features.sum(0) / mixed_weight
+
+                    # take the loss function of the first feature
+                    loss_function = target["feature_loss_functions"][0]
+                    loss = loss_function(clip_feature, mixed_features.squeeze(0))
+                    loss_sum += loss
+
+                    for i, target_feature in enumerate(target_features):
+                        feature_weight, apply_feature = feature_weights[i]
+                        if not apply_feature:
+                            target["applied_feature_weights"].append(feature_weight)
+                            target["feature_losses"][i].append(0, count=False)
+                            target["feature_similarities"][i].append(float(similarities[i]), count=False)
+                        else:
+                            target["applied_feature_weights"].append(feature_weight)
+                            target["feature_losses"][i].append(float(loss))
+                            target["feature_similarities"][i].append(float(similarities[i]))
                 else:
-                    loss_function = target["feature_loss_functions"][i]
-
-                    loss = loss_function(clip_feature, target_feature)
-
-                    loss_sum += feature_weight * loss
-
-                    # track statistics
-                    target["applied_feature_weights"].append(feature_weight)
-                    target["feature_losses"][i].append(float(loss))
-                    target["feature_similarities"][i].append(float(similarities[i]))
+                    for i, target_feature in enumerate(target_features):
+                        feature_weight, apply_feature = feature_weights[i]
+                        target["applied_feature_weights"].append(feature_weight)
+                        target["feature_losses"][i].append(0, count=False)
+                        target["feature_similarities"][i].append(float(similarities[i]), count=False)
 
             mean_sim = float(similarities.mean())
             context = context.add(sim=mean_sim, similarity=mean_sim)
@@ -544,7 +587,7 @@ class ImageTraining:
             enable = self._check_start_end(*target["feature_start_ends"][i])
             feature_weights.append([weight, enable])
 
-        if mode == "all":
+        if mode in ("all", "mix"):
             pass
 
         elif mode == "best":

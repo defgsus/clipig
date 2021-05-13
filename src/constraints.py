@@ -169,8 +169,8 @@ def get_mean_saturation(image: torch.Tensor) -> torch.Tensor:
 class BlurConstraint(ConstraintBase):
     NAME = "blur"
     PARAMS = {
-        "kernel_size": SequenceParameter(int, length=2, default=[3, 3], expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
-        "sigma": SequenceParameter(float, length=2, null=True, default=None, expression_args=EXPR_ARGS.TARGET_CONSTRAINT),
+        "kernel_size": SequenceParameter(int, length=2, default=[3, 3]),
+        "sigma": SequenceParameter(float, length=2, null=True, default=None),
     }
 
     def __init__(
@@ -184,17 +184,7 @@ class BlurConstraint(ConstraintBase):
         self.sigma = sigma
 
     def forward(self, image: torch.Tensor, context: ExpressionContext):
-        kernel_size = context(self.kernel_size)
-        kernel_size = [
-            max(1, k+1 if k % 2 == 0 else k)
-            for k in kernel_size
-        ]
-        if self.sigma is None:
-            sigma = None
-        else:
-            sigma = [max(0.0001, s) for s in context(self.sigma)]
-
-        blurred_image = VF.gaussian_blur(image, kernel_size, sigma)
+        blurred_image = get_expression_blur(image, self.kernel_size, self.sigma, context)
 
         loss = self.loss_function(
             image.reshape(3, -1),
@@ -209,8 +199,28 @@ class EdgeMeanConstraint(AboveBelowConstraintBase):
     NAME = "edge_mean"
     WEIGHT_FACTOR = 100.
 
+    PARAMS = {
+        **AboveBelowConstraintBase.PARAMS,
+        "kernel_size": SequenceParameter(int, length=2, default=[3, 3]),
+        "sigma": SequenceParameter(float, length=2, null=True, default=None),
+    }
+
+    def __init__(
+            self,
+            above: List[Union[float, Expression]],
+            below: List[Union[float, Expression]],
+            kernel_size: List[Union[int, Expression]],
+            sigma: List[Union[float, Expression]],
+            loss: str,
+    ):
+        super().__init__(above=above, below=below, loss=loss)
+        self.kernel_size = kernel_size
+        self.sigma = sigma
+
     def get_image_value(self, image: torch.Tensor, context: ExpressionContext):
-        return get_edge_mean(image)
+        blurred_image = get_expression_blur(image, self.kernel_size, self.sigma, context)
+        edges = torch.abs(blurred_image - image)
+        return edges.reshape(3, -1).mean(1)
 
 
 # TODO: this one's not working good, rather remove it
@@ -222,8 +232,25 @@ class EdgeMaxConstraint(AboveBelowConstraintBase):
         return get_edge_max(image)
 
 
+def get_expression_blur(
+        image: torch.Tensor,
+        kernel_size: List[int],
+        sigma: Optional[List[float]],
+        context: ExpressionContext,
+) -> torch.Tensor:
+    kernel_size = context(kernel_size)
+    kernel_size = [
+        max(1, k+1 if k % 2 == 0 else k)
+        for k in kernel_size
+    ]
+    if sigma is not None:
+        sigma = [max(0.0001, s) for s in context(sigma)]
+
+    return VF.gaussian_blur(image, kernel_size, sigma)
+
+
 def get_edge_mean(image: torch.Tensor) -> torch.Tensor:
-    blurred_image = VF.gaussian_blur(image, [5, 5], None)
+    blurred_image = VF.gaussian_blur(image, [3, 3], None)
     edges = (blurred_image - image)
     edges = torch.abs(edges)
     return edges.reshape(3, -1).mean(1)
