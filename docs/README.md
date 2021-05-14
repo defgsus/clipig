@@ -158,11 +158,11 @@ This results in a runtime of about 2 minutes on 1500 cuda cores.
 opinionated about the background.
 
 Some [noise](#targetstransformsnoise) is added to each image that is
-shown to [CLIP](https://github.com/openai/CLIP/) and a [[gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur)](#targetsconstraintsblur) is added
+shown to [CLIP](https://github.com/openai/CLIP/) and a [gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur) is added
 to the backpropagation [loss](https://en.wikipedia.org/wiki/Loss_function).  
 
 The noise makes CLIPig kind of *think twice* about the way 
-a pixels is adjusted. The blur used as a training loss tends 
+a pixel is adjusted. The blur used as a training loss tends 
 to blur out the areas where [CLIP](https://github.com/openai/CLIP/) is not interested in, while 
 the points of interest are constantly updated and are not 
 blurred as much. Unfortunately both methods also help to 
@@ -241,7 +241,7 @@ The **contrast** of the image is not as good as the previous
 ones. Generally, [CLIP](https://github.com/openai/CLIP/) does not require a lot of contrast to 
 identify things so it's not automatically increased to *normal*
 levels. The previous images had a higher noise amount which
-actually increased the contrast because areas of low contrast   
+actually increased the contrast because areas of low contrast
 simply disappear in the noise. Unfortunately, the high noise
 deviation only lets things emerge where [CLIP](https://github.com/openai/CLIP/) is very certain
 about. *Curly spoons* do not represent a well-known archetype, 
@@ -340,7 +340,7 @@ Here's a list of all available constraints:
 
 ## Reference
 
-#### verbose
+#### `verbose`
 
 `int` default: **2**
 
@@ -349,7 +349,7 @@ Verbosity level
 - `1` = show progress
 - `2` = show statistics
 
-#### output
+#### `output`
 
 `str` default: **./**
 
@@ -359,7 +359,7 @@ Directory or filename of the output.
 - If a filename, it must end with `.png`. Note that a number is attached to the 
   filename or is automatically increased, if the file already exists.
 
-#### snapshot_interval
+#### `snapshot_interval`
 
 `int, float` default: **20.0**
 
@@ -368,7 +368,7 @@ Interval after which a snapshot of the currently trained image is saved.
 A float number specifies the interval in seconds. An integer number specifies 
 the interval in number-of-epochs.
 
-#### epochs
+#### `epochs`
 
 `int` default: **300**
 
@@ -377,7 +377,7 @@ The number of training steps before stopping the training, not including batch s
 For example, if the number of epochs is `100` and a target has a batch_size of `10`, 
 then `1000` training steps will be performed.
 
-#### start_epoch
+#### `start_epoch`
 
 `int` default: **0**
 
@@ -385,13 +385,13 @@ The number of epochs to skip in the beginning.
 
 This is used by the GUI application to continue training after config changes.
 
-#### resolution
+#### `resolution`
 
 `list of length 2 of int` default: **[224, 224]**
 
 Resolution of the image to create. A single number for square images or two numbers for width and height.
 
-#### model
+#### `model`
 
 `str` default: **ViT-B/32**
 
@@ -399,13 +399,13 @@ The pre-trained [CLIP](https://github.com/openai/CLIP/) model to use. Options ar
 
 The models are downloaded from `openaipublic.azureedge.net` and stored in the current user's cache directory
 
-#### device
+#### `device`
 
 `str` default: **auto**
 
 The device to run the training on. Can be `cpu`, `cuda`, `cuda:1` etc.
 
-#### learnrate
+#### `learnrate`
 
 `float` default: **1.0**
 
@@ -417,7 +417,7 @@ about the same learning rate for each optimizer.
 
 The learnrate value is available to other expressions as `lr` or `learnrate`.
 
-#### learnrate_scale
+#### `learnrate_scale`
 
 `float` default: **1.0**
 
@@ -429,7 +429,7 @@ different experiments.
 
 The learnrate_scale value is available to other expressions as `lrs` or `learnrate_scale`.
 
-#### optimizer
+#### `optimizer`
 
 `str` default: **adam**
 
@@ -439,7 +439,7 @@ The torch optimizer to perform the gradient descent.
 
 Defines the way, the pixels are initialized. Default is random pixels.
 
-#### init.mean
+#### `init.mean`
 
 `list of length 3 of float` default: **[0.5, 0.5, 0.5]**
 
@@ -447,7 +447,7 @@ The mean (brightness) of the initial pixel noise.
 
 Can be a single number for gray or three numbers for RGB.
 
-#### init.std
+#### `init.std`
 
 `list of length 3 of float` default: **[0.1, 0.1, 0.1]**
 
@@ -455,7 +455,7 @@ The standard deviation (randomness) of the initial pixel noise.
 
 A single number will be copied to the RGB values.
 
-#### init.image
+#### `init.image`
 
 `str` no default
 
@@ -463,7 +463,7 @@ A filename of an image to use as starting point.
 
 The image will be scaled to the desired resolution if necessary.
 
-#### init.image_tensor
+#### `init.image_tensor`
 
 `list` no default
 
@@ -490,7 +490,7 @@ e.g. the image [mean](#targetsconstraintsmean),
 [saturation](#targetsconstraintssaturation) 
 or [[gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur)](#targetsconstraintsblur).
 
-#### targets.active
+#### `targets.active`
 
 `bool` default: **True**
 
@@ -500,7 +500,7 @@ This is just a convenience parameter. To turn of a target
 during testing without deleting all the parameters, simply 
 put `active: false` inside.
 
-#### targets.name
+#### `targets.name`
 
 `str` default: **target**
 
@@ -509,7 +509,7 @@ The name of the target.
 Currently this is just displayed in the statistics dump and has no
 functionality.
 
-#### targets.start
+#### `targets.start`
 
 `int, float` default: **0.0**
 
@@ -520,7 +520,7 @@ Start frame of the target. The whole target is inactive before this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.end
+#### `targets.end`
 
 `int, float` default: **1.0**
 
@@ -531,14 +531,14 @@ End frame of the target. The whole target is inactive after this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.weight
+#### `targets.weight`
 
 `float` default: **1.0**
 
 Weight factor that is multiplied with all the weights of [features](#targetsfeatures)
 and [constraints](#targetsconstraints).
 
-#### targets.batch_size
+#### `targets.batch_size`
 
 `int` default: **1**
 
@@ -556,7 +556,7 @@ E.g. you can run an experiment for 1000 epochs with batch size 1, or for 100 epo
 with a batch size of 10. The latter is much faster. Basically, you can increase 
 the batch size until memory is exhausted.
 
-#### targets.select
+#### `targets.select`
 
 `str` default: **all**
 
@@ -589,7 +589,7 @@ shows it to [CLIP](https://github.com/openai/CLIP/) and compares the resulting f
 Through [backpropagation](https://en.wikipedia.org/wiki/Backpropagation) each pixel is then 
 slightly adjusted in a way that would make the [CLIP](https://github.com/openai/CLIP/) feature more similar to the defined features.
 
-#### targets.features.text
+#### `targets.features.text`
 
 `str` no default
 
@@ -597,7 +597,7 @@ A word, sentence or paragraph that describes the desired image contents.
 
 [CLIP](https://github.com/openai/CLIP/) does understand english language fairly good, also *some* phrases in other languages.
 
-#### targets.features.image
+#### `targets.features.image`
 
 `str` no default
 
@@ -613,7 +613,7 @@ to fit into the [CLIP](https://github.com/openai/CLIP/) input window.
 If the path starts with `http://` or `https://` it's treated as an URL and the image 
 is downloaded and cached in `~/.cache/img/<md5-hash-of-url>`.
 
-#### targets.features.start
+#### `targets.features.start`
 
 `int, float` default: **0.0**
 
@@ -624,7 +624,7 @@ Start frame of the specific feature
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.features.end
+#### `targets.features.end`
 
 `int, float` default: **1.0**
 
@@ -635,7 +635,7 @@ End frame of the specific feature
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.features.weight
+#### `targets.features.weight`
 
 `float` default: **1.0**
 
@@ -644,7 +644,7 @@ A weight parameter to control the influence of a specific feature of a target.
 Note that you can use negative weights as well which translates roughly to:
 Generate an image that is the least likely to that feature.
 
-#### targets.features.loss
+#### `targets.features.loss`
 
 `str` default: **cosine**
 
@@ -667,7 +667,7 @@ difference (or error) between current and desired [feature](#targetsfeatures).
 Transforms shape the area of the trained image before showing
 it to [CLIP](https://github.com/openai/CLIP/) for evaluation.
 
-#### targets.transforms.add
+### `targets.transforms.add`
 
 `list of length 3 of float` no default
 
@@ -681,7 +681,7 @@ single number specifies a gray-scale color.
 A [gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur) is applied to the pixels.
 See [torchvision gaussian_blur](https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.functional.gaussian_blur).
 
-#### targets.transforms.blur.kernel_size
+#### `targets.transforms.blur.kernel_size`
 
 `list of length 2 of int` default: **[3, 3]**
 
@@ -689,7 +689,7 @@ The size of the pixel window. Must be an **odd*, **positive** integer.
 
 Two numbers define **width** and **height** separately.
 
-#### targets.transforms.blur.sigma
+#### `targets.transforms.blur.sigma`
 
 `list of length 2 of float` no default
 
@@ -703,14 +703,14 @@ Two numbers define sigma for **x** and **y** separately.
 
 Draws a border on the edge of the image. The resolution is not changed.
 
-#### targets.transforms.border.size
+#### `targets.transforms.border.size`
 
 `list of length 2 of int` default: **[1, 1]**
 
 One integer two specify **width** and **height** at the same time, 
 or two integers to specify them separately.
 
-#### targets.transforms.border.color
+#### `targets.transforms.border.color`
 
 `list of length 3 of float` default: **[0.0, 0.0, 0.0]**
 
@@ -719,7 +719,7 @@ The color of the border as float numbers in the range `[0, 1]`.
 Three numbers for **red**, **green** and **blue** or a single number 
 to specify a gray-scale.
 
-#### targets.transforms.center_crop
+### `targets.transforms.center_crop`
 
 `list of length 2 of int` no default
 
@@ -728,7 +728,7 @@ See [torchvision center_crop](https://pytorch.org/vision/stable/transforms.html#
 
 One integer for square images, two numbers to specify **width** and **height**.
 
-#### targets.transforms.clamp
+### `targets.transforms.clamp`
 
 `list of length 2 of float` no default
 
@@ -749,7 +749,7 @@ A [gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur) is used to detect
 
     edge = amount * abs(image - blur(image))
 
-#### targets.transforms.edge.kernel_size
+#### `targets.transforms.edge.kernel_size`
 
 `list of length 2 of int` default: **[3, 3]**
 
@@ -758,7 +758,7 @@ Must be an **odd*, **positive** integer.
 
 Two numbers define **width** and **height** separately.
 
-#### targets.transforms.edge.sigma
+#### `targets.transforms.edge.sigma`
 
 `list of length 2 of float` no default
 
@@ -768,14 +768,14 @@ If not specified it will default to `0.3 * ((kernel_size - 1) * 0.5 - 1) + 0.8`.
 
 Two numbers define sigma for **x** and **y** separately.
 
-#### targets.transforms.edge.amount
+#### `targets.transforms.edge.amount`
 
 `list of length 3 of float` default: **[1.0, 1.0, 1.0]**
 
 A multiplier for the edge value. Three numbers to specify 
 **red**, **green** and **blue** separately.
 
-#### targets.transforms.mul
+### `targets.transforms.mul`
 
 `list of length 3 of float` no default
 
@@ -784,7 +784,7 @@ Multiplies all pixels by a fixed value.
 Three numbers specify **red**, **green** and **blue** while a 
 single number specifies a gray-scale color.
 
-#### targets.transforms.noise
+### `targets.transforms.noise`
 
 `list of length 3 of float` no default
 
@@ -796,7 +796,7 @@ Specifies the standard deviation of the noise distribution.
 
 One value or three values to specify **red**, **green** and **blue** separately.
 
-#### targets.transforms.random_crop
+### `targets.transforms.random_crop`
 
 `list of length 2 of int` no default
 
@@ -815,19 +815,19 @@ of the specified values.
 The resolution is not changed and areas outside of the image
 are filled with black (zero).
 
-#### targets.transforms.random_rotate.degree
+#### `targets.transforms.random_rotate.degree`
 
 `list of length 2 of float` no default
 
 The minimum and maximum counter-clockwise angle of ration in degrees.
 
-#### targets.transforms.random_rotate.center
+#### `targets.transforms.random_rotate.center`
 
 `list of length 2 of float` default: **[0.5, 0.5]**
 
 The minimum and maximum center of rotation (for x and y) in the range `[0, 1]`.
 
-#### targets.transforms.random_scale
+### `targets.transforms.random_scale`
 
 `list of length 2 of float` no default
 
@@ -839,7 +839,7 @@ Areas outside of the image are filled with black (zero).
 
 Minimum and maximum scale, where `0.5` means half and `2.0` means double.
 
-#### targets.transforms.random_shift
+### `targets.transforms.random_shift`
 
 `list of length 2 of float` no default
 
@@ -855,7 +855,7 @@ A number **between -1 and 1** translates by the fraction of the image resolution
 E.g., `shift: 0 1` would randomly translate the image to every possible position
 given it's resolution.
 
-#### targets.transforms.random_translate
+### `targets.transforms.random_translate`
 
 `list of length 2 of float` no default
 
@@ -871,7 +871,7 @@ For example: `random_translate: a, b`, then horizontal shift is randomly sampled
 the range `-img_width * a < dx < img_width * a` and vertical shift is randomly sampled in the range 
 `-img_height * b < dy < img_height * b`.
 
-#### targets.transforms.repeat
+### `targets.transforms.repeat`
 
 `list of length 2 of int` no default
 
@@ -880,7 +880,7 @@ Repeats the image a number of times in the right and bottom direction.
 One integer two specify **x** and **y** at the same time, 
 or two integers to specify them separately.
 
-#### targets.transforms.resize
+### `targets.transforms.resize`
 
 `list of length 2 of int` no default
 
@@ -895,13 +895,13 @@ Rotates the image.
 The resolution is not changed and areas outside of the image
 are filled with black (zero).
 
-#### targets.transforms.rotate.degree
+#### `targets.transforms.rotate.degree`
 
 `float` no default
 
 The counter-clockwise angle of ration in degrees (`[0, 360]`).
 
-#### targets.transforms.rotate.center
+#### `targets.transforms.rotate.center`
 
 `list of length 2 of float` default: **[0.5, 0.5]**
 
@@ -909,7 +909,7 @@ The center of rotation in the range `[0, 1]`.
 
 Two numbers to specify **x** and **y** separately.
 
-#### targets.transforms.shift
+### `targets.transforms.shift`
 
 `list of length 2 of float` no default
 
@@ -947,7 +947,7 @@ Areas that [CLIP](https://github.com/openai/CLIP/) is *excited about* will be co
 updated and will stand out of the blur, while *unexciting*
 areas get blurred a lot.
 
-#### targets.constraints.blur.kernel_size
+#### `targets.constraints.blur.kernel_size`
 
 `list of length 2 of int` default: **[3, 3]**
 
@@ -955,7 +955,7 @@ The size of the pixel window. Must be an **odd*, **positive** integer.
 
 Two numbers define **width** and **height** separately.
 
-#### targets.constraints.blur.sigma
+#### `targets.constraints.blur.sigma`
 
 `list of length 2 of float` no default
 
@@ -965,13 +965,13 @@ If not specified it will default to `0.3 * ((kernel_size - 1) * 0.5 - 1) + 0.8`.
 
 Two numbers define sigma for **x** and **y** separately.
 
-#### targets.constraints.blur.weight
+#### `targets.constraints.blur.weight`
 
 `float` default: **1.0**
 
 A multiplier for the resulting loss value of the constraint.
 
-#### targets.constraints.blur.start
+#### `targets.constraints.blur.start`
 
 `int, float` default: **0.0**
 
@@ -987,7 +987,7 @@ Start frame of the constraints. The constraint is inactive before this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.constraints.blur.end
+#### `targets.constraints.blur.end`
 
 `int, float` default: **1.0**
 
@@ -1003,7 +1003,7 @@ End frame of the constraints. The constraint is inactive after this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.constraints.blur.loss
+#### `targets.constraints.blur.loss`
 
 `str` default: **l2**
 
@@ -1022,14 +1022,14 @@ image.
 
 Adds a border with a specific size and color to the training loss.
 
-#### targets.constraints.border.size
+#### `targets.constraints.border.size`
 
 `list of length 2 of int` default: **[1, 1]**
 
 One integer two specify **width** and **height** at the same time, 
 or two integers to specify them separately.
 
-#### targets.constraints.border.color
+#### `targets.constraints.border.color`
 
 `list of length 3 of float` default: **[0.0, 0.0, 0.0]**
 
@@ -1038,13 +1038,13 @@ The color of the border as float numbers in the range `[0, 1]`.
 Three numbers for **red**, **green** and **blue** or a single number 
 to specify a gray-scale.
 
-#### targets.constraints.border.weight
+#### `targets.constraints.border.weight`
 
 `float` default: **1.0**
 
 A multiplier for the resulting loss value of the constraint.
 
-#### targets.constraints.border.start
+#### `targets.constraints.border.start`
 
 `int, float` default: **0.0**
 
@@ -1060,7 +1060,7 @@ Start frame of the constraints. The constraint is inactive before this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.constraints.border.end
+#### `targets.constraints.border.end`
 
 `int, float` default: **1.0**
 
@@ -1076,7 +1076,7 @@ End frame of the constraints. The constraint is inactive after this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.constraints.border.loss
+#### `targets.constraints.border.loss`
 
 `str` default: **l2**
 
@@ -1102,27 +1102,27 @@ above and below the pixel mean values. The contrast
 value is then the difference between the mean of the lower
 and the mean of the higher pixels.
 
-#### targets.constraints.contrast.above
+#### `targets.constraints.contrast.above`
 
 `list of length 3 of float` no default
 
 If specified, the training loss increases if the current value is
 below the `above` value.
 
-#### targets.constraints.contrast.below
+#### `targets.constraints.contrast.below`
 
 `list of length 3 of float` no default
 
 If specified, the training loss increases if the current value is
 above the `below` value.
 
-#### targets.constraints.contrast.weight
+#### `targets.constraints.contrast.weight`
 
 `float` default: **1.0**
 
 A multiplier for the resulting loss value of the constraint.
 
-#### targets.constraints.contrast.start
+#### `targets.constraints.contrast.start`
 
 `int, float` default: **0.0**
 
@@ -1138,7 +1138,7 @@ Start frame of the constraints. The constraint is inactive before this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.constraints.contrast.end
+#### `targets.constraints.contrast.end`
 
 `int, float` default: **1.0**
 
@@ -1154,7 +1154,7 @@ End frame of the constraints. The constraint is inactive after this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.constraints.contrast.loss
+#### `targets.constraints.contrast.loss`
 
 `str` default: **l2**
 
@@ -1178,27 +1178,27 @@ A [gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur) is used to detect
 
     edge = amount * abs(image - blur(image))
 
-#### targets.constraints.edge_mean.above
+#### `targets.constraints.edge_mean.above`
 
 `list of length 3 of float` no default
 
 If specified, the training loss increases if the current value is
 below the `above` value.
 
-#### targets.constraints.edge_mean.below
+#### `targets.constraints.edge_mean.below`
 
 `list of length 3 of float` no default
 
 If specified, the training loss increases if the current value is
 above the `below` value.
 
-#### targets.constraints.edge_mean.weight
+#### `targets.constraints.edge_mean.weight`
 
 `float` default: **1.0**
 
 A multiplier for the resulting loss value of the constraint.
 
-#### targets.constraints.edge_mean.start
+#### `targets.constraints.edge_mean.start`
 
 `int, float` default: **0.0**
 
@@ -1214,7 +1214,7 @@ Start frame of the constraints. The constraint is inactive before this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.constraints.edge_mean.end
+#### `targets.constraints.edge_mean.end`
 
 `int, float` default: **1.0**
 
@@ -1230,7 +1230,7 @@ End frame of the constraints. The constraint is inactive after this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.constraints.edge_mean.loss
+#### `targets.constraints.edge_mean.loss`
 
 `str` default: **l2**
 
@@ -1245,7 +1245,7 @@ image.
   *mean absolute error*, it produces a smaller loss for small differences and 
   a larger loss for large differences.
 
-#### targets.constraints.edge_mean.kernel_size
+#### `targets.constraints.edge_mean.kernel_size`
 
 `list of length 2 of int` default: **[3, 3]**
 
@@ -1254,7 +1254,7 @@ Must be an **odd*, **positive** integer.
 
 Two numbers define **width** and **height** separately.
 
-#### targets.constraints.edge_mean.sigma
+#### `targets.constraints.edge_mean.sigma`
 
 `list of length 2 of float` no default
 
@@ -1268,27 +1268,27 @@ Two numbers define sigma for **x** and **y** separately.
 
 Pushes the image color mean above or below a threshold value
 
-#### targets.constraints.mean.above
+#### `targets.constraints.mean.above`
 
 `list of length 3 of float` no default
 
 If specified, the training loss increases if the current value is
 below the `above` value.
 
-#### targets.constraints.mean.below
+#### `targets.constraints.mean.below`
 
 `list of length 3 of float` no default
 
 If specified, the training loss increases if the current value is
 above the `below` value.
 
-#### targets.constraints.mean.weight
+#### `targets.constraints.mean.weight`
 
 `float` default: **1.0**
 
 A multiplier for the resulting loss value of the constraint.
 
-#### targets.constraints.mean.start
+#### `targets.constraints.mean.start`
 
 `int, float` default: **0.0**
 
@@ -1304,7 +1304,7 @@ Start frame of the constraints. The constraint is inactive before this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.constraints.mean.end
+#### `targets.constraints.mean.end`
 
 `int, float` default: **1.0**
 
@@ -1320,7 +1320,7 @@ End frame of the constraints. The constraint is inactive after this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.constraints.mean.loss
+#### `targets.constraints.mean.loss`
 
 `str` default: **l2**
 
@@ -1340,7 +1340,7 @@ image.
 Adds the difference between the current image and
 a noisy image to the training loss.
 
-#### targets.constraints.noise.std
+#### `targets.constraints.noise.std`
 
 `list of length 3 of float` no default
 
@@ -1348,13 +1348,13 @@ Specifies the standard deviation of the noise distribution.
 
 One value or three values to specify **red**, **green** and **blue** separately.
 
-#### targets.constraints.noise.weight
+#### `targets.constraints.noise.weight`
 
 `float` default: **1.0**
 
 A multiplier for the resulting loss value of the constraint.
 
-#### targets.constraints.noise.start
+#### `targets.constraints.noise.start`
 
 `int, float` default: **0.0**
 
@@ -1370,7 +1370,7 @@ Start frame of the constraints. The constraint is inactive before this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.constraints.noise.end
+#### `targets.constraints.noise.end`
 
 `int, float` default: **1.0**
 
@@ -1386,7 +1386,7 @@ End frame of the constraints. The constraint is inactive after this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.constraints.noise.loss
+#### `targets.constraints.noise.loss`
 
 `str` default: **l2**
 
@@ -1409,7 +1409,7 @@ The normalized version is found by moving the image colors
 into the range of [min](#targetsconstraintsnormalizemin)
 and [max](#targetsconstraintsnormalizemax).
 
-#### targets.constraints.normalize.min
+#### `targets.constraints.normalize.min`
 
 `list of length 3 of float` default: **[0.0, 0.0, 0.0]**
 
@@ -1417,7 +1417,7 @@ The desired lowest value in the image.
 
 One color for gray-scale, three colors for **red**, **green** and **blue**.
 
-#### targets.constraints.normalize.max
+#### `targets.constraints.normalize.max`
 
 `list of length 3 of float` default: **[1.0, 1.0, 1.0]**
 
@@ -1425,13 +1425,13 @@ The desired highest value in the image.
 
 One color for gray-scale, three colors for **red**, **green** and **blue**.
 
-#### targets.constraints.normalize.weight
+#### `targets.constraints.normalize.weight`
 
 `float` default: **1.0**
 
 A multiplier for the resulting loss value of the constraint.
 
-#### targets.constraints.normalize.start
+#### `targets.constraints.normalize.start`
 
 `int, float` default: **0.0**
 
@@ -1447,7 +1447,7 @@ Start frame of the constraints. The constraint is inactive before this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.constraints.normalize.end
+#### `targets.constraints.normalize.end`
 
 `int, float` default: **1.0**
 
@@ -1463,7 +1463,7 @@ End frame of the constraints. The constraint is inactive after this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.constraints.normalize.loss
+#### `targets.constraints.normalize.loss`
 
 `str` default: **l2**
 
@@ -1485,27 +1485,27 @@ Pushes the saturation above or below a threshold value.
 The saturation is currently calculated as the difference of each
 color channel to the mean of all channels.
 
-#### targets.constraints.saturation.above
+#### `targets.constraints.saturation.above`
 
 `list of length 3 of float` no default
 
 If specified, the training loss increases if the current value is
 below the `above` value.
 
-#### targets.constraints.saturation.below
+#### `targets.constraints.saturation.below`
 
 `list of length 3 of float` no default
 
 If specified, the training loss increases if the current value is
 above the `below` value.
 
-#### targets.constraints.saturation.weight
+#### `targets.constraints.saturation.weight`
 
 `float` default: **1.0**
 
 A multiplier for the resulting loss value of the constraint.
 
-#### targets.constraints.saturation.start
+#### `targets.constraints.saturation.start`
 
 `int, float` default: **0.0**
 
@@ -1521,7 +1521,7 @@ Start frame of the constraints. The constraint is inactive before this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.constraints.saturation.end
+#### `targets.constraints.saturation.end`
 
 `int, float` default: **1.0**
 
@@ -1537,7 +1537,7 @@ End frame of the constraints. The constraint is inactive after this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.constraints.saturation.loss
+#### `targets.constraints.saturation.loss`
 
 `str` default: **l2**
 
@@ -1557,27 +1557,27 @@ image.
 Pushes the [standard deviation](https://en.wikipedia.org/wiki/Standard_deviation)
 above or below a threshold value.
 
-#### targets.constraints.std.above
+#### `targets.constraints.std.above`
 
 `list of length 3 of float` no default
 
 If specified, the training loss increases if the current value is
 below the `above` value.
 
-#### targets.constraints.std.below
+#### `targets.constraints.std.below`
 
 `list of length 3 of float` no default
 
 If specified, the training loss increases if the current value is
 above the `below` value.
 
-#### targets.constraints.std.weight
+#### `targets.constraints.std.weight`
 
 `float` default: **1.0**
 
 A multiplier for the resulting loss value of the constraint.
 
-#### targets.constraints.std.start
+#### `targets.constraints.std.start`
 
 `int, float` default: **0.0**
 
@@ -1593,7 +1593,7 @@ Start frame of the constraints. The constraint is inactive before this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.constraints.std.end
+#### `targets.constraints.std.end`
 
 `int, float` default: **1.0**
 
@@ -1609,7 +1609,7 @@ End frame of the constraints. The constraint is inactive after this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### targets.constraints.std.loss
+#### `targets.constraints.std.loss`
 
 `str` default: **l2**
 
@@ -1633,7 +1633,7 @@ backpropagation stage.
 All [transforms](#transforms) that do not change the resolution are 
 available as post processing effects.
 
-#### postproc.active
+#### `postproc.active`
 
 `bool` default: **True**
 
@@ -1643,7 +1643,7 @@ This is just a convenience parameter. To turn of a stage
 during testing without deleting all the parameters, simply 
 put `active: false` inside.
 
-#### postproc.start
+#### `postproc.start`
 
 `int, float` default: **0.0**
 
@@ -1654,7 +1654,7 @@ Start frame for the post-processing stage. The stage is inactive before this tim
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### postproc.end
+#### `postproc.end`
 
 `int, float` default: **1.0**
 
@@ -1665,7 +1665,7 @@ End frame for the post-processing stage. The stage is inactive after this time.
   where 1.0 is the final epoch.
 - `percent` (e.g. `23.5%`) defines the time as percentage of the number of epochs.
 
-#### postproc.add
+#### `postproc.add`
 
 `list of length 3 of float` no default
 
@@ -1679,7 +1679,7 @@ single number specifies a gray-scale color.
 A [gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur) is applied to the pixels.
 See [torchvision gaussian_blur](https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.functional.gaussian_blur).
 
-#### postproc.blur.kernel_size
+#### `postproc.blur.kernel_size`
 
 `list of length 2 of int` default: **[3, 3]**
 
@@ -1687,7 +1687,7 @@ The size of the pixel window. Must be an **odd*, **positive** integer.
 
 Two numbers define **width** and **height** separately.
 
-#### postproc.blur.sigma
+#### `postproc.blur.sigma`
 
 `list of length 2 of float` no default
 
@@ -1701,14 +1701,14 @@ Two numbers define sigma for **x** and **y** separately.
 
 Draws a border on the edge of the image. The resolution is not changed.
 
-#### postproc.border.size
+#### `postproc.border.size`
 
 `list of length 2 of int` default: **[1, 1]**
 
 One integer two specify **width** and **height** at the same time, 
 or two integers to specify them separately.
 
-#### postproc.border.color
+#### `postproc.border.color`
 
 `list of length 3 of float` default: **[0.0, 0.0, 0.0]**
 
@@ -1717,7 +1717,7 @@ The color of the border as float numbers in the range `[0, 1]`.
 Three numbers for **red**, **green** and **blue** or a single number 
 to specify a gray-scale.
 
-#### postproc.clamp
+#### `postproc.clamp`
 
 `list of length 2 of float` no default
 
@@ -1738,7 +1738,7 @@ A [gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur) is used to detect
 
     edge = amount * abs(image - blur(image))
 
-#### postproc.edge.kernel_size
+#### `postproc.edge.kernel_size`
 
 `list of length 2 of int` default: **[3, 3]**
 
@@ -1747,7 +1747,7 @@ Must be an **odd*, **positive** integer.
 
 Two numbers define **width** and **height** separately.
 
-#### postproc.edge.sigma
+#### `postproc.edge.sigma`
 
 `list of length 2 of float` no default
 
@@ -1757,14 +1757,14 @@ If not specified it will default to `0.3 * ((kernel_size - 1) * 0.5 - 1) + 0.8`.
 
 Two numbers define sigma for **x** and **y** separately.
 
-#### postproc.edge.amount
+#### `postproc.edge.amount`
 
 `list of length 3 of float` default: **[1.0, 1.0, 1.0]**
 
 A multiplier for the edge value. Three numbers to specify 
 **red**, **green** and **blue** separately.
 
-#### postproc.mul
+#### `postproc.mul`
 
 `list of length 3 of float` no default
 
@@ -1773,7 +1773,7 @@ Multiplies all pixels by a fixed value.
 Three numbers specify **red**, **green** and **blue** while a 
 single number specifies a gray-scale color.
 
-#### postproc.noise
+#### `postproc.noise`
 
 `list of length 3 of float` no default
 
@@ -1795,19 +1795,19 @@ of the specified values.
 The resolution is not changed and areas outside of the image
 are filled with black (zero).
 
-#### postproc.random_rotate.degree
+#### `postproc.random_rotate.degree`
 
 `list of length 2 of float` no default
 
 The minimum and maximum counter-clockwise angle of ration in degrees.
 
-#### postproc.random_rotate.center
+#### `postproc.random_rotate.center`
 
 `list of length 2 of float` default: **[0.5, 0.5]**
 
 The minimum and maximum center of rotation (for x and y) in the range `[0, 1]`.
 
-#### postproc.random_scale
+#### `postproc.random_scale`
 
 `list of length 2 of float` no default
 
@@ -1819,7 +1819,7 @@ Areas outside of the image are filled with black (zero).
 
 Minimum and maximum scale, where `0.5` means half and `2.0` means double.
 
-#### postproc.random_shift
+#### `postproc.random_shift`
 
 `list of length 2 of float` no default
 
@@ -1835,7 +1835,7 @@ A number **between -1 and 1** translates by the fraction of the image resolution
 E.g., `shift: 0 1` would randomly translate the image to every possible position
 given it's resolution.
 
-#### postproc.random_translate
+#### `postproc.random_translate`
 
 `list of length 2 of float` no default
 
@@ -1858,13 +1858,13 @@ Rotates the image.
 The resolution is not changed and areas outside of the image
 are filled with black (zero).
 
-#### postproc.rotate.degree
+#### `postproc.rotate.degree`
 
 `float` no default
 
 The counter-clockwise angle of ration in degrees (`[0, 360]`).
 
-#### postproc.rotate.center
+#### `postproc.rotate.center`
 
 `list of length 2 of float` default: **[0.5, 0.5]**
 
@@ -1872,7 +1872,7 @@ The center of rotation in the range `[0, 1]`.
 
 Two numbers to specify **x** and **y** separately.
 
-#### postproc.shift
+#### `postproc.shift`
 
 `list of length 2 of float` no default
 

@@ -158,11 +158,11 @@ This results in a runtime of about 2 minutes on 1500 cuda cores.
 opinionated about the background.
 
 Some [noise](#targetstransformsnoise) is added to each image that is
-shown to CLIP and a [gaussian blur](#targetsconstraintsblur) is added
+shown to CLIP and a gaussian blur is added
 to the backpropagation [loss](https://en.wikipedia.org/wiki/Loss_function).  
 
 The noise makes CLIPig kind of *think twice* about the way 
-a pixels is adjusted. The blur used as a training loss tends 
+a pixel is adjusted. The blur used as a training loss tends 
 to blur out the areas where CLIP is not interested in, while 
 the points of interest are constantly updated and are not 
 blurred as much. Unfortunately both methods also help to 
@@ -241,7 +241,7 @@ The **contrast** of the image is not as good as the previous
 ones. Generally, CLIP does not require a lot of contrast to 
 identify things so it's not automatically increased to *normal*
 levels. The previous images had a higher noise amount which
-actually increased the contrast because areas of low contrast   
+actually increased the contrast because areas of low contrast
 simply disappear in the noise. Unfortunately, the high noise
 deviation only lets things emerge where CLIP is very certain
 about. *Curly spoons* do not represent a well-known archetype, 

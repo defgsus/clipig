@@ -37,6 +37,13 @@ def dump_parameters_md(file: Optional[TextIO] = None):
 
         is_list = isinstance(param, SequenceParameter)
         is_section = isinstance(param, PlaceholderParameter)
+        is_single_param = not any(filter(
+            lambda p: p.startswith(path + "."),
+            PARAMETERS.keys()
+        )) and (
+            path.startswith("targets.transforms.") and len(path.split(".")) == 3
+        )
+
 
         if is_section:
             print(f"### `{path}`\n", file=file)
@@ -46,7 +53,10 @@ def dump_parameters_md(file: Optional[TextIO] = None):
                 warnings.warn(f"No documentation of '{path}'")
             continue
 
-        print(f"#### {path}\n", file=file)
+        if is_single_param:
+            print(f"### `{path}`\n", file=file)
+        else:
+            print(f"#### `{path}`\n", file=file)
 
         if len(param.types) == 1:
             type_str = param.types[0].__name__
@@ -119,7 +129,7 @@ def render_documentation():
 
         template = template.replace("{{%s}}" % key, text)
 
-    (path / "documentation.md").write_text(template)
+    (path / "README.md").write_text(template)
 
 
 def dump_constraints(file: Optional[TextIO] = None):
