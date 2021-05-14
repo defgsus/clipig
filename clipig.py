@@ -12,9 +12,8 @@ from src.training import ImageTraining
 if __name__ == "__main__":
 
     if len(sys.argv) > 1 and sys.argv[1] == "render-documentation":
-        from src.doc import dump_parameters_md
-        with open("parameters.md", "w") as file:
-            dump_parameters_md(file=file)
+        from src.doc import render_documentation
+        render_documentation()
         exit()
 
     parameters = parse_arguments()
@@ -43,11 +42,17 @@ if __name__ == "__main__":
 
     filename = change_extension(parameters["output"], "yaml")
     if not pathlib.Path(filename).exists():
-        header = f"""auto-generated at {datetime.datetime.now().replace(microsecond=0)}
-epochs: {trainer.epoch+1} / {parameters['epochs']}
-runtime: {run_time:.2f} seconds ({epoch_time:.3f}/epoch)"""
+        header = f"""
+        auto-generated at {datetime.datetime.now().replace(microsecond=0)}
+        epochs: {trainer.epoch+1} / {parameters['epochs']}
+        runtime: {run_time:.2f} seconds ({epoch_time:.3f}/epoch)
+        """
 
-        header = "\n".join(f"# {line}" for line in header.splitlines())
+        header = "\n".join(
+            f"# {line.lstrip()}"
+            for line in header.splitlines()
+            if line.strip()
+        )
 
         trainer.log(2, f"exporting config {filename}")
         make_filename_dir(filename)

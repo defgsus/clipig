@@ -366,7 +366,9 @@ PARAMETERS = {
         
         It's possible to add additional [constraints](#targetsconstraints)
         which alter image creation without using CLIP, 
-        e.g. the image mean, saturation or gaussian blur.
+        e.g. the image [mean](#targetsconstraintsmean), 
+        [saturation](#targetsconstraintssaturation) 
+        or [gaussian blur](#targetsconstraintsblur).
         """
     ),
     "targets.active": Parameter(
@@ -411,7 +413,7 @@ PARAMETERS = {
         In machine learning the batch size is one of the important and magic hyper-parameters.
         They control how many different training samples are included into one weight update.
         
-        With CLIPig we are not training a neuronal network or anything complicated, we just
+        With CLIPig we are not training a neural network or anything complicated, we just
         adjust pixel colors, so different batch sizes probably do not make as much 
         difference to the outcome.
         
@@ -548,10 +550,24 @@ def _add_parameters(prefix: str, classes: dict, expr_args: Tuple[str, ...] = Non
 def _add_class_parameters():
     from .transforms import transformations
     from .constraints import constraints
-    PARAMETERS["targets.transforms"] = PlaceholderParameter(list, default=list())
+    PARAMETERS["targets.transforms"] = PlaceholderParameter(
+        list, default=list(),
+        doc="""
+        Transforms shape the area of the trained image before showing
+        it to CLIP for evaluation. 
+        """
+    )
     _add_parameters("targets.transforms", transformations, expr_args=EXPR_ARGS.TARGET_TRANSFORM)
 
-    PARAMETERS["targets.constraints"] = PlaceholderParameter(list, default=list())
+    PARAMETERS["targets.constraints"] = PlaceholderParameter(
+        list, default=list(),
+        doc="""
+        Constraints do influence the trained image without using CLIP.
+        
+        They only affect the pixels that are processed by
+        the [transforms](#transforms) of the [target](#targets). 
+        """
+    )
     _add_parameters("targets.constraints", constraints, expr_args=EXPR_ARGS.TARGET_CONSTRAINT)
 
     postprocs = {
@@ -560,10 +576,35 @@ def _add_class_parameters():
         if not klass.IS_RESIZE
     }
     PARAMETERS.update({
-        "postproc": PlaceholderParameter(list, default=list()),
-        "postproc.active": Parameter(bool, default=True),
-        "postproc.start": FrameTimeParameter(default=0.0),
-        "postproc.end": FrameTimeParameter(default=1.0),
+        "postproc": PlaceholderParameter(
+            list, default=list(),
+            doc="""
+            A list of post-processing effects that are applied every epoch and change
+            the image pixels directly without interfering with the
+            backpropagation stage. 
+            
+            All [transforms](#transforms) that do not change the resolution are 
+            available as post processing effects.
+            """
+        ),
+        "postproc.active": Parameter(
+            bool, default=True,
+            doc="""
+            A boolean to turn of the post-processing stage during development. 
+        
+            This is just a convenience parameter. To turn of a stage
+            during testing without deleting all the parameters, simply 
+            put `active: false` inside.
+            """
+        ),
+        "postproc.start": FrameTimeParameter(
+            default=0.0,
+            doc="""Start frame for the post-processing stage. The stage is inactive before this time."""
+        ),
+        "postproc.end": FrameTimeParameter(
+            default=1.0,
+            doc="""End frame for the post-processing stage. The stage is inactive after this time."""
+        ),
     })
     _add_parameters("postproc", postprocs, expr_args=EXPR_ARGS.DEFAULT)
 

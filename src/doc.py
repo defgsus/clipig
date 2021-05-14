@@ -1,4 +1,7 @@
 import re
+from io import StringIO
+from pathlib import Path
+import warnings
 from typing import TextIO, Optional
 
 
@@ -36,9 +39,11 @@ def dump_parameters_md(file: Optional[TextIO] = None):
         is_section = isinstance(param, PlaceholderParameter)
 
         if is_section:
-            print(f"### {path}\n", file=file)
+            print(f"### `{path}`\n", file=file)
             if param.doc:
                 print(prepare_doc_string(param.doc) + "\n", file=file)
+            else:
+                warnings.warn(f"No documentation of '{path}'")
             continue
 
         print(f"#### {path}\n", file=file)
@@ -64,6 +69,8 @@ def dump_parameters_md(file: Optional[TextIO] = None):
 
         if param.doc:
             print(prepare_doc_string(param.doc) + "\n", file=file)
+        else:
+            warnings.warn(f"No documentation of '{path}'")
 
 
 def prepare_doc_string(doc: str) -> str:
@@ -93,3 +100,47 @@ def strip_doc(doc: Optional[str]) -> Optional[str]:
     )
 
     return doc.strip()
+
+
+def render_documentation():
+    path = Path(__file__).resolve().parent.parent / "docs"
+    template = (path / "_doc_template.md").read_text()
+    template = prepare_doc_string(template)
+
+    for key, render_func in (
+            ("transforms", dump_transforms),
+            ("constraints", dump_constraints),
+            ("reference", dump_parameters_md),
+    ):
+        file = StringIO()
+        render_func(file=file)
+        file.seek(0)
+        text = file.read()
+
+        template = template.replace("{{%s}}" % key, text)
+
+    (path / "documentation.md").write_text(template)
+
+
+def dump_constraints(file: Optional[TextIO] = None):
+    from .constraints import constraints
+    for name in sorted(constraints):
+        klass = constraints[name]
+
+        text = klass.__doc__.strip()
+        if "\n\n" in text:
+            text = text[:text.index("\n\n")]
+
+        print(f"- [{name}](#targetsconstraints{name}): {text}", file=file)
+
+
+def dump_transforms(file: Optional[TextIO] = None):
+    from .transforms import transformations
+    for name in sorted(transformations):
+        klass = transformations[name]
+
+        text = klass.__doc__.strip()
+        if "\n\n" in text:
+            text = text[:text.index("\n\n")]
+
+        print(f"- [{name}](#targetstransforms{name}): {text}", file=file)
