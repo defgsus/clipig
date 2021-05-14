@@ -435,6 +435,11 @@ The learnrate_scale value is available to other expressions as `lrs` or `learnra
 
 The torch optimizer to perform the gradient descent.
 
+
+
+---
+
+
 ### `init`
 
 Defines the way, the pixels are initialized. Default is random pixels.
@@ -475,6 +480,11 @@ namely `[C, H, W]`, where `C` is number of colors (3),
 `H` is height and `W` is width.
 
 This is used by the GUI application to continue training after config changes.
+
+
+
+---
+
 
 ### `targets`
 
@@ -576,6 +586,11 @@ Selects the way how multiple [features](#targetsfeatures) are handled.
   and the resulting feature is compared with the features of the current image.
   This actually works quite well!
 
+
+
+---
+
+
 ### `targets.features`
 
 A list of features to drive the image creation. 
@@ -661,6 +676,11 @@ difference (or error) between current and desired [feature](#targetsfeatures).
   is the mean of the squared difference of each vector variable. Compared to 
   *mean absolute error*, it produces a smaller loss for small differences and 
   a larger loss for large differences.
+
+
+
+---
+
 
 ### `targets.transforms`
 
@@ -925,6 +945,11 @@ corner.
 
 A single number specifies translation on both **x** and **y** axes while
 two numbers specify them separately.
+
+
+
+---
+
 
 ### `targets.constraints`
 
@@ -1624,6 +1649,11 @@ image.
   *mean absolute error*, it produces a smaller loss for small differences and 
   a larger loss for large differences.
 
+
+
+---
+
+
 ### `postproc`
 
 A list of post-processing effects that are applied every epoch and change
@@ -1674,6 +1704,11 @@ Adds a fixed value to all pixels.
 Three numbers specify **red**, **green** and **blue** while a 
 single number specifies a gray-scale color.
 
+
+
+---
+
+
 ### `postproc.blur`
 
 A [gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur) is applied to the pixels.
@@ -1696,6 +1731,11 @@ Gaussian kernel standard deviation. The larger, the more *blurry*.
 If not specified it will default to `0.3 * ((kernel_size - 1) * 0.5 - 1) + 0.8`.
 
 Two numbers define sigma for **x** and **y** separately.
+
+
+
+---
+
 
 ### `postproc.border`
 
@@ -1728,6 +1768,11 @@ second is the maximum allowed value.
 
 An image displayed on screen or converted to a file does only include
 values in the range of `[0, 1]`.
+
+
+
+---
+
 
 ### `postproc.edge`
 
@@ -1784,6 +1829,11 @@ The noise has a scalable normal distribution around zero.
 Specifies the standard deviation of the noise distribution. 
 
 One value or three values to specify **red**, **green** and **blue** separately.
+
+
+
+---
+
 
 ### `postproc.random_rotate`
 
@@ -1850,6 +1900,11 @@ Maximum absolute fraction for horizontal and vertical translations.
 For example: `random_translate: a, b`, then horizontal shift is randomly sampled in 
 the range `-img_width * a < dx < img_width * a` and vertical shift is randomly sampled in the range 
 `-img_height * b < dy < img_height * b`.
+
+
+
+---
+
 
 ### `postproc.rotate`
 

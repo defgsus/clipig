@@ -43,7 +43,10 @@ def dump_parameters_md(file: Optional[TextIO] = None):
         )) and (
             path.startswith("targets.transforms.") and len(path.split(".")) == 3
         )
+        is_new_section = is_section and len(path.split(".")) <= 2
 
+        if is_new_section:
+            print("\n\n---\n\n", file=file)
 
         if is_section:
             print(f"### `{path}`\n", file=file)
