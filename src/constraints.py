@@ -334,11 +334,6 @@ class ContrastConstraint(AboveBelowConstraintBase):
     NAME = "contrast"
     # WEIGHT_FACTOR = 100.
 
-    PARAMS = {
-        "above": SequenceParameter(float, length=3, default=None),
-        "below": SequenceParameter(float, length=3, default=None),
-    }
-
     def get_image_value(self, image: torch.Tensor, context: ExpressionContext):
         mean = image.mean(-1).mean(-1)
         mean = mean.reshape(3, 1, 1)
@@ -366,3 +361,27 @@ class ContrastConstraint(AboveBelowConstraintBase):
 
         spread = high_mean - low_mean
         return spread
+
+
+class NoiseConstraint(ConstraintBase):
+    NAME = "noise"
+    # WEIGHT_FACTOR = 100.
+
+    PARAMS = {
+        "std": SequenceParameter(float, length=3, default=[.1, .1, .1]),
+    }
+
+    def __init__(
+            self,
+            std: List[Union[Float, Expression]],
+            loss: str,
+    ):
+        super().__init__(loss=loss)
+        self.std = std
+
+    def forward(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+        std = torch.Tensor(context(self.std)).to(image.device).reshape(3, 1)
+        image = image.reshape(3, -1)
+        noisy_image = image + std * torch.rand(*image.shape).to(image.device)
+
+        return self.loss_function(image, noisy_image, context)
