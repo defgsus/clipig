@@ -364,8 +364,8 @@ class RandomRotate(TransformBase):
     NAME = "random_rotate"
     IS_RANDOM = True
     PARAMS = {
-        "degree": Parameter(
-            float, default=None,
+        "degree": SequenceParameter(
+            float, length=2, default=None,
             doc="""
             The minimum and maximum counter-clockwise angle of ration in degrees.
             """
