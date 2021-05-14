@@ -40,10 +40,35 @@ class ConstraintBase(torch.nn.Module):
         if cls.PARAMS is not None:
             cls.PARAMS = {
                 **cls.PARAMS,
-                "weight": Parameter(float, default=1.),
-                "start": FrameTimeParameter(default=0.),
-                "end": FrameTimeParameter(default=1.),
-                "loss": Parameter(str, default="l2"),
+                "weight": Parameter(
+                    float, default=1.,
+                    doc="""
+                    A multiplier for the resulting loss value of the constraint.  
+                    """
+                ),
+                "start": FrameTimeParameter(
+                    default=0.,
+                    doc="Start frame of the constraints. The constraint is inactive before this time."
+                ),
+                "end": FrameTimeParameter(
+                    default=1.,
+                    doc="End frame of the constraints. The constraint is inactive after this time."
+                ),
+                "loss": Parameter(
+                    str, default="l2",
+                    doc="""
+                    The [loss function](https://en.wikipedia.org/wiki/Loss_function) 
+                    used to calculate the difference (or error) between current and desired 
+                    image.
+                    
+                    - `l1` or `mae`: [Mean absolute error](https://en.wikipedia.org/wiki/Mean_absolute_error)
+                      is the mean of the absolute difference of each vector variable.
+                    - `l2` or `mse`: [Mean squared error](https://en.wikipedia.org/wiki/Mean_squared_error)
+                      is the mean of the squared difference of each vector variable. Compared to 
+                      *mean absolute error*, it produces a smaller loss for small differences and 
+                      a larger loss for large differences.
+                    """
+                ),
             }
 
     def __init__(self, loss: Union[str, Expression]):
@@ -98,8 +123,20 @@ class AboveBelowConstraintBase(ConstraintBase):
     WEIGHT_FACTOR = 1.
 
     PARAMS = {
-        "above": SequenceParameter(float, length=3, default=None),
-        "below": SequenceParameter(float, length=3, default=None),
+        "above": SequenceParameter(
+            float, length=3, default=None,
+            doc="""
+            If specified, the training loss increases if the current value is
+            below the `above` value.  
+            """
+        ),
+        "below": SequenceParameter(
+            float, length=3, default=None,
+            doc="""
+            If specified, the training loss increases if the current value is
+            above the `below` value.  
+            """
+        ),
     }
 
     def __init__(
@@ -135,6 +172,9 @@ class AboveBelowConstraintBase(ConstraintBase):
 
 
 class MeanConstraint(AboveBelowConstraintBase):
+    """
+    Pushes the image color mean above or below a threshold value
+    """
     NAME = "mean"
     WEIGHT_FACTOR = 100.
 
@@ -144,6 +184,10 @@ class MeanConstraint(AboveBelowConstraintBase):
 
 
 class StdConstraint(AboveBelowConstraintBase):
+    """
+    Pushes the [standard deviation](https://en.wikipedia.org/wiki/Standard_deviation)
+    above or below a threshold value.
+    """
     NAME = "std"
     WEIGHT_FACTOR = 100.
 
@@ -153,6 +197,12 @@ class StdConstraint(AboveBelowConstraintBase):
 
 
 class SaturationConstraint(AboveBelowConstraintBase):
+    """
+    Pushes the saturation above or below a threshold value.
+
+    The saturation is currently calculated as the difference of each
+    color channel to the mean of all channels.
+    """
     NAME = "saturation"
     WEIGHT_FACTOR = 100.
 
@@ -167,10 +217,39 @@ def get_mean_saturation(image: torch.Tensor) -> torch.Tensor:
 
 
 class BlurConstraint(ConstraintBase):
+    """
+    Adds the difference between the image and a blurred version to
+    the training loss.
+
+    This is much more helpful than using the gaussian blur
+    as a [post-processing](#postproc) step. When added to the
+    training loss, the blurring keeps in balance with the
+    actual image creation.
+
+    Areas that CLIP is *excited about* will be constantly
+    updated and will stand out of the blur, while *unexciting*
+    areas get blurred a lot.
+    """
     NAME = "blur"
     PARAMS = {
-        "kernel_size": SequenceParameter(int, length=2, default=[3, 3]),
-        "sigma": SequenceParameter(float, length=2, null=True, default=None),
+        "kernel_size": SequenceParameter(
+            int, length=2, default=[3, 3],
+            doc="""
+            The size of the pixel window. Must be an **odd*, **positive** integer. 
+            
+            Two numbers define **width** and **height** separately.
+            """
+        ),
+        "sigma": SequenceParameter(
+            float, length=2, null=True, default=None,
+            doc="""
+            Gaussian kernel standard deviation. The larger, the more *blurry*.
+            
+            If not specified it will default to `0.3 * ((kernel_size - 1) * 0.5 - 1) + 0.8`.
+            
+            Two numbers define sigma for **x** and **y** separately.
+            """
+        ),
     }
 
     def __init__(
@@ -196,13 +275,39 @@ class BlurConstraint(ConstraintBase):
 
 
 class EdgeMeanConstraint(AboveBelowConstraintBase):
+    """
+    Adds the difference between the current image and
+    and an edge-detected version to the training constraint.
+
+    A gaussian blur is used to detect the edges:
+
+        edge = amount * abs(image - blur(image))
+
+    """
     NAME = "edge_mean"
     WEIGHT_FACTOR = 100.
 
     PARAMS = {
         **AboveBelowConstraintBase.PARAMS,
-        "kernel_size": SequenceParameter(int, length=2, default=[3, 3]),
-        "sigma": SequenceParameter(float, length=2, null=True, default=None),
+        "kernel_size": SequenceParameter(
+            int, length=2, default=[3, 3],
+            doc="""
+            The size of the pixel window of the gaussian blur. 
+            Must be an **odd*, **positive** integer. 
+            
+            Two numbers define **width** and **height** separately.
+            """
+        ),
+        "sigma": SequenceParameter(
+            float, length=2, null=True, default=None,
+            doc="""
+            Gaussian kernel standard deviation. The larger, the more *blurry*.
+            
+            If not specified it will default to `0.3 * ((kernel_size - 1) * 0.5 - 1) + 0.8`.
+            
+            Two numbers define sigma for **x** and **y** separately.
+            """
+        ),
     }
 
     def __init__(
@@ -221,15 +326,6 @@ class EdgeMeanConstraint(AboveBelowConstraintBase):
         blurred_image = get_expression_blur(image, self.kernel_size, self.sigma, context)
         edges = torch.abs(blurred_image - image)
         return edges.reshape(3, -1).mean(1)
-
-
-# TODO: this one's not working good, rather remove it
-class EdgeMaxConstraint(AboveBelowConstraintBase):
-    NAME = "edge_max"
-    WEIGHT_FACTOR = 100.
-
-    def get_image_value(self, image: torch.Tensor, context: ExpressionContext):
-        return get_edge_max(image)
 
 
 def get_expression_blur(
@@ -256,24 +352,28 @@ def get_edge_mean(image: torch.Tensor) -> torch.Tensor:
     return edges.reshape(3, -1).mean(1)
 
 
-def get_edge_max(image: torch.Tensor) -> torch.Tensor:
-    blurred_image = VF.gaussian_blur(image, [5, 5], None)
-    edges = (blurred_image - image)
-    edges = torch.abs(edges.reshape(3, -1))
-    edge_max = torch.max(edges, 1).values * .7
-    edges_mean = torch.cat([
-        edges[0, edges[0] > edge_max[0]].mean().unsqueeze(0),
-        edges[1, edges[1] > edge_max[1]].mean().unsqueeze(0),
-        edges[2, edges[2] > edge_max[2]].mean().unsqueeze(0),
-    ])
-    return edges_mean
-
-
 class BorderConstraint(ConstraintBase):
+    """
+    Adds a border with a specific size and color to the training loss.
+    """
     NAME = "border"
     PARAMS = {
-        "size": SequenceParameter(int, length=2, default=[1, 1]),
-        "color": SequenceParameter(float, length=3, default=[1., 1., 1.]),
+        "size": SequenceParameter(
+            int, length=2, default=[1, 1],
+            doc="""
+            One integer two specify **width** and **height** at the same time, 
+            or two integers to specify them separately.  
+            """
+        ),
+        "color": SequenceParameter(
+            float, length=3, default=[0., 0., 0.],
+            doc="""
+            The color of the border as float numbers in the range `[0, 1]`.
+            
+            Three numbers for **red**, **green** and **blue** or a single number 
+            to specify a gray-scale. 
+            """
+        ),
     }
 
     def __init__(self, size: List[Int], color: List[Float], loss: Union[str, Expression],):
@@ -302,10 +402,31 @@ class BorderConstraint(ConstraintBase):
 
 
 class NormalizeConstraint(ConstraintBase):
+    """
+    Adds image normalization to the training loss.
+
+    The normalized version is found by moving the image colors
+    into the range of [min](#targetsconstraintsnormalizemin)
+    and [max](#targetsconstraintsnormalizemax).
+    """
     NAME = "normalize"
     PARAMS = {
-        "min": SequenceParameter(float, length=3, default=[0., 0., 0.]),
-        "max": SequenceParameter(float, length=3, default=[1., 1., 1.]),
+        "min": SequenceParameter(
+            float, length=3, default=[0., 0., 0.],
+            doc="""
+            The desired lowest value in the image. 
+            
+            One color for gray-scale, three colors for **red**, **green** and **blue**.
+            """
+        ),
+        "max": SequenceParameter(
+            float, length=3, default=[1., 1., 1.],
+            doc="""
+            The desired highest value in the image. 
+            
+            One color for gray-scale, three colors for **red**, **green** and **blue**.
+            """
+        ),
     }
 
     def __init__(self, min: List[Float], max: List[Float], loss: Union[str, Expression]):
@@ -331,6 +452,16 @@ class NormalizeConstraint(ConstraintBase):
 
 
 class ContrastConstraint(AboveBelowConstraintBase):
+    """
+    Pushes the contrast above or below a threshold value.
+
+    The contrast is currently calculated in the following way:
+
+    The image pixels are divided into the ones that are
+    above and below the pixel mean values. The contrast
+    value is then the difference between the mean of the lower
+    and the mean of the higher pixels.
+    """
     NAME = "contrast"
     # WEIGHT_FACTOR = 100.
 
@@ -364,11 +495,21 @@ class ContrastConstraint(AboveBelowConstraintBase):
 
 
 class NoiseConstraint(ConstraintBase):
+    """
+    Adds the difference between the current image and
+    a noisy image to the training loss.
+    """
     NAME = "noise"
-    # WEIGHT_FACTOR = 100.
 
     PARAMS = {
-        "std": SequenceParameter(float, length=3, default=[.1, .1, .1]),
+        "std": SequenceParameter(
+            float, length=3, default=None,
+            doc="""
+            Specifies the standard deviation of the noise distribution. 
+            
+            One value or three values to specify **red**, **green** and **blue** separately.
+            """
+        ),
     }
 
     def __init__(
@@ -382,6 +523,6 @@ class NoiseConstraint(ConstraintBase):
     def forward(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
         std = torch.Tensor(context(self.std)).to(image.device).reshape(3, 1)
         image = image.reshape(3, -1)
-        noisy_image = image + std * torch.rand(*image.shape).to(image.device)
+        noisy_image = image + std * torch.randn(*image.shape).to(image.device)
 
-        return self.loss_function(image, noisy_image, context)
+        return 100. * self.loss_function(image, noisy_image, context)

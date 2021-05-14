@@ -500,7 +500,7 @@ PARAMETERS = {
     "targets.features.loss": Parameter(
         str, default="cosine",
         doc="""
-        The [loss function](https://en.wikipedia.org/wiki/Loss_function) used to calculated the 
+        The [loss function](https://en.wikipedia.org/wiki/Loss_function) used to calculate the 
         difference (or error) between current and desired [feature](#targetsfeatures).
         
         - `cosine`: The loss function is `1 - cosine_similarity(current, target)`.

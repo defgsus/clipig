@@ -194,7 +194,7 @@ class Border(TransformBase):
             """
         ),
         "color": SequenceParameter(
-            float, length=3, default=[1., 1., 1.],
+            float, length=3, default=[0., 0., 0.],
             doc="""
             The color of the border as float numbers in the range `[0, 1]`.
             
@@ -229,7 +229,9 @@ class Border(TransformBase):
 
 class Noise(TransformBase):
     """
-    Adds gaussian noise to the image.
+    Adds noise to the image.
+
+    The noise has a scalable normal distribution around zero.
     """
     NAME = "noise"
     IS_RANDOM = True
@@ -237,7 +239,7 @@ class Noise(TransformBase):
         "std": SequenceParameter(
             float, length=3, default=None,
             doc="""
-            Specifies the standard deviation of the gaussian noise. 
+            Specifies the standard deviation of the noise distribution. 
             
             One value or three values to specify **red**, **green** and **blue** separately.
             """
