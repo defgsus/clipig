@@ -1,6 +1,6 @@
 import unittest
 
-from src.parameters import set_parameter_defaults, convert_params, merge_parameters
+from src.parameters import set_parameter_defaults, convert_params, merge_parameters, EXPR_ARGS
 
 
 class TestParametersConvert(unittest.TestCase):
@@ -11,7 +11,8 @@ class TestParametersConvert(unittest.TestCase):
         }
         params = convert_params(params)
         set_parameter_defaults(params)
-        self.assertEqual(1.0, params["learnrate"](t=0., epoch=0))
+        self.assertEqual(float, type(params["learnrate"]))
+        self.assertEqual(1.0, params["learnrate"])
 
     def test_expression(self):
         params = {
@@ -19,4 +20,9 @@ class TestParametersConvert(unittest.TestCase):
         }
         params = convert_params(params)
         set_parameter_defaults(params)
-        self.assertEqual(.5, params["learnrate"](t=1., epoch=0))
+        args = {
+            key: 0.
+            for key in EXPR_ARGS.MINIMAL
+        }
+        args["t"] = .5
+        self.assertEqual(.25, params["learnrate"](**args))

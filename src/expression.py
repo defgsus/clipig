@@ -1,11 +1,12 @@
 from math import *
 from random import *
-from typing import Union, List
+from typing import Union, List, Optional, Type
 
 
 class Expression:
 
-    def __init__(self, expression: str, *arguments: str):
+    def __init__(self, type: Type, expression: str, *arguments: str):
+        self.type = type
         self.expression = expression
         self.arguments = list(arguments)
 
@@ -22,14 +23,19 @@ class Expression:
         return f"{self.__class__.__name__}('{self.expression}'{args})"
 
     def validate(self):
-        args = {
-            name: 0.
-            for name in self.arguments
-        }
-        self(**args)
+        try:
+            args = {
+                name: 0.
+                for name in self.arguments
+            }
+            self(**args)
+        except Exception as e:
+            raise ValueError(
+                f"{type(e).__name__} in expression '{self.expression}': {e}"
+            )
 
     def __call__(self, **arguments):
-        return eval(self.code, globals())(**arguments)
+        return self.type(eval(self.code, globals())(**arguments))
 
 
 class ExpressionContext:
@@ -42,12 +48,13 @@ class ExpressionContext:
             expr: Union[int, float, Expression, List[Union[int, float, Expression]]],
     ):
         def _convert(e):
-            if isinstance(e, (int, float)):
-                return e
+            if isinstance(e, (int, float, str)):
+                value = e
             elif isinstance(e, Expression):
-                return e(**self.arguments)
+                value = e(**self.arguments)
             else:
                 raise TypeError(f"Can not evaluate expression of type '{type(e).__name__}': '{e}'")
+            return value
 
         try:
             if isinstance(expr, (list, tuple)):

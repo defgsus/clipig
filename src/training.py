@@ -25,6 +25,8 @@ from . import transforms as transform_modules
 from . import constraints as constraint_modules
 from .constraints import get_mean_saturation
 from .clip_singleton import ClipSingleton
+from .strings import value_str
+from .images import load_image
 
 
 torch.autograd.set_detect_anomaly(True)
@@ -63,6 +65,7 @@ class ImageTraining:
         self.pixel_model = PixelsRGB(parameters["resolution"]).to(self.device)
 
         self.epoch = self.parameters["start_epoch"]
+        self.epoch_f = self.epoch / max(1, self.parameters["epochs"] - 1)
 
         # for threaded access
         self._stop = False
@@ -106,6 +109,7 @@ class ImageTraining:
             raise ValueError(f"Unknown optimizer '{self.parameters['optimizer']}'")
 
         self.targets = []
+        self.postprocs = []
 
     @property
     def clip_model(self):
@@ -138,6 +142,31 @@ class ImageTraining:
     def setup_targets(self):
         self.log(2, "getting target features")
         self.targets = []
+
+        # --- setup post-processing transforms ---
+
+        self.postprocs = []
+
+        for param in self.parameters["postproc"]:
+            for name, klass in transform_modules.transformations.items():
+                if not param.get(name):
+                    continue
+
+                assert not klass.IS_RESIZE, f"{klass} changes resolution and can not be used for post-processing"
+                transform_param = param[name]
+
+                if isinstance(transform_param, dict):
+                    t = klass(**transform_param)
+                else:
+                    t = klass(transform_param)
+
+                self.postprocs.append({
+                    "params": param,
+                    "transform": t,
+                })
+
+        # --- targets ---
+
         for target_param in self.parameters["targets"]:
             if not target_param["active"]:
                 continue
@@ -146,18 +175,22 @@ class ImageTraining:
 
             features = []
             feature_loss_functions = []
+            feature_start_ends = []
             for feature_param in target_param["features"]:
                 if feature_param.get("text"):
                     tokens = clip.tokenize([feature_param["text"]]).to(self.device)
                     feature = self.clip_model.encode_text(tokens)
                 else:
-                    image = PIL.Image.open(feature_param["image"])
+                    image = load_image(feature_param["image"])
                     image = self.clip_preprocess(image)
                     feature = self.clip_model.encode_image(image.unsqueeze(0))
 
                 features.append(feature)
-
                 feature_loss_functions.append(get_feature_loss_function(feature_param["loss"]))
+                feature_start_ends.append((
+                    feature_param.get("start") or 0.,
+                    feature_param.get("end") or 0.,
+                ))
 
             if features:
                 features = torch.cat(features)
@@ -167,6 +200,7 @@ class ImageTraining:
                 "params": target_param,
                 "features": features,
                 "feature_loss_functions": feature_loss_functions,
+                "feature_start_ends": feature_start_ends,
 
                 # statistics ...
                 "count": 0,
@@ -178,88 +212,42 @@ class ImageTraining:
 
             is_random = False  # determine if the transform stack includes randomization
             transforms = []
-            final_resolution = self.parameters["resolution"].copy()
+
             for trans_param in target_param["transforms"]:
-                if trans_param.get("repeat"):
-                    transforms.append(
-                        transform_modules.RepeatTransform(trans_param["repeat"])
-                    )
+                for key, transform_param in trans_param.items():
+                    if transform_param is None:
+                        continue
+                    if key not in transform_modules.transformations:
+                        raise ValueError(f"Unknown transformation '{key}'")
+                    klass = transform_modules.transformations[key]
 
-                if trans_param.get("blur"):
-                    p = trans_param["blur"]
-                    transforms.append(VT.GaussianBlur(int(p[0]), [p[1], p[1]]))
+                    if isinstance(transform_param, dict):
+                        t = klass(**transform_param)
+                    else:
+                        t = klass(transform_param)
 
-                affine_kwargs = dict()
-                if trans_param.get("random_translate"):
-                    is_random = True
-                    affine_kwargs["translate"] = trans_param["random_translate"]
-
-                if trans_param.get("random_scale"):
-                    is_random = True
-                    affine_kwargs["scale"] = trans_param["random_scale"]
-
-                if affine_kwargs:
-                    affine_kwargs["degrees"] = 0
-                    affine_kwargs["fillcolor"] = None
-                    transforms.append(VT.RandomAffine(**affine_kwargs))
-
-                if trans_param.get("random_rotate"):
-                    is_random = True
-                    transforms.append(
-                        VT.RandomRotation(
-                            degrees=trans_param["random_rotate"]["degree"],
-                            center=trans_param["random_rotate"]["center"],
-                        )
-                    )
-
-                if trans_param.get("random_crop"):
-                    is_random = True
-                    transforms.append(VT.RandomCrop(trans_param["random_crop"]))
-                    final_resolution = trans_param["random_crop"]
-
-                if trans_param.get("resize"):
-                    transforms.append(VT.Resize(trans_param["resize"]))
-                    final_resolution = trans_param["resize"]
-
-                if trans_param.get("center_crop"):
-                    transforms.append(VT.CenterCrop(trans_param["center_crop"]))
-                    final_resolution = trans_param["center_crop"]
-
-                if trans_param.get("noise"):
-                    is_random = True
-                    transforms.append(transform_modules.NoiseTransform(trans_param["noise"]))
-
-                if trans_param.get("edge"):
-                    transforms.append(transform_modules.EdgeTransform(trans_param["edge"]))
-
-            if final_resolution != self.clip_resolution:
-                transforms.append(VT.Resize(self.clip_resolution))
+                    transforms.append(t)
+                    is_random |= klass.IS_RANDOM
 
             if transforms:
                 target["is_random"] = is_random
-                target["transforms"] = torch.nn.Sequential(*transforms).to(self.device)
-                self.log(2, f"target '{target_param['name']}' transforms:")
-                self.log(2, target["transforms"])
+                target["transforms"] = transforms
 
             # --- setup constraints ---
 
             target["constraints"] = []
             for constr_param in target_param["constraints"]:
-                for name, Module in (
-                        ("mean", constraint_modules.MeanConstraint),
-                        ("std", constraint_modules.StdConstraint),
-                        ("edge_mean", constraint_modules.EdgeMeanConstraint),
-                        ("edge_max", constraint_modules.EdgeMaxConstraint),
-                        ("saturation", constraint_modules.SaturationConstraint),
-                        ("blur", constraint_modules.BlurConstraint),
-                ):
+                for name, Module in constraint_modules.constraints.items():
                     if constr_param.get(name):
-                        constraint = Module(**constr_param[name])
+                        kwargs = Module.strip_parameters(constr_param[name])
+                        constraint = Module(**kwargs)
 
                         target["constraints"].append({
                             "params": constr_param,
                             "model": constraint.to(self.device),
-
+                            "weight": constr_param[name]["weight"],
+                            "start": constr_param[name]["start"],
+                            "end": constr_param[name]["end"],
                             # statistics ...
                             "losses": ValueQueue(),
                         })
@@ -314,9 +302,21 @@ class ImageTraining:
                 break
 
             self.epoch = epoch
-            epoch_f = epoch / max(1, self.parameters["epochs"] - 1)
+            self.epoch_f = epoch_f = epoch / max(1, self.parameters["epochs"] - 1)
 
-            expression_context = ExpressionContext(epoch=epoch, epoch_f=epoch_f, t=epoch_f)
+            expression_context = ExpressionContext(
+                epoch=epoch,
+                t=epoch_f,
+                t2=math.pow(epoch_f, 2),
+                t3=math.pow(epoch_f, 3),
+                t4=math.pow(epoch_f, 4),
+                t5=math.pow(epoch_f, 5),
+                ti=1. - epoch_f,
+                ti2=math.pow(1.-epoch_f, 2),
+                ti3=math.pow(1.-epoch_f, 3),
+                ti4=math.pow(1.-epoch_f, 4),
+                ti5=math.pow(1.-epoch_f, 5),
+            )
 
             # --- update learnrate ---
 
@@ -335,7 +335,7 @@ class ImageTraining:
 
             # --- post process pixels ---
 
-            self._postproc(epoch, epoch_f, expression_context)
+            self._postproc(expression_context)
 
             # --- get pixels ---
 
@@ -347,20 +347,22 @@ class ImageTraining:
             target_pixels = []
             target_to_pixels_mapping = dict()
             for target in self.targets:
-                if _check_start_end(
+                if self._check_start_end(
                         target["params"]["start"], target["params"]["end"],
-                        epoch, epoch_f
                 ):
                     active_targets.append(target)
                     target_idx = len(active_targets) - 1
                     for batch_idx in range(target["params"]["batch_size"]):
-                        if not target["is_random"] and target_idx in target_to_pixels_mapping:
+                        if not target.get("is_random") and target_idx in target_to_pixels_mapping:
                             continue
 
                         pixels = current_pixels
                         if target.get("transforms"):
-                            pixels = target["transforms"](pixels)
-                        # pixels = torch.clamp(pixels, 0, 1)
+                            for t in target["transforms"]:
+                                pixels = t(pixels, expression_context)
+
+                        if pixels.shape != [3, 224, 224]:
+                            pixels = VF.resize(pixels, [224, 224])
 
                         target_pixels.append(pixels.unsqueeze(0))
                         target_pixel_idx = len(target_pixels) - 1
@@ -426,10 +428,10 @@ class ImageTraining:
 
             if self.verbose >= 2 and (cur_time - last_stats_time > 4) or epoch == self.parameters["epochs"] - 1:
                 last_stats_time = cur_time
-                mean = [round(float(f), 3) for f in current_pixels.reshape(3, -1).mean(1)]
-                std = [round(float(f), 3) for f in current_pixels.reshape(3, -1).std(1)]
-                sat = round(float(get_mean_saturation(current_pixels)), 3)
-                edge_mean = [round(float(f), 3) for f in constraint_modules.get_edge_mean(current_pixels)]
+                mean = value_str(current_pixels.reshape(3, -1).mean(1))
+                std = value_str(current_pixels.reshape(3, -1).std(1))
+                sat = value_str(get_mean_saturation(current_pixels))
+                edge_mean = value_str(constraint_modules.get_edge_mean(current_pixels))
                 self.log(2, f"--- train step {epoch+1} / {self.parameters['epochs']} ---")
                 self.log(2, f"device: {self.device}")
                 self.log(2, f"image: res {self.parameters['resolution']}, "
@@ -457,25 +459,21 @@ class ImageTraining:
                 else:
                     self.snapshot_callback(current_pixels)
 
-    def _postproc(self, epoch: int, epoch_f: float, context: ExpressionContext):
-        for pp in self.parameters["postproc"]:
-            if not pp["active"]:
+    def _postproc(self, context: ExpressionContext):
+        image = self.pixel_model.pixels
+        changed = False
+
+        for pp in self.postprocs:
+
+            if not self._check_start_end(pp["params"]["start"], pp["params"]["end"]):
                 continue
 
-            if not _check_start_end(pp["start"], pp["end"], epoch, epoch_f):
-                continue
+            image = pp["transform"](image, context)
+            changed = True
 
-            if pp.get("blur"):
-                self.pixel_model.blur(
-                    int(context(pp["blur"][0])),
-                    context(pp["blur"][1]),
-                )
-
-            if pp.get("add"):
-                self.pixel_model.add(context(pp["add"]))
-
-            if pp.get("multiply"):
-                self.pixel_model.multiply(context(pp["multiply"]))
+        if changed:
+            with torch.no_grad():
+                self.pixel_model.pixels[...] = image
 
     def _get_target_loss(
             self,
@@ -496,33 +494,79 @@ class ImageTraining:
             feature_weights = self._get_target_feature_weights(target, similarities, context)
 
             target["applied_feature_weights"] = []
-            for i, target_feature in enumerate(target_features):
-                feature_weight, apply_feature = feature_weights[i]
 
-                if not apply_feature:
-                    target["applied_feature_weights"].append(feature_weight)
-                    target["feature_losses"][i].append(0, count=False)
-                    target["feature_similarities"][i].append(float(similarities[i]), count=False)
+            if target["params"]["select"] != "mix":
 
+                for i, target_feature in enumerate(target_features):
+                    feature_weight, apply_feature = feature_weights[i]
+
+                    if not apply_feature:
+                        target["applied_feature_weights"].append(feature_weight)
+                        target["feature_losses"][i].append(0, count=False)
+                        target["feature_similarities"][i].append(float(similarities[i]), count=False)
+
+                    else:
+                        loss_function = target["feature_loss_functions"][i]
+
+                        loss = loss_function(clip_feature, target_feature)
+
+                        loss_sum += feature_weight * loss
+
+                        # track statistics
+                        target["applied_feature_weights"].append(feature_weight)
+                        target["feature_losses"][i].append(float(loss))
+                        target["feature_similarities"][i].append(float(similarities[i]))
+
+            # mix features together
+            else:
+                mixed_features = []
+                mixed_weight = 0.
+                for i, target_feature in enumerate(target_features):
+                    feature_weight, apply_feature = feature_weights[i]
+                    if apply_feature:
+                        mixed_features.append(feature_weight * target_feature.unsqueeze(0))
+                        mixed_weight += abs(feature_weight)
+
+                if mixed_features and mixed_weight:
+                    mixed_features = torch.cat(mixed_features)
+                    mixed_features = mixed_features.sum(0) / mixed_weight
+
+                    # take the loss function of the first feature
+                    loss_function = target["feature_loss_functions"][0]
+                    loss = loss_function(clip_feature, mixed_features.squeeze(0))
+                    loss_sum += loss
+
+                    for i, target_feature in enumerate(target_features):
+                        feature_weight, apply_feature = feature_weights[i]
+                        if not apply_feature:
+                            target["applied_feature_weights"].append(feature_weight)
+                            target["feature_losses"][i].append(0, count=False)
+                            target["feature_similarities"][i].append(float(similarities[i]), count=False)
+                        else:
+                            target["applied_feature_weights"].append(feature_weight)
+                            target["feature_losses"][i].append(float(loss))
+                            target["feature_similarities"][i].append(float(similarities[i]))
                 else:
-                    loss_function = target["feature_loss_functions"][i]
-
-                    loss = loss_function(clip_feature, target_feature)
-
-                    loss_sum += feature_weight * loss
-
-                    # track statistics
-                    target["applied_feature_weights"].append(feature_weight)
-                    target["feature_losses"][i].append(float(loss))
-                    target["feature_similarities"][i].append(float(similarities[i]))
+                    for i, target_feature in enumerate(target_features):
+                        feature_weight, apply_feature = feature_weights[i]
+                        target["applied_feature_weights"].append(feature_weight)
+                        target["feature_losses"][i].append(0, count=False)
+                        target["feature_similarities"][i].append(float(similarities[i]), count=False)
 
             mean_sim = float(similarities.mean())
             context = context.add(sim=mean_sim, similarity=mean_sim)
         else:
             context = context.add(sim=0., similarity=0.)
 
+        # --- apply constraints ---
+
         for constraint in target.get("constraints", []):
+            if not self._check_start_end(
+                    constraint["start"], constraint["end"],
+            ):
+                continue
             loss = constraint["model"].forward(pixels, context)
+            loss = loss * context(constraint["weight"])
             constraint["losses"].append(float(loss))
             loss_sum += loss
 
@@ -533,22 +577,29 @@ class ImageTraining:
             target: dict,
             similarities: torch.Tensor,
             context: ExpressionContext
-    ) -> List[Tuple[float, bool]]:
+    ) -> List[List[Union[float, bool]]]:
         mode = target["params"]["select"]
+
         feature_weights = []
+        for i, target_feature in enumerate(target["features"]):
+            feature_context = context.add(sim=float(similarities[i]), similarity=float(similarities[i]))
+            weight = feature_context(target["params"]["features"][i]["weight"])
+            enable = self._check_start_end(*target["feature_start_ends"][i])
+            feature_weights.append([weight, enable])
 
-        if mode == "all":
-            for i, target_feature in enumerate(target["features"]):
-                feature_context = context.add(sim=float(similarities[i]), similarity=float(similarities[i]))
-                weight = feature_context(target["params"]["features"][i]["weight"])
-                feature_weights.append((weight, True))
+        if mode in ("all", "mix"):
+            pass
 
-        elif mode == "best":
-            best_index = int(torch.argmax(similarities))
-            for i, target_feature in enumerate(target["features"]):
-                feature_context = context.add(sim=float(similarities[i]), similarity=float(similarities[i]))
-                weight = feature_context(target["params"]["features"][i]["weight"])
-                feature_weights.append((weight, i == best_index))
+        elif mode in ("best", "worst"):
+            best_indices = torch.argsort(similarities, descending=mode == "best")
+            set_false = False
+            for i in best_indices:
+                if set_false:
+                    feature_weights[i][1] = False
+
+                # catch the best active feature and deactivate all others
+                if feature_weights[i][1]:
+                    set_false = True
 
         else:
             raise ValueError(f"Unknown feature selection mode '{mode}'")
@@ -615,7 +666,7 @@ class ImageTraining:
             for i, constraint in enumerate(target["constraints"]):
                 row = {
                     "name": "  constraint",
-                    "weight": round(context(constraint["model"].weight), 3),
+                    "weight": round(context(constraint["weight"]), 3),
                     "feature": _short_str(constraint["model"].description(context), feature_length),
                     "count": constraint["losses"].count,
                     "count_p": round(constraint["losses"].count / max(1, target["count"]) * 100., 1),
@@ -650,23 +701,21 @@ class ImageTraining:
                 )
             self.log(0, line)
 
+    def _check_start_end(
+            self,
+            start: Union[int, float],
+            end: Union[int, float],
+    ):
+        if isinstance(start, int) and start > self.epoch:
+            return False
+        elif isinstance(start, float) and start > self.epoch_f:
+            return False
+        if isinstance(end, int) and end < self.epoch:
+            return False
+        elif isinstance(end, float) and end < self.epoch_f:
+            return False
 
-def _check_start_end(
-        start: Union[int, float],
-        end: Union[int, float],
-        epoch: int,
-        epoch_f: float,
-):
-    if isinstance(start, int) and start > epoch:
-        return False
-    elif isinstance(start, float) and start > epoch_f:
-        return False
-    if isinstance(end, int) and end < epoch:
-        return False
-    elif isinstance(end, float) and end < epoch_f:
-        return False
-
-    return True
+        return True
 
 
 def _short_str(s: str, max_length: int, front: bool = False) -> str:

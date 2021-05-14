@@ -16,11 +16,13 @@ The outstanding thing, maybe, and the reason for developing it, is it's configur
 I got pretty tired of constantly changing actual code during various experiments so i started
 this new project which fulfills *most* desires through yaml configuration files. 
 
+Please read the **[documentation](docs/README.md)** or gather 
+everything from this example:
 
 ### example yaml config
 
 ```yaml
-resolution: 1024
+resolution: 512
 epochs: 200
 
 learnrate: 1.5
@@ -29,11 +31,14 @@ learnrate_scale: (1. - .95 * pow(t, 5.))   # 't' is training epoch in [0, 1] ran
 targets:
 
   - name: random sampler
+    batch_size: 10
 
     transforms:
       - noise: 0.1 0.2 0.3
       - random_scale: .1 1.
       - random_crop: 224
+      - blur:
+          kernel_size: 13
 
     features:
       - text: some text feature to match
@@ -50,8 +55,9 @@ targets:
       
 # post-processing is applied after each back-propagation step
 postproc:
-  - blur: 3 .35
-    end: 50%    
+  - blur: 
+      kernel_size: 3
+    end: 10%    
 ```
 
 As you can see, it supports 
@@ -67,10 +73,9 @@ As you can see, it supports
 
 ---
 
-Once the interface is settled i'll write down the documentation. 
-
-Currently, to get started switch to a virtual environment that contains 
-the `torch` library matching your CUDA drivers and then
+Currently, to get started switch to a virtual environment 
+that contains the `torch` library matching your CUDA drivers 
+and then
 
 ```bash
 python clipig.py examples/strawberries.yaml -o ./images/
@@ -103,6 +108,8 @@ The author does not have enough time!
 
 Then there are bugs in there and stuff that is not yet tested 
 or even implemented.
+
+Expressions are not yet documented.
 
 But the major concern is the image quality. Just adjusting pixels so that CLIP does like them
 generally creates horrible grids and artifacts. A good first step to avoid them is 

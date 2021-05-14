@@ -1,6 +1,7 @@
 import unittest
 
 from src.expression import Expression, ExpressionContext
+from src.parameters import set_parameter_defaults, convert_params
 
 
 class TestExpression(unittest.TestCase):
@@ -8,17 +9,25 @@ class TestExpression(unittest.TestCase):
     def test_expression(self):
         ctx = ExpressionContext()
         self.assertEqual(1.2, ctx(1.2))
-        self.assertEqual(1.2, ctx(Expression("1.2")))
-        self.assertEqual([1.2, 3.4], ctx([Expression("1.2"), 3.4]))
+        self.assertEqual(1.2, ctx(Expression(float, "1.2")))
+        self.assertEqual([1.2, 3.4], ctx([Expression(float, "1.2"), 3.4]))
 
     def test_expression_param(self):
         ctx = ExpressionContext(a=2, b=3)
-        self.assertEqual(6, ctx(Expression("a * b", "a", "b")))
+        self.assertEqual(6, ctx(Expression(int, "a * b", "a", "b")))
         self.assertEqual([5, 6], ctx([
-            Expression("a+b", "a", "b"),
-            Expression("a*b", "a", "b"),
+            Expression(int, "a+b", "a", "b"),
+            Expression(int, "a*b", "a", "b"),
         ]))
 
     def test_expression_math(self):
-        e = Expression("sin(3.14159265)")
+        e = Expression(float, "sin(3.14159265)")
         self.assertAlmostEqual(0, e())
+
+    def test_eval_wthout_params(self):
+        params = {
+            "resolution": "224*2 224//2",
+        }
+        params = convert_params(params)
+        set_parameter_defaults(params)
+        self.assertEqual([448, 112], params["resolution"])
