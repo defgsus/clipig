@@ -93,6 +93,7 @@ def prepare_doc_string(doc: str) -> str:
     doc = doc.replace("CLIP ", clip_link + " ")
     doc = doc.replace("CLIP-", clip_link + "-")
     doc = doc.replace("CLIP.", clip_link + ".")
+    doc = doc.replace("CLIP'", clip_link + "'")
     doc = doc.replace("gaussian blur", blur_link)
     return doc
 

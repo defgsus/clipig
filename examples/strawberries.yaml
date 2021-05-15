@@ -2,7 +2,7 @@ resolution: 512 512
 epochs: 250
 
 learnrate: 2.
-learnrate_scale: (1. - .95 * pow(t, 5.))
+learnrate_scale: 1. - .95 * t5
 
 init:
   mean: .4
@@ -17,17 +17,21 @@ targets:
     batch_size: 5
 
     transforms:
+      # randomly move the image around
+      - random_shift: -1 1
+      # randomly rotate between -10 and +10 degrees
       - random_rotate:
           degree: -10 10
           center: 0 1
+      # randomly zoom in
       - random_scale: 0.5 1.
-      - random_crop: 224
+      # take the image center and present it to CLIP
+      - center_crop: 224
 
     constraints:
-      # back-prop the blur into the transformation window
+      # back-prop the blur into the transformated window
       - blur:
           kernel_size: 5
-          sigma: .5
 
     select: all
     features:
