@@ -335,7 +335,7 @@ python clipig.py best-meta-settings.yaml specific.yaml
 
 will parse `best-meta-settings.yaml` and then add anything
 from `sepcific.yaml` on top. List entries 
-like [targets](#targets) will be added to the previous list.
+like [targets](#targets) will be appended to the previous list.
 
 
 ## Expressions
