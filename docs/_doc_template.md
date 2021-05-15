@@ -11,13 +11,14 @@ the most common method of training artificial neural networks, the
 dissimilarity of trained features and target features is 
 translated back into pixel values which adjust the initial bunch of pixels
 just slightly. If we do this long enough, with some
-artistic variation in the processing pipeline, an actual image derives.  
+artistic variation in the processing pipeline, an actual image emerges.  
 
 CLIPig is designed to allow a lot of control over those *variations* 
 which requires a bit of documentation. 
 
 - [introduction](#introduction)
 - [command line interface](#command-line-interface)
+- [expressions](#expressions)
 - [transforms](#transforms)
 - [constraints](#constraints)
 - [parameter reference](#reference)
@@ -61,8 +62,9 @@ For a live experience in image generation call
 python clipig-gui.py
 ```
 
-paste the code inside the editor and press `Alt-S` to start training 
-and watch the image emerge in realtime.
+paste the code inside the editor (top-left one) and 
+press `Alt-S` to start training and watch the image 
+emerge in realtime.
 
 So, what does the image look like?
 
@@ -73,7 +75,7 @@ a psychedelic pixel mess.
 
 But indeed, CLIP does think this image to be **95%** similar 
 to the term **a curly spoon**. This is a top scoring that
-an actual photo never would get and a classic example of an 
+an actual photo would rarely get and a classic example of an 
 [Adversarial](https://en.wikipedia.org/wiki/Adversarial_machine_learning)
 in machine learning. 
 
@@ -161,6 +163,9 @@ Some [noise](#targetstransformsnoise) is added to each image that is
 shown to CLIP and a gaussian blur is added
 to the backpropagation [loss](https://en.wikipedia.org/wiki/Loss_function).  
 
+If you wonder what the `nose: 0.1*ti` means, please check out the
+[expressions](#expressions) section. 
+
 The noise makes CLIPig kind of *think twice* about the way 
 a pixel is adjusted. The blur used as a training loss tends 
 to blur out the areas where CLIP is not interested in, while 
@@ -175,8 +180,8 @@ text to `a photo of a curly spoon`?
 
 ![almost a photo of a curly spoon](demo5.png)
 
-Ah, i see where CLIP is going to. But it's not enough
-as a proof-of-concept.
+Ah, i see where CLIP is going to. Quite funny indeed, 
+but not enough as a proof-of-concept.
 
 ```yaml
 targets:
@@ -247,6 +252,54 @@ deviation only lets things emerge where CLIP is very certain
 about. *Curly spoons* do not represent a well-known archetype, 
 it seems.
 
+There is a trick, though! We can show CLIP the image with 
+much less contrast so the bit of contrast it creates
+creates a larger contrast in the final image.
+
+```yaml
+targets:
+- batch_size: 5
+  features:
+  - text: a lot of curly spoons
+  transforms:
+  - noise: 0.1
+  - repeat: 3
+  - random_rotate:
+      degree: -30 30
+      center: .4 .6
+  - center_crop: 224
+  - mul: 1./5.         # CLIP only sees 1/5th of the color range
+  constraints:
+  - blur:
+      kernel_size: 51
+  - saturation:        # The desired saturation is lowered
+      below: .01       
+      weight: 10.
+postproc:
+- border:
+    size: 1
+    color: 0.15 0.1 0.05
+```
+
+![pretty good recognizable curly spoons](demo8-c.png)
+
+The [mul transformation](#targetstransformsmul) reduces
+the color range that CLIP is seeing so the final color
+range is increased. Of course, this also increases the 
+saturation a lot so the 
+[saturation constraint](#targetconstraintssaturation)
+is used to reduce it to acceptable levels.
+
+I'll end this chapter here because my 3 years old clearly
+approves the image to depict *curly spoons*. And you should 
+know the basic pieces needed to create your desired fantasy 
+images. 
+
+Just go ahead, play with CLIPig and consume a lot of your 
+life or work time. If stuck, check the [reference](#reference) 
+and the lists of available [transforms](#transforms) and 
+[constraints](#constraints).
+
 
 ## command line interface
 
@@ -273,6 +326,64 @@ exists, `/path/image-1.png` will be created.
 CLIPig also stores a `<filename>.yaml` file besides the image, if there
 does not exist one already, which holds the complete configuration with 
 all defaults and the runtime in seconds as comment on the top. 
+
+Multiple yaml files are merged into one set of parameters, e.g.:
+
+```shell script
+python clipig.py best-meta-settings.yaml specific.yaml
+```
+
+will parse `best-meta-settings.yaml` and then add anything
+from `sepcific.yaml` on top. List entries 
+like [targets](#targets) will be added to the previous list.
+
+
+## Expressions
+
+CLIPig supports expressions for all parameters. Some parameters
+also support variables and the expression will be evaluated
+every time the value is needed. 
+
+E.g., if you want thrice the CLIP-resolution of 224x224 pixels
+but are too lazy to calculate it, just say:
+
+```yaml
+resolution: 224*3
+```
+
+> **Note**: Parameters that expect lists (like **resolution** above)
+> copy a single value to all entries of the list. A list can 
+> be specified with 
+> - YAML syntax:
+>   ```yaml
+>   resolution: 
+>     - 640
+>     - 480
+>   ```
+> - with commas:
+>   ```yaml
+>   resolution: 640, 480
+>   ```
+> - or simply with spaces
+>   ```yaml
+>   resolution: 640 480
+>   ```
+> If you type expressions, you might want to use spaces or 
+> commas. In cse of list parameters you'll need to use the 
+> YAML lists:
+> ```yaml
+> resolution:
+>   - 224 * 3
+>   - pow(224, 1.2)
+> ``` 
+
+The result of an expression is automatically converted to 
+the desired type. So even if your `resolution` expression 
+generates a float it will be cast to integer before being used.
+
+> **Note**: Divisions through zero and stuff like this will
+> throw an error and stop the experiment.
+
 
 
 ## Transforms
