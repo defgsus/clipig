@@ -381,8 +381,10 @@ class ImageTraining:
 
                 # --- retrieve CLIP features ---
 
+                target_pixels = torch.clamp(target_pixels, 0, 1)
                 norm_pixels = self.clip_preprocess.transforms[-1](target_pixels)
                 clip_features = self.clip_model.encode_image(norm_pixels)
+
                 clip_features = clip_features / clip_features.norm(dim=-1, keepdim=True)
 
                 # --- combine loss for each target ---
@@ -772,8 +774,11 @@ def get_feature_loss_function(name: str) -> Callable:
         return lambda x1, x2: F.mse_loss(x1, x2) * 100.
 
     elif name in ("cosine", ):
-        return lambda x1, x2: 1. - F.cosine_similarity(x1.unsqueeze(0), x2.unsqueeze(0))[0]
+        return cosine_similarity_loss
 
     else:
         raise ValueError(f"Invalid loss function '{name}'")
 
+
+def cosine_similarity_loss(x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
+    return 1. - F.cosine_similarity(x1.unsqueeze(0), x2.unsqueeze(0))[0]
