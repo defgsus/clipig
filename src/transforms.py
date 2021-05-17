@@ -4,6 +4,7 @@ from typing import Union, Sequence, List, Type, Tuple, Optional
 import numpy as np
 import torch
 import torch.nn
+import torch.fft as fft
 import torch.nn.functional as F
 import torchvision.transforms as VT
 import torchvision.transforms.functional as VF
@@ -11,7 +12,7 @@ from torchvision.utils import save_image, make_grid
 
 from .expression import Expression, ExpressionContext
 from .parameters import (
-    Parameter, SequenceParameter, EXPR_ARGS
+    Parameter, SequenceParameter, FrameTimeParameter
 )
 
 Int = Union[int, Expression]
@@ -31,6 +32,26 @@ class TransformBase:
         assert cls.NAME, f"Must specify {cls.__name__}.NAME"
         assert cls.PARAMS, f"Must specify {cls.__name__}.PARAMS"
         transformations[cls.NAME] = cls
+
+        # TODO: would be nice to have start/end on each transform
+        #   but most transforms only have a single parameter so i'd
+        #   like to support both notations, e.g.:
+        #       resize: 224
+        #    or
+        #       resize:
+        #         size: 224
+        #         start: 10%
+        # cls.PARAMS = {
+        #     **cls.PARAMS,
+        #     "start": FrameTimeParameter(
+        #         default=0.,
+        #         doc="Start frame of the transform. The transform is inactive before this time."
+        #     ),
+        #     "end": FrameTimeParameter(
+        #         default=1.,
+        #         doc="End frame of the transform. The transform is inactive after this time."
+        #     ),
+        # }
 
     def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
         raise NotImplementedError
@@ -155,6 +176,41 @@ class RandomCrop(TransformBase):
         return VT.RandomCrop(size=size)(image)
 
 
+class Crop(TransformBase):
+    """
+    Crops a specified section from the image.
+    """
+    NAME = "crop"
+    IS_RESIZE = True
+    PARAMS = {
+        "xywh": SequenceParameter(
+            float, length=4, default=None,
+            doc="""
+            4 numbers: **x** and **y** of top-left corner followed by **width** and **height**.
+            
+            A number between 0 and 1 is considered a fraction of the full resolution.
+            A number greater or equal to 1 is considered a pixel coordinate 
+            """
+        ),
+    }
+
+    def __init__(self, xywh: List[Int]):
+        super().__init__()
+        self.xywh = xywh
+
+    def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+        x, y, w, h = context(self.xywh)
+        if x < 1:
+            x = x * image.shape[-1]
+        if y < 1:
+            y = y * image.shape[-2]
+        if w < 1:
+            w = w * image.shape[-1]
+        if h < 1:
+            h = h * image.shape[-2]
+        return VF.crop(image, int(y), int(x), int(h), int(w))
+
+
 class Repeat(TransformBase):
     """
     Repeats the image a number of times in the right and bottom direction.
@@ -254,6 +310,43 @@ class Noise(TransformBase):
         std = torch.Tensor(context(self.std)).to(image.device)
         noise = torch.randn(image.shape).to(image.device)
         return image + noise * std.reshape(3, 1, 1)
+
+
+class FNoise(TransformBase):
+    """
+    Adds noise to the image's fourier space.
+
+    It's just a bit different than the normal [noise](#targetstransformsnoise).
+
+    The noise has a scalable normal distribution around zero.
+    """
+    NAME = "fnoise"
+    IS_RANDOM = True
+    PARAMS = {
+        "std": SequenceParameter(
+            float, length=3, default=None,
+            doc="""
+            Specifies the standard deviation of the noise distribution. 
+            The actual value is multiplied by `15.0` to give a visually 
+            similar distribution than the normal [noise](#targetstransformsnoise).
+            
+            One value or three values to specify **red**, **green** and **blue** separately.
+            """
+        ),
+    }
+
+    def __init__(self, std: List[Float]):
+        super().__init__()
+        self.std = std
+
+    def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+        std = 15. * torch.Tensor(context(self.std)).to(image.device).reshape(3, 1)
+
+        space = fft.rfft(image.reshape(3, -1))
+        space.real = space.real + torch.randn(space.shape).to(image.device) * std
+        space.imag = space.imag + torch.randn(space.shape).to(image.device) * std
+
+        return fft.irfft(space).reshape(*image.shape)
 
 
 class Edge(TransformBase):
@@ -611,3 +704,63 @@ class Clamp(TransformBase):
     def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
         range = context(self.range)
         return torch.clamp(image, range[0], range[1])
+
+
+
+# TODO: not really helpful a.t.m.
+#
+# class Fft(TransformBase):
+#     """
+#     Fourier transform
+#     """
+#     NAME = "fft"
+#     PARAMS = {
+#         "real": Parameter(
+#             bool, default=None,
+#             doc="""
+#             Return real or imaginary part
+#             """
+#         ),
+#     }
+#
+#     def __init__(self, real: Union[bool, Expression]):
+#         super().__init__()
+#         self.real = real
+#
+#     def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+#         space = fft.rfft(image)
+#         return torch.cat([space.real, space.imag], dim=-1)
+#         if context(self.real):
+#             return f_space.real
+#         else:
+#             return f_space.imag
+#
+#
+# class IFft(TransformBase):
+#     """
+#     Fourier transform
+#     """
+#     NAME = "ifft"
+#     PARAMS = {
+#         "real": Parameter(
+#             bool, default=None,
+#             doc="""
+#             Return real or imaginary part
+#             """
+#         ),
+#     }
+#
+#     def __init__(self, real: Union[bool, Expression]):
+#         super().__init__()
+#         self.real = real
+#
+#     def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+#         space = torch.complex(
+#             image[..., :image.shape[-1] // 2],
+#             image[..., image.shape[-1] // 2:],
+#         )
+#         return fft.irfft(space)
+#         #if context(self.real):
+#         #    return f_space.real
+#         #else:
+#         #    return f_space.imag
