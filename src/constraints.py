@@ -8,7 +8,7 @@ import torchvision.transforms as VT
 import torchvision.transforms.functional as VF
 
 from .expression import Expression, ExpressionContext
-from .parameters import Parameter, SequenceParameter, FrameTimeParameter, EXPR_ARGS
+from .parameters import Parameter, SequenceParameter, FrameTimeParameter
 from .strings import value_str
 
 
@@ -37,6 +37,7 @@ class ConstraintBase(torch.nn.Module):
     def __init_subclass__(cls, **kwargs):
         if cls.NAME is not None:
             constraints[cls.NAME] = cls
+
         if cls.PARAMS is not None:
             cls.PARAMS = {
                 **cls.PARAMS,

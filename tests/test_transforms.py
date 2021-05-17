@@ -3,7 +3,7 @@ import unittest
 import torch
 
 from src.expression import ExpressionContext
-from src.parameters import EXPR_ARGS
+from src.parameters import EXPR_GROUPS
 from src import transforms
 
 
@@ -23,7 +23,7 @@ class TestTransforms(unittest.TestCase):
     def expression_context(self):
         return ExpressionContext(**{
             key: 0
-            for key in EXPR_ARGS.TARGET_TRANSFORM
+            for key in EXPR_GROUPS.target_transform
         })
 
     def test_shift(self):

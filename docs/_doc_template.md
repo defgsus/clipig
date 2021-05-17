@@ -429,13 +429,29 @@ postproc:
 ![high-res composition](hpl4-d.png)
 
 It's quite good at parts but, wait! There's already another 
-Lovecraft developing in the background.
+Lovecraft developing in the background. And that's what is to be 
+expected. The training target of that Lovecraftian party is
+simply applied at all points of the image and CLIP won't 
+jude the whole frame less similar to the target when every
+face is that of Howard Phillips???.
+
+The above snapshot is kind'o good but the repetitions will
+increase with higher resolutions. It would be more like a fractal
+of H.P.'s birthday party. 
+
+... Let's see *a fractal of H.P.'s birthday party*
+
+![a colorful cthulhuian fractal](hpl-fractal.png)
+
+Well done CLIP, well done.
+
+But back to the topic
+
+
 
 I guess, everyone has to judge for themselves if this
 is worth 8 minutes of GPU time. Personally, i am quite 
-excited.
-
-
+excited and would like to continue..
 
 
 

@@ -20,19 +20,16 @@ class Parameter:
             default: Any = None,
             null: bool = False,
             doc: Optional[str] = None,
-            expression: bool = False,
-            expression_args: Optional[Sequence[str]] = None,
+            expression_groups: Optional[Sequence[str]] = None,
     ):
         self.doc = doc
         self.types = list(types) if isinstance(types, Sequence) else [types]
         self.null = null
         self.default = default
-        self.expression = expression or bool(expression_args)
-        expression_args = expression_args or EXPR_ARGS.DEFAULT
-        self.expression_args = list(expression_args)
+        self.expression_groups = list(expression_groups) if expression_groups is not None else []
 
         assert len(self.types)
-        assert len(self.types) == 1 or not self.expression
+        assert len(self.types) == 1 or not self.expression_groups
 
     def copy(self):
         return self.__class__(
@@ -40,8 +37,7 @@ class Parameter:
             default=self.default,
             null=self.null,
             doc=self.doc,
-            expression=self.expression,
-            expression_args=self.expression_args,
+            expression_groups=self.expression_groups,
         )
 
     def convert(self, x: Any) -> Any:
@@ -71,7 +67,7 @@ class Parameter:
             except:
                 pass
 
-        if not self.expression:
+        if not self.expression_groups:
             if len(self.types) == 1:
                 raise ValueError(
                     f"Expected type '{self.types[0]}', got '{x}'"
@@ -81,7 +77,7 @@ class Parameter:
                     f"Expected one of types {self.types}, got '{x}'"
                 )
 
-        exp = Expression(self.types[0], x, *self.expression_args)
+        exp = Expression(self.types[0], x, self.expression_groups)
         exp.validate()
         return exp
 
@@ -135,16 +131,14 @@ class SequenceParameter(Parameter):
             default: Any = None,
             null: bool = False,
             doc: Optional[str] = None,
-            expression: bool = False,
-            expression_args: Optional[Sequence[str]] = None,
+            expression_groups: Optional[Sequence[str]] = None,
     ):
         super().__init__(
             types=types,
             default=default,
             null=null,
             doc=doc,
-            expression=expression,
-            expression_args=expression_args,
+            expression_groups=expression_groups,
         )
         self.length = length
 
@@ -155,8 +149,7 @@ class SequenceParameter(Parameter):
             default=self.default,
             null=self.null,
             doc=self.doc,
-            expression=self.expression,
-            expression_args=self.expression_args,
+            expression_groups=self.expression_groups,
         )
 
     def convert(self, x: Any) -> Any:
@@ -193,30 +186,19 @@ class PlaceholderParameter(Parameter):
     pass
 
 
-class EXPR_ARGS:
-
-    MINIMAL = (
-        "epoch",
-        "t", "t2", "t3", "t4", "t5",
-        "ti", "ti2", "ti3", "ti4", "ti5",
-    )
-
-    LEARNRATE = (
-        "lr", "learnrate",
-        "lrs", "learnrate_scale",
-    )
-
-    DEFAULT = MINIMAL + LEARNRATE
-
-    TARGET_TRANSFORM = DEFAULT
-
-    TARGET_FEATURE = DEFAULT + (
-        "sim", "similarity",
-    )
-
-    TARGET_CONSTRAINT = DEFAULT + (
-        "sim", "similarity",
-    )
+class EXPR_GROUPS:
+    """
+    Just a little grouping to make code updates easier.
+    Regrouping is not visible in the docs.
+    """
+    basic = ("basic", )
+    resolution = basic
+    learnrate = basic
+    postproc = basic
+    target = basic + ("learnrate", )
+    target_transform = target
+    target_feature = target + ("target_feature", )
+    target_constraint = target + ("target_constraint", )
 
 
 PARAMETERS = {
@@ -268,7 +250,8 @@ PARAMETERS = {
     "resolution": SequenceParameter(
         int, length=2, default=[224, 224],
         doc="Resolution of the image to create. A single number for square images or two "
-            "numbers for width and height."
+            "numbers for width and height.",
+        expression_groups=EXPR_GROUPS.resolution,
     ),
     "model": Parameter(
         str, default="ViT-B/32",
@@ -283,7 +266,7 @@ PARAMETERS = {
         doc="The device to run the training on. Can be `cpu`, `cuda`, `cuda:1` etc.",
     ),
     "learnrate": Parameter(
-        float, default=1., expression_args=EXPR_ARGS.MINIMAL,
+        float, default=1., expression_groups=EXPR_GROUPS.learnrate,
         doc="""
         The learning rate of the optimizer. 
         
@@ -295,7 +278,7 @@ PARAMETERS = {
         """
     ),
     "learnrate_scale": Parameter(
-        float, default=1., expression_args=EXPR_ARGS.MINIMAL,
+        float, default=1., expression_groups=EXPR_GROUPS.learnrate,
         doc="""
         A scaling parameter for the actual learning rate.
         
@@ -374,7 +357,7 @@ PARAMETERS = {
     "targets.active": Parameter(
         bool, default=True,
         doc="""
-        A boolean to turn of the target during development. 
+        A boolean to turn off the target during development. 
         
         This is just a convenience parameter. To turn of a target
         during testing without deleting all the parameters, simply 
@@ -399,7 +382,7 @@ PARAMETERS = {
         doc="""End frame of the target. The whole target is inactive after this time."""
     ),
     "targets.weight": Parameter(
-        float, default=1., expression=True, expression_args=EXPR_ARGS.TARGET_CONSTRAINT,
+        float, default=1., expression_groups=EXPR_GROUPS.target_constraint,
         doc="""
         Weight factor that is multiplied with all the weights of [features](#targetsfeatures)
         and [constraints](#targetsconstraints). 
@@ -491,7 +474,7 @@ PARAMETERS = {
         doc="End frame of the specific feature"
     ),
     "targets.features.weight": Parameter(
-        float, default=1., expression=True, expression_args=EXPR_ARGS.TARGET_FEATURE,
+        float, default=1., expression_groups=EXPR_GROUPS.target_feature,
         doc="""
         A weight parameter to control the influence of a specific feature of a target.
         
@@ -550,6 +533,7 @@ def _add_parameters(prefix: str, classes: dict, expr_args: Tuple[str, ...] = Non
 def _add_class_parameters():
     from .transforms import transformations
     from .constraints import constraints
+
     PARAMETERS["targets.transforms"] = PlaceholderParameter(
         list, default=list(),
         doc="""
@@ -557,7 +541,7 @@ def _add_class_parameters():
         it to CLIP for evaluation. 
         """
     )
-    _add_parameters("targets.transforms", transformations, expr_args=EXPR_ARGS.TARGET_TRANSFORM)
+    _add_parameters("targets.transforms", transformations, expr_args=EXPR_GROUPS.target_transform)
 
     PARAMETERS["targets.constraints"] = PlaceholderParameter(
         list, default=list(),
@@ -568,7 +552,7 @@ def _add_class_parameters():
         the [transforms](#transforms) of the [target](#targets). 
         """
     )
-    _add_parameters("targets.constraints", constraints, expr_args=EXPR_ARGS.TARGET_CONSTRAINT)
+    _add_parameters("targets.constraints", constraints, expr_args=EXPR_GROUPS.target_constraint)
 
     postprocs = {
         name: klass
@@ -606,7 +590,7 @@ def _add_class_parameters():
             doc="""End frame for the post-processing stage. The stage is inactive after this time."""
         ),
     })
-    _add_parameters("postproc", postprocs, expr_args=EXPR_ARGS.DEFAULT)
+    _add_parameters("postproc", postprocs, expr_args=EXPR_GROUPS.postproc)
 
 
 _add_class_parameters()
@@ -810,7 +794,7 @@ def _recursive_convert_and_validate(data, parent_path: str):
         param: Parameter = PARAMETERS[path]
 
         try:
-            if param.expression and isinstance(value, Expression):
+            if param.expression_groups and isinstance(value, Expression):
                 return value
             return param.convert(value)
         except Exception as e:
