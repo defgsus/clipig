@@ -318,7 +318,7 @@ If you don't know Lovecraft, he's one of the earliest and
 spookiest fantasy authors with stories about creepy and
 *unearthly* things and obviously enough fan-art has found it's
 way into [CLIP](https://github.com/openai/CLIP/)'s convolutional weight matrices. The green guy
-there must be children's birthday version of *Cthulhu*, an 
+there must be a children's birthday version of *Cthulhu*, an 
 age-old murderous god living in the sea, waiting for a come-back
 as leader of a blood-thirsty army of fanatics.
 
@@ -369,7 +369,7 @@ John Malkovich movie when John Malkovich truckles through the
 door that leads into his own head. There's even a body without
 a head.
 
-Clearly, [CLIP](https://github.com/openai/CLIP/) does not get good view of the whole image but
+Clearly, [CLIP](https://github.com/openai/CLIP/) does not get a good view of the whole image but
 just assembles parts of it without the knowledge of how they
 relate to each other.
 

@@ -335,8 +335,8 @@ class ImageTraining:
                 g['lr'] = learnrate
 
             expression_context = expression_context.add(
-                lr=learnrate, learnrate=learnrate,
-                lrs=learnrate_scale, learnrate_scale=learnrate_scale,
+                learnrate=learnrate,
+                learnrate_scale=learnrate_scale,
             )
 
             forward_start_time = time.time()

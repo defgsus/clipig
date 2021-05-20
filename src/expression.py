@@ -139,7 +139,7 @@ class Expression:
             self.arguments.update(EXPRESSION_ARGS[group]["args"])
 
         params = set(name for name in self.arguments.keys())
-        for a in self.arguments.values():
+        for name, a in self.arguments.items():
             if a.get("alias"):
                 params.add(a["alias"])
         self.params = params
@@ -180,7 +180,7 @@ class Expression:
             if name not in self.arguments:
                 raise NameError(f"Argument '{name}' supplied but not defined for {self}")
             if self.arguments[name].get("alias"):
-                args[ self.arguments[name]["alias"]] = arguments[name]
+                args[self.arguments[name]["alias"]] = arguments[name]
         return args
 
 
