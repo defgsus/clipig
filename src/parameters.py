@@ -70,7 +70,7 @@ class Parameter:
         if not self.expression_groups:
             if len(self.types) == 1:
                 raise ValueError(
-                    f"Expected type '{self.types[0]}', got '{x}'"
+                    f"Expected type '{self.types[0].__name__}', got '{x}'"
                 )
             else:
                 raise ValueError(
@@ -189,13 +189,14 @@ class PlaceholderParameter(Parameter):
 class EXPR_GROUPS:
     """
     Just a little grouping to make code updates easier.
-    Regrouping is not visible in the docs.
+    The grouping is not visible in the docs, instead
+    it represents the processing stages.
     """
     basic = ("basic", )
     resolution = basic
-    learnrate = basic
-    postproc = basic
-    target = basic + ("learnrate", )
+    learnrate = basic + ("resolution", )
+    postproc = learnrate
+    target = basic + learnrate + ("learnrate", )
     target_transform = target
     target_feature = target + ("target_feature", )
     target_constraint = target + ("target_constraint", )
@@ -496,21 +497,20 @@ PARAMETERS = {
           is the mean of the absolute difference of each vector variable.
         - `l2` or `mse`: [Mean squared error](https://en.wikipedia.org/wiki/Mean_squared_error)
           is the mean of the squared difference of each vector variable. Compared to 
-          *mean absolute error*, it produces a smaller loss for small differences and 
-          a larger loss for large differences.
+          *mean absolute error*, it produces a smaller loss for small differences 
+          (below 1.0) and a larger loss for large differences.
         """
     ),
 }
 
 
-def _add_parameters(prefix: str, classes: dict, expr_args: Tuple[str, ...] = None):
+def _add_parameters(prefix: str, classes: dict, expr_groups: Tuple[str, ...] = None):
     from .doc import strip_doc
     def _add_args(p: Parameter) -> Parameter:
-        if not expr_args:
+        if not expr_groups:
             return p
         p = p.copy()
-        p.expression = True
-        p.expression_args = expr_args
+        p.expression_groups = expr_groups
         return p
 
     for name in sorted(classes.keys()):
@@ -541,7 +541,7 @@ def _add_class_parameters():
         it to CLIP for evaluation. 
         """
     )
-    _add_parameters("targets.transforms", transformations, expr_args=EXPR_GROUPS.target_transform)
+    _add_parameters("targets.transforms", transformations, expr_groups=EXPR_GROUPS.target_transform)
 
     PARAMETERS["targets.constraints"] = PlaceholderParameter(
         list, default=list(),
@@ -552,7 +552,7 @@ def _add_class_parameters():
         the [transforms](#transforms) of the [target](#targets). 
         """
     )
-    _add_parameters("targets.constraints", constraints, expr_args=EXPR_GROUPS.target_constraint)
+    _add_parameters("targets.constraints", constraints, expr_groups=EXPR_GROUPS.target_constraint)
 
     postprocs = {
         name: klass
@@ -590,7 +590,7 @@ def _add_class_parameters():
             doc="""End frame for the post-processing stage. The stage is inactive after this time."""
         ),
     })
-    _add_parameters("postproc", postprocs, expr_args=EXPR_GROUPS.postproc)
+    _add_parameters("postproc", postprocs, expr_groups=EXPR_GROUPS.postproc)
 
 
 _add_class_parameters()

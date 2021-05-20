@@ -1,4 +1,5 @@
 import unittest
+from itertools import chain
 
 from src.parameters import set_parameter_defaults, convert_params, merge_parameters, EXPR_GROUPS
 from src.expression import EXPRESSION_ARGS
@@ -23,7 +24,7 @@ class TestParametersConvert(unittest.TestCase):
         set_parameter_defaults(params)
         args = {
             key: 0.
-            for key in EXPRESSION_ARGS["basic"]["args"]
+            for key in chain(EXPRESSION_ARGS["basic"]["args"], EXPRESSION_ARGS["resolution"]["args"])
         }
         args["time"] = .5
         self.assertEqual(.25, params["learnrate"](**args))

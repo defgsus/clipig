@@ -67,7 +67,7 @@ class Blur(TransformBase):
         "kernel_size": SequenceParameter(
             int, length=2, default=[3, 3],
             doc="""
-            The size of the pixel window. Must be an **odd*, **positive** integer. 
+            The size of the pixel window. Must be an **odd**, **positive** integer. 
             
             Two numbers define **width** and **height** separately.
             """
@@ -364,7 +364,7 @@ class Edge(TransformBase):
             int, length=2, default=[3, 3],
             doc="""
             The size of the pixel window used for gaussian blur. 
-            Must be an **odd*, **positive** integer. 
+            Must be an **odd**, **positive** integer. 
             
             Two numbers define **width** and **height** separately.
             """

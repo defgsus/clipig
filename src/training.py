@@ -306,16 +306,24 @@ class ImageTraining:
 
             expression_context = ExpressionContext(
                 epoch=epoch,
-                t=epoch_f,
-                t2=math.pow(epoch_f, 2),
-                t3=math.pow(epoch_f, 3),
-                t4=math.pow(epoch_f, 4),
-                t5=math.pow(epoch_f, 5),
-                ti=1. - epoch_f,
-                ti2=math.pow(1.-epoch_f, 2),
-                ti3=math.pow(1.-epoch_f, 3),
-                ti4=math.pow(1.-epoch_f, 4),
-                ti5=math.pow(1.-epoch_f, 5),
+                time=epoch_f,
+                time2=math.pow(epoch_f, 2),
+                time3=math.pow(epoch_f, 3),
+                time4=math.pow(epoch_f, 4),
+                time5=math.pow(epoch_f, 5),
+                time_inverse=1. - epoch_f,
+                time_inverse2=math.pow(1.-epoch_f, 2),
+                time_inverse3=math.pow(1.-epoch_f, 3),
+                time_inverse4=math.pow(1.-epoch_f, 4),
+                time_inverse5=math.pow(1.-epoch_f, 5),
+            )
+
+            # TODO: resize pixels if necessary
+
+            expression_context = expression_context.add(
+                resolution=[self.pixel_model.pixels.shape[-1], self.pixel_model.pixels.shape[-2]],
+                width=self.pixel_model.pixels.shape[-1],
+                height=self.pixel_model.pixels.shape[-2],
             )
 
             # --- update learnrate ---
@@ -556,9 +564,9 @@ class ImageTraining:
                         target["feature_similarities"][i].append(float(similarities[i]), count=False)
 
             mean_sim = float(similarities.mean())
-            context = context.add(sim=mean_sim, similarity=mean_sim)
+            context = context.add(similarity=mean_sim)
         else:
-            context = context.add(sim=0., similarity=0.)
+            context = context.add(similarity=0.)
 
         # --- apply constraints ---
 
@@ -584,7 +592,7 @@ class ImageTraining:
 
         feature_weights = []
         for i, target_feature in enumerate(target["features"]):
-            feature_context = context.add(sim=float(similarities[i]), similarity=float(similarities[i]))
+            feature_context = context.add(similarity=float(similarities[i]))
             weight = feature_context(target["params"]["features"][i]["weight"])
             enable = self._check_start_end(*target["feature_start_ends"][i])
             feature_weights.append([weight, enable])

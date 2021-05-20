@@ -66,18 +66,20 @@ EXPRESSION_ARGS = {
     },
 
     "learnrate": {
-        "name": "basic",
+        "name": "learnrate",
         "doc": """
+        The current values of [learnrate](#learnrate) and [learnrate_scale](#learnrate_scale)
+        which can be expressions themselves.
         """,
         "args": {
             "learnrate": {
                 "type": "float",
-                "doc": """The currently used learnrate""",
+                "doc": """The currently used [learnrate](#learnrate)""",
                 "alias": "lr",
             },
             "learnrate_scale": {
                 "type": "float",
-                "doc": """The currently used learnrate_scale""",
+                "doc": """The currently used [learnrate_scale](#learnrate_scale)""",
                 "alias": "lrs",
             }
         }
