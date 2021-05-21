@@ -2,10 +2,11 @@ import os
 from pathlib import Path
 import hashlib
 import requests
+from typing import List
 
 import PIL.Image
 import torch
-from torchvision.transforms.functional import to_tensor
+import torchvision.transforms.functional as VT
 
 
 CACHE_DIR = Path("~/.cache/img").expanduser()
@@ -20,7 +21,7 @@ def load_image(path: str) -> PIL.Image.Image:
 
 
 def load_image_tensor(path: str) -> torch.Tensor:
-    return to_tensor(load_image(path))
+    return VT.to_tensor(load_image(path))
 
 
 def _load_web_image(url: str) -> PIL.Image.Image:
@@ -38,3 +39,26 @@ def _load_web_image(url: str) -> PIL.Image.Image:
         fp.write(response.content)
 
     return PIL.Image.open(CACHE_DIR.joinpath(hash))
+
+
+def resize_crop(image: torch.Tensor, resolution: List[int]):
+    width, height = image.shape[-1], image.shape[-2]
+
+    if width != resolution[0] or height != resolution[1]:
+
+        if width < height:
+            factor = resolution[0] / width
+        else:
+            factor = resolution[1] / height
+        print(width, height, factor)
+        image = VT.resize(
+            image,
+            [int(height * factor), int(width * factor)]
+        )
+
+        print(image.shape)
+        if image.shape[-2:] != resolution:
+            image = VT.center_crop(image, resolution)
+        print(image.shape)
+
+    return image

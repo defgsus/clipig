@@ -124,7 +124,7 @@ class Resize(TransformBase):
 
     def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
         size = context(self.size)
-        return VF.resize(image, size)
+        return VF.resize(image, [size[1], size[0]])
 
 
 class CenterCrop(TransformBase):
