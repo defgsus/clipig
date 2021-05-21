@@ -250,8 +250,18 @@ PARAMETERS = {
     ),
     "resolution": SequenceParameter(
         int, length=2, default=[224, 224],
-        doc="Resolution of the image to create. A single number for square images or two "
-            "numbers for width and height.",
+        doc="""
+        Resolution of the image to create. A single number for square images or two 
+        numbers for width and height.
+        
+        It supports expression variables so you can actually change the resolution
+        during training, e.g:
+        ```yaml
+        resolution:
+        - 224 if t < .2 else 448
+        ```
+        would change the resolution from 224x224 to 448x448 at 20% of training time.
+        """,
         expression_groups=EXPR_GROUPS.resolution,
     ),
     "model": Parameter(

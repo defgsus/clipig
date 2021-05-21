@@ -1,4 +1,4 @@
-from typing import Union, Sequence, Type, Tuple, Optional
+from typing import Union, Sequence, Type, Tuple, Optional, List
 
 import numpy as np
 import torch
@@ -30,6 +30,9 @@ class PixelsBase(torch.nn.Module):
         raise NotImplementedError
 
     def initialize(self, parameters: dict):
+        raise NotImplementedError
+
+    def resize(self, resolution: List[int]):
         raise NotImplementedError
 
 
@@ -73,6 +76,12 @@ class PixelsRGB(PixelsBase):
 
         with torch.no_grad():
             self.pixels[...] = pixels
+
+    def resize(self, resolution: List[int]):
+        self.resolution = list(resolution)
+        self.pixels = torch.nn.Parameter(
+            VF.resize(self.pixels, resolution)
+        )
 
     def info_str(self) -> str:
         return f"mean rgbs " \

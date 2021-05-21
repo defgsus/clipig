@@ -20,6 +20,7 @@ from tqdm import tqdm
 from .parameters import save_yaml_config
 from .files import make_filename_dir, change_extension
 from .pixel_models import PixelsRGB
+from .optimizers import create_optimizer
 from .expression import Expression, ExpressionContext
 from . import transforms as transform_modules
 from . import constraints as constraint_modules
@@ -62,7 +63,9 @@ class ImageTraining:
         self._clip_model = None
         self.clip_preprocess = None
 
-        self.pixel_model = PixelsRGB(parameters["resolution"]).to(self.device)
+        self.pixel_model: PixelsRGB = None
+        self.optimizer = None
+        self.base_learnrate = None
 
         self.epoch = self.parameters["start_epoch"]
         self.epoch_f = self.epoch / max(1, self.parameters["epochs"] - 1)
@@ -70,43 +73,6 @@ class ImageTraining:
         # for threaded access
         self._stop = False
         self._running = False
-
-        if self.parameters["optimizer"] == "adam":
-            self.base_learnrate = 0.01
-            self.optimizer = torch.optim.Adam(
-                self.pixel_model.parameters(),
-                lr=self.base_learnrate,  # will be adjusted per epoch
-            )
-        elif self.parameters["optimizer"] == "sgd":
-            self.base_learnrate = 10.0
-            self.optimizer = torch.optim.SGD(
-                self.pixel_model.parameters(),
-                lr=self.base_learnrate,  # will be adjusted per epoch
-            )
-        elif self.parameters["optimizer"] == "sparse_adam":
-            self.base_learnrate = 0.01
-            self.optimizer = torch.optim.RMSprop(
-                self.pixel_model.parameters(),
-                lr=self.base_learnrate,  # will be adjusted per epoch
-            )
-        elif self.parameters["optimizer"] == "adadelta":
-            self.base_learnrate = 20.0
-            self.optimizer = torch.optim.Adadelta(
-                self.pixel_model.parameters(),
-                lr=self.base_learnrate,  # will be adjusted per epoch
-            )
-        elif self.parameters["optimizer"] == "rmsprob":
-            self.base_learnrate = 0.005
-            self.optimizer = torch.optim.RMSprop(
-                self.pixel_model.parameters(),
-                lr=self.base_learnrate,  # will be adjusted per epoch
-                centered=True,
-                # TODO: high momentum is quite useful for more 'chaotic' images but needs to
-                #   be adjustable by config expression
-                momentum=0.1,
-            )
-        else:
-            raise ValueError(f"Unknown optimizer '{self.parameters['optimizer']}'")
 
         self.targets = []
         self.postprocs = []
@@ -254,9 +220,18 @@ class ImageTraining:
 
             self.targets.append(target)
 
-    def initialize(self):
+    def initialize(self, context: ExpressionContext):
         self.log(2, "initializing pixels")
+        res = context(self.parameters["resolution"])
+        self.pixel_model = PixelsRGB(resolution=res).to(self.device)
         self.pixel_model.initialize(self.parameters["init"])
+        self.base_learnrate, self.optimizer = \
+            create_optimizer(self.pixel_model, self.parameters["optimizer"])
+
+    def _resize_pixel_model(self, res: List[int]):
+        self.pixel_model.resize(res)
+        self.base_learnrate, self.optimizer = \
+            create_optimizer(self.pixel_model, self.parameters["optimizer"])
 
     def train(self, initialize: bool = True):
         self._running = True
@@ -273,9 +248,6 @@ class ImageTraining:
 
         if not self.targets:
             self.setup_targets()
-
-        if initialize:
-            self.initialize()
 
         last_frame_time = None
         last_stats_time = 0
@@ -318,7 +290,12 @@ class ImageTraining:
                 time_inverse5=math.pow(1.-epoch_f, 5),
             )
 
-            # TODO: resize pixels if necessary
+            if self.pixel_model is None:
+                self.initialize(context=expression_context)
+
+            resolution = expression_context(self.parameters["resolution"])
+            if resolution != self.pixel_model.resolution:
+                self._resize_pixel_model(resolution)
 
             expression_context = expression_context.add(
                 resolution=[self.pixel_model.pixels.shape[-1], self.pixel_model.pixels.shape[-2]],
