@@ -17,6 +17,7 @@ from .parameters import (
 
 Int = Union[int, Expression]
 Float = Union[float, Expression]
+Str = Union[str, Expression]
 
 
 transformations = dict()
@@ -218,10 +219,10 @@ class Repeat(TransformBase):
     NAME = "repeat"
     IS_RESIZE = True
     PARAMS = {
-        "size": SequenceParameter(
+        "count": SequenceParameter(
             int, length=2, default=None,
             doc="""
-            One integer two specify **x** and **y** at the same time, 
+            One integer to specify **x** and **y** at the same time, 
             or two integers to specify them separately.  
             """
         ),
@@ -234,6 +235,87 @@ class Repeat(TransformBase):
     def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
         count = context(self.count)
         return image.repeat(1, 1, count[0]).repeat(1, count[1], 1)
+
+
+class Pad(TransformBase):
+    """
+    Pads the image with additional pixels at the borders.
+    """
+    NAME = "pad"
+    IS_RESIZE = True
+    PARAMS = {
+        "size": SequenceParameter(
+            int, length=2, default=None,
+            doc="""
+            The number of columns/rows to add. 
+            
+            One integer to specify **x** and **y** at the same time, 
+            or two integers to specify them separately.
+            
+            E.g. `1, 2` would add 1 column left and one column right of
+            the image and two rows on top and bottom respectively.
+            """
+        ),
+        "color": SequenceParameter(
+            float, length=3, default=[0., 0., 0.],
+            doc="""
+            The color of the pixels that are padded around the image.
+            """
+        ),
+        "mode": Parameter(
+            str, default="fill",
+            doc="""
+            The way the padded area is filled.
+            
+            - `fill`: fills everything with the `color` value
+            - `edge`: repeats the edge pixels
+            """
+        )
+    }
+
+    def __init__(self, size: List[Int], color: List[Float], mode: Str):
+        super().__init__()
+        self.size = size
+        self.color = color
+        self.mode = mode
+
+    def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+        mode = context(self.mode)
+        size = [max(0, s) for s in context(self.size)]
+        color = torch.Tensor(context(self.color)).to(image.device)
+
+        if mode == "fill":
+            if size[0]:
+                column = color.reshape(3, 1, 1).repeat(1, image.shape[-2], size[0])
+                image = torch.cat([column, image, column], dim=-1)
+
+            if size[1]:
+                row = color.reshape(3, 1, 1).repeat(1, size[1], image.shape[-1])
+                image = torch.cat([row, image, row], dim=-2)
+
+        elif mode == "edge":
+            if size[0]:
+                column_left = image[:, :, :1].repeat(1, 1, size[0])
+                column_right = image[:, :, -1:].repeat(1, 1, size[0])
+                image = torch.cat([column_left, image, column_right], dim=-1)
+
+            if size[1]:
+                row_top = image[:, :1, :].repeat(1, size[1], 1)
+                row_bottom = image[:, -1:, :].repeat(1, size[1], 1)
+                image = torch.cat([row_top, image, row_bottom], dim=-2)
+
+        elif mode == "wrap":
+            if size[0]:
+                column_left = image[:, :, -size[0]:]
+                column_right = image[:, :, :size[0]]
+                image = torch.cat([column_left, image, column_right], dim=-1)
+
+            if size[1]:
+                row_top = image[:, -size[1]:, :]
+                row_bottom = image[:, :size[1], :]
+                image = torch.cat([row_top, image, row_bottom], dim=-2)
+
+        return image
 
 
 class Border(TransformBase):
