@@ -192,11 +192,11 @@ class EXPR_GROUPS:
     The grouping is not visible in the docs, instead
     it represents the processing stages.
     """
-    basic = ("basic", )
+    basic = ("time", )
     resolution = basic
     learnrate = basic + ("resolution", )
-    postproc = learnrate
-    target = basic + learnrate + ("learnrate", )
+    postproc = learnrate + ("learnrate", )
+    target = learnrate + ("learnrate", )
     target_transform = target
     target_feature = target + ("target_feature", )
     target_constraint = target + ("target_constraint", )
@@ -269,7 +269,7 @@ PARAMETERS = {
         doc=("The pre-trained CLIP model to use. Options are " +
              ", ".join(f"`{m}`" for m in clip.available_models()) +
              "\n\nThe models are downloaded from `openaipublic.azureedge.net` and stored "
-             "in the current user's cache directory"
+             "in the user's `~/.cache/` directory"
              )
     ),
     "device": Parameter(

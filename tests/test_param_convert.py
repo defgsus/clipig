@@ -24,7 +24,7 @@ class TestParametersConvert(unittest.TestCase):
         set_parameter_defaults(params)
         args = {
             key: 0.
-            for key in chain(EXPRESSION_ARGS["basic"]["args"], EXPRESSION_ARGS["resolution"]["args"])
+            for key in chain(EXPRESSION_ARGS["time"]["args"], EXPRESSION_ARGS["resolution"]["args"])
         }
         args["time"] = .5
         self.assertEqual(.25, params["learnrate"](**args))

@@ -4,10 +4,10 @@ from typing import Union, List, Optional, Type, Sequence
 
 
 EXPRESSION_ARGS = {
-    "basic": {
-        "name": "basic",
+    "time": {
+        "name": "time",
         "doc": """
-        Holds variables that reference the current frame time.
+        Holds variables that reference the current training time.
         """,
         "args": {
             "epoch": {
