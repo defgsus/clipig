@@ -128,7 +128,7 @@ target <a href="reference.html#targetsfeatures">features</a>.</p>
 <pre class="code shell">python clipig-gui.py</pre><p>then paste the code inside the editor (top-left one) and 
 press <code>Alt-S</code> to start training and watch the image 
 emerge in realtime.</p>
-<p>So, what does the image look like?</p>
+<p>So, what does it look like?</p>
 <p><img src="static/img/demo1.png" alt="a badly rendered curly spoon"></p>
 <p>Yeah, well... I promised <em>images</em> and now i'm showing nothing 
 more than a psychedelic pixel mess.</p>
@@ -137,7 +137,13 @@ to the words <strong>a curly spoon</strong>. This is a top score that
 an actual photo would rarely get and a classic example of an 
 <a href="https://en.wikipedia.org/wiki/Adversarial_machine_learning">adversarial</a>
 in machine learning.</p>
-<p>To make it look more like an actual image we'll add some of those 
+<blockquote><p>Note: Throughout this text <strong>similarity</strong> is spoken of as percentage
+which is not really the case. It's actually the 
+<a href="https://en.wikipedia.org/wiki/Cosine_similarity">cosine similarity</a>
+(times <strong>100</strong>) or in other words, the dot-product of two normalized
+vectors.</p>
+</blockquote>
+<p>To produce an actual image we'll add some of those 
 artistic variations, spoken of earlier. The art is in showing 
 different parts of the image to <a href="https://github.com/openai/CLIP/">CLIP</a> when evaluating the 
 feature similarities.</p>
@@ -152,10 +158,9 @@ simply moves the image center to a random position, before
 each evaluation by <a href="https://github.com/openai/CLIP/">CLIP</a>. The edges are wrapped around so the
 outcome is actually a repeatable texture! The object of interest
 might just not be in it's center.</p>
-<p>Apropos, the object of interest does look a tiny bit spoony to a
-human observer but not really, i'd say. There is a lot of curliness
+<p>It looks a bit spoony but not really, i'd say. There is a lot of curliness
 in the background but the spoon does not show as much.</p>
-<p>Also, <a href="https://github.com/openai/CLIP/">CLIP</a> obviously missed the curliness of the spoon 
+<p>Also <a href="https://github.com/openai/CLIP/">CLIP</a> missed the curliness of the spoon 
 because actual letters appeared to increase the similarity 
 nevertheless. It got to <strong>50%</strong>.</p>
 <p>Another method to inspire <a href="https://github.com/openai/CLIP/">CLIP</a> is 
@@ -422,8 +427,115 @@ of H.P.'s birthday party.</p>
 <p>... Well actually, let's see <em>a fractal of H.P.'s birthday party</em></p>
 <p><img src="static/img/hpl-fractal.png" alt="a colorful cthulhuian fractal"></p>
 <p>Well done CLIP, well done.</p>
-<p>But back to the topic</p>
-<p>...</p>
+<p>But back to the topic. We'll start with the blurry Lovecraft picture
+above and train the image details with non-lovecraft targets:</p>
+<pre class="code yaml">epochs: 500
+resolution: 224*3
+
+# load the previous image
+init:
+  image: docs/static/img/hpl4-c.png
+  mean: 0.0
+  std: 1.0
+
+# lower the brightness a bit
+postproc:
+  - mean: .33
+
+targets:
+  - name: lovecraft
+    batch_size: 3
+    features:
+      - text: h.p. lovecraft at a birthday party
+    transforms:
+      - noise: 0.1
+      - random_rotate:
+          degree: -30 30
+          center: .4 .6
+      - center_crop: width/2
+      - random_crop: 224
+      - mul: 1./5.
+    constraints:
+      - blur:
+          kernel_size: 51
+      - saturation:
+          below: 0.01
+          weight: 10.0
+
+  - name: party details
+    batch_size: 5
+    features:
+      - text: people at a creepy birthday party
+    transforms:
+      - noise: 0.1
+      - random_shift: 0 1
+      - random_rotate:
+          degree: -30 30
+          center: .4 .6
+      - random_scale: .5 1.5
+      - center_crop: 224
+      - mul: 1./5.
+    constraints:
+      - blur:
+          kernel_size: 11
+
+  - name: special details
+    start: 30%
+    batch_size: 5
+    select: best
+    features:
+      - text: cthulhuian birthday cakes
+      - text: creepy confetti
+        weight: 0.5
+      - text: lovecraft&#39;s interior
+        weight: 0.7
+      - text: cthulhu
+        weight: 0.8
+    transforms:
+      - noise: 0.1
+      - random_shift: 0 1
+      - random_rotate:
+          degree: -30 30
+          center: .4 .6
+      - random_scale: .7 1.5
+      - center_crop: 224
+      - mul: 1./5.
+    constraints:
+      - blur:
+          kernel_size: 51
+      - saturation:
+          below: 0.01
+          weight: 10.0</pre><p>And 10 minutes later:</p>
+<p><img src="static/img/hpl5.png" alt="diverse high-res composition"></p>
+<p>Only one Lovecraft in the image! And many interesting details.</p>
+<p>Here's a summary about the different applied targets:</p>
+<p>The <code>lovecraft</code> target keeps the original theme intact, at 
+  least in the center of the image.</p>
+<pre class="code yaml">  - center_crop: width/2
+  - random_crop: 224</pre><p>We crop the middle part of the randomly rotated image and then randomly crop a 
+<a href="https://github.com/openai/CLIP/">CLIP</a>-window from that. That certainly does not help <em>correcting</em> the face but 
+it's not so bad, either.</p>
+<p>The <code>party details</code> target simply crops randomly from the whole image and applies
+the <em>people at a creepy birthday party</em> text feature.</p>
+<p>The <code>special details</code> target starts at 30% of the training and applies the best
+matching feature of a few different features to the randomly cropped window.</p>
+<p>It starts late to give the <code>special details</code> target a bit of time to create
+the people in the background. The <code>select: best</code> mode chooses only one feature
+at a time. Here are the counts after the training:</p>
+<pre class="code None">lovecraft       : h.p. lovecraft at a birthday party : count 1500 (100.0%) / sim 53.377 
+party details   : people at a creepy birthday party  : count 2500 (100.0%) / sim 34.222 
+special details : cthulhuian birthday cakes          : count 740  (42.3 %) / sim 30.744 
+                : creepy confetti                    : count 985  (56.3 %) / sim 30.427 
+                : lovecraft&#39;s interior               : count 22   (1.3  %) / sim 25.249 
+                : cthulhu                            : count 3    (0.2  %) / sim 25.261</pre><p>So, <code>lovecraft's interior</code> and <code>cthulhu</code> did not really get a chance.</p>
+<p>The match rate of features 
+is quite dependent on various other parameters and may 
+change during several runs. Below is another experiment where <em>lovecraft's interior</em>
+did get a far better match because the word <em>creepy</em> was removed from 
+<em>"people at a creepy birthday party"</em>.</p>
+<p><img src="static/img/hpl5b.png" alt="diverse high-res composition"></p>
+<p>So, to summarize the topic of high resolution <a href="https://github.com/defgsus/CLIPig/">CLIPig</a> images:
+It's tricky stuff.</p>
 
 
            </div>

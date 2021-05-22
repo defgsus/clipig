@@ -62,7 +62,7 @@ then paste the code inside the editor (top-left one) and
 press `Alt-S` to start training and watch the image 
 emerge in realtime.
 
-So, what does the image look like?
+So, what does it look like?
 
 ![a badly rendered curly spoon](static/img/demo1.png)
 
@@ -73,9 +73,15 @@ But indeed, CLIP does think this image to be **95%** similar
 to the words **a curly spoon**. This is a top score that
 an actual photo would rarely get and a classic example of an 
 [adversarial](https://en.wikipedia.org/wiki/Adversarial_machine_learning)
-in machine learning. 
+in machine learning.
 
-To make it look more like an actual image we'll add some of those 
+> Note: Throughout this text **similarity** is spoken of as percentage
+> which is not really the case. It's actually the 
+> [cosine similarity](https://en.wikipedia.org/wiki/Cosine_similarity)
+> (times **100**) or in other words, the dot-product of two normalized
+> vectors.  
+
+To produce an actual image we'll add some of those 
 artistic variations, spoken of earlier. The art is in showing 
 different parts of the image to CLIP when evaluating the 
 feature similarities. 
@@ -98,11 +104,10 @@ each evaluation by CLIP. The edges are wrapped around so the
 outcome is actually a repeatable texture! The object of interest
 might just not be in it's center. 
 
-Apropos, the object of interest does look a tiny bit spoony to a
-human observer but not really, i'd say. There is a lot of curliness
+It looks a bit spoony but not really, i'd say. There is a lot of curliness
 in the background but the spoon does not show as much. 
 
-Also, CLIP obviously missed the curliness of the spoon 
+Also CLIP missed the curliness of the spoon 
 because actual letters appeared to increase the similarity 
 nevertheless. It got to **50%**. 
 
@@ -445,6 +450,135 @@ of H.P.'s birthday party.
 
 Well done CLIP, well done.
 
-But back to the topic 
+But back to the topic. We'll start with the blurry Lovecraft picture
+above and train the image details with non-lovecraft targets:
 
-...
+```yaml
+epochs: 500
+resolution: 224*3
+
+# load the previous image
+init:
+  image: docs/static/img/hpl4-c.png
+  mean: 0.0
+  std: 1.0
+
+# lower the brightness a bit
+postproc:
+  - mean: .33
+
+targets:
+  - name: lovecraft
+    batch_size: 3
+    features:
+      - text: h.p. lovecraft at a birthday party
+    transforms:
+      - noise: 0.1
+      - random_rotate:
+          degree: -30 30
+          center: .4 .6
+      - center_crop: width/2
+      - random_crop: 224
+      - mul: 1./5.
+    constraints:
+      - blur:
+          kernel_size: 51
+      - saturation:
+          below: 0.01
+          weight: 10.0
+
+  - name: party details
+    batch_size: 5
+    features:
+      - text: people at a creepy birthday party
+    transforms:
+      - noise: 0.1
+      - random_shift: 0 1
+      - random_rotate:
+          degree: -30 30
+          center: .4 .6
+      - random_scale: .5 1.5
+      - center_crop: 224
+      - mul: 1./5.
+    constraints:
+      - blur:
+          kernel_size: 11
+
+  - name: special details
+    start: 30%
+    batch_size: 5
+    select: best
+    features:
+      - text: cthulhuian birthday cakes
+      - text: creepy confetti
+        weight: 0.5
+      - text: lovecraft's interior
+        weight: 0.7
+      - text: cthulhu
+        weight: 0.8
+    transforms:
+      - noise: 0.1
+      - random_shift: 0 1
+      - random_rotate:
+          degree: -30 30
+          center: .4 .6
+      - random_scale: .7 1.5
+      - center_crop: 224
+      - mul: 1./5.
+    constraints:
+      - blur:
+          kernel_size: 51
+      - saturation:
+          below: 0.01
+          weight: 10.0
+```
+
+And 10 minutes later:
+
+![diverse high-res composition](static/img/hpl5.png)
+
+Only one Lovecraft in the image! And many interesting details. 
+
+Here's a summary about the different applied targets:
+
+The `lovecraft` target keeps the original theme intact, at 
+  least in the center of the image.
+```yaml
+  - center_crop: width/2
+  - random_crop: 224
+```
+We crop the middle part of the randomly rotated image and then randomly crop a 
+CLIP-window from that. That certainly does not help *correcting* the face but 
+it's not so bad, either.
+
+The `party details` target simply crops randomly from the whole image and applies
+the *people at a creepy birthday party* text feature.
+
+The `special details` target starts at 30% of the training and applies the best
+matching feature of a few different features to the randomly cropped window.
+
+It starts late to give the `special details` target a bit of time to create
+the people in the background. The `select: best` mode chooses only one feature
+at a time. Here are the counts after the training: 
+
+```
+lovecraft       : h.p. lovecraft at a birthday party : count 1500 (100.0%) / sim 53.377 
+party details   : people at a creepy birthday party  : count 2500 (100.0%) / sim 34.222 
+special details : cthulhuian birthday cakes          : count 740  (42.3 %) / sim 30.744 
+                : creepy confetti                    : count 985  (56.3 %) / sim 30.427 
+                : lovecraft's interior               : count 22   (1.3  %) / sim 25.249 
+                : cthulhu                            : count 3    (0.2  %) / sim 25.261 
+```
+
+So, `lovecraft's interior` and `cthulhu` did not really get a chance. 
+
+The match rate of features 
+is quite dependent on various other parameters and may 
+change during several runs. Below is another experiment where *lovecraft's interior*
+did get a far better match because the word *creepy* was removed from 
+*"people at a creepy birthday party"*. 
+
+![diverse high-res composition](static/img/hpl5b.png)
+
+So, to summarize the topic of high resolution CLIPig images:
+It's tricky stuff.

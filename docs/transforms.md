@@ -18,6 +18,7 @@ Here's a list of all available transformations:
 - [edge](reference.md#targetstransformsedge): This removes everything except edges and generally has a bad effect on image
     quality. It might be useful, however.
 - [fnoise](reference.md#targetstransformsfnoise): Adds noise to the image's fourier space.
+- [mean](reference.md#targetstransformsmean): Adjust the mean color value.
 - [mul](reference.md#targetstransformsmul): Multiplies all pixels by a fixed value.
 - [noise](reference.md#targetstransformsnoise): Adds noise to the image.
 - [pad](reference.md#targetstransformspad): Pads the image with additional pixels at the borders.

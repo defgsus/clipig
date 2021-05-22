@@ -545,6 +545,18 @@ similar distribution as the normal [noise](reference.md#targetstransformsnoise).
 
 One value or three values to specify **red**, **green** and **blue** separately.
 
+### `targets.transforms.mean`
+
+`list of length 3 of float` no default
+
+
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
+
+Adjust the mean color value.
+
+Three numbers specify **red**, **green** and **blue** while a 
+single number specifies a gray-scale color.
+
 ### `targets.transforms.mul`
 
 `list of length 3 of float` no default
@@ -983,6 +995,18 @@ The actual value is multiplied by `15.0` to give a visually
 similar distribution as the normal [noise](reference.md#targetstransformsnoise).
 
 One value or three values to specify **red**, **green** and **blue** separately.
+
+#### `postproc.mean`
+
+`list of length 3 of float` no default
+
+
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
+
+Adjust the mean color value.
+
+Three numbers specify **red**, **green** and **blue** while a 
+single number specifies a gray-scale color.
 
 #### `postproc.mul`
 

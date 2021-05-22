@@ -77,6 +77,7 @@
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformscrop">targets.transforms.crop</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsedge">targets.transforms.edge</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsfnoise">targets.transforms.fnoise</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsmean">targets.transforms.mean</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsmul">targets.transforms.mul</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsnoise">targets.transforms.noise</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformspad">targets.transforms.pad</a></li>
@@ -106,6 +107,7 @@
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocedgesigma">postproc.edge.sigma</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocedgeamount">postproc.edge.amount</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocfnoise">postproc.fnoise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference.html#postprocmean">postproc.mean</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocmul">postproc.mul</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocnoise">postproc.noise</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#postprocrandom_rotate">postproc.random_rotate</a></li>
@@ -499,6 +501,12 @@ Must be an <strong>odd</strong>, <strong>positive</strong> integer.</p>
 The actual value is multiplied by <code>15.0</code> to give a visually 
 similar distribution as the normal <a href="reference.html#targetstransformsnoise">noise</a>.</p>
 <p>One value or three values to specify <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> separately.</p>
+<h3 id="targetstransformsmean"><code>targets.transforms.mean</code></h3>
+<p><code>list of length 3 of float</code> no default</p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>Adjust the mean color value.</p>
+<p>Three numbers specify <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> while a 
+single number specifies a gray-scale color.</p>
 <h3 id="targetstransformsmul"><code>targets.transforms.mul</code></h3>
 <p><code>list of length 3 of float</code> no default</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
@@ -726,6 +734,12 @@ Must be an <strong>odd</strong>, <strong>positive</strong> integer.</p>
 The actual value is multiplied by <code>15.0</code> to give a visually 
 similar distribution as the normal <a href="reference.html#targetstransformsnoise">noise</a>.</p>
 <p>One value or three values to specify <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> separately.</p>
+<h4 id="postprocmean"><code>postproc.mean</code></h4>
+<p><code>list of length 3 of float</code> no default</p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>Adjust the mean color value.</p>
+<p>Three numbers specify <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> while a 
+single number specifies a gray-scale color.</p>
 <h4 id="postprocmul"><code>postproc.mul</code></h4>
 <p><code>list of length 3 of float</code> no default</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>

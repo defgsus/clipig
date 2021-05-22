@@ -111,6 +111,8 @@ The author does not have enough time!
 Then there are bugs in there and stuff that is not yet tested 
 or even implemented.
 
+Docs is missing an installation section. 
+
 But the major concern is the image quality. Just adjusting pixels so that CLIP does like them
 generally creates horrible grids and artifacts. A good first step to avoid them is 
 a relatively small learning rate and random rotation like:
