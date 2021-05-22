@@ -5,10 +5,9 @@ html{box-sizing:border-box}*,:after,:before{box-sizing:inherit}article,aside,det
 
 dl, ol, ul {
     padding-left: 2rem;
-    list-style: circle;
 }
 
-li {
+.document dl, .document ol, .document ul, .document li {
     padding-bottom: .5rem;
     list-style: circle;
 }

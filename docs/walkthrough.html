@@ -31,11 +31,19 @@
           
         <p class="caption"><a class="reference internal" href="index.html"><span class="caption-text">Intro</span></a></p>
 <p class="caption"><a class="reference internal" href="walkthrough.html"><span class="caption-text">Walk-through</span></a></p>
+<ul>
+<li class="toctree-l2"><a class="reference internal" href="walkthrough.html#Increasing-resolution">Increasing resolution</a></li>
+</ul>
 <p class="caption"><a class="reference internal" href="cli.html"><span class="caption-text">command line interface</span></a></p>
+</ul>
 <p class="caption"><a class="reference internal" href="expressions.html"><span class="caption-text">Expressions</span></a></p>
+</ul>
 <p class="caption"><a class="reference internal" href="transforms.html"><span class="caption-text">Transforms</span></a></p>
+</ul>
 <p class="caption"><a class="reference internal" href="constraints.html"><span class="caption-text">Constraints</span></a></p>
+</ul>
 <p class="caption"><a class="reference internal" href="reference.html"><span class="caption-text">Reference</span></a></p>
+</ul>
 
         </div>
         
@@ -183,7 +191,7 @@ to the backpropagation <a href="https://en.wikipedia.org/wiki/Loss_function">los
 decreases the amount of noise over time.</p>
 <p>The noise makes <a href="https://github.com/defgsus/CLIPig/">CLIPig</a> kind of <em>think twice</em> about the way 
 a pixel is adjusted. The blur as a training loss tends 
-to blur out the areas where <a href="https://github.com/openai/CLIP/">CLIP</a> is not interested in, while 
+to blur out the areas where <a href="https://github.com/openai/CLIP/">CLIP</a> is not much interested in, while 
 the points of interest are constantly updated and are not 
 blurred as much. Unfortunately both methods also help to 
 create new artifacts. And this is where those
@@ -192,7 +200,7 @@ It certainly takes some patience.</p>
 <p>And maybe the correct language. What if we change the target 
 text to <code>a photo of a curly spoon</code>?</p>
 <p><img src="static/img/demo5.png" alt="almost a photo of a curly spoon"></p>
-<p>Ah, i see where <a href="https://github.com/openai/CLIP/">CLIP</a> is going to. Indeed funny, 
+<p>Ah, i see where you are going, CLIP! Indeed funny, 
 but not enough for a proof-of-concept.</p>
 <pre class="code yaml">targets:
 - batch_size: 5
@@ -287,12 +295,17 @@ range is increased. Of course, this also increases the
 saturation a lot so the 
 <a href="#targetconstraintssaturation">saturation constraint</a>
 is used to reduce it to acceptable levels.</p>
-<p>I'll end this experiment here because my almost-3 years old 
+<p>I'll end this experiment here because my 3 years old kid 
 clearly approves the image to depict <em>curly spoons</em>. 
 And you should know the basic pieces now, that are needed to 
 create your desired fantasy images.</p>
+<p>Just go ahead, play with <a href="https://github.com/defgsus/CLIPig/">CLIPig</a> and consume a lot of your 
+life and work time. If stuck, check the <a href="reference.md">reference</a> 
+and the lists of available <a href="reference.md#transforms">transforms</a> and 
+<a href="reference.md#constraints">constraints</a>.</p>
 <p>But there's one thing left: <strong>How do i increase 
 the resolution?</strong></p>
+<h2 id="Increasing-resolution">Increasing resolution</h2>
 <p>Okay, let's start with a new theme. Take the curly spoon script
 from above and replace the text with <code>h.p. lovecraft at a 
 birthday party</code>.</p>
@@ -315,18 +328,14 @@ correct the face. But only, if it increases similarity to the
 target feature.</p>
 <p>Anyways, let's increase the resolution by putting this line
 in front:</p>
-<pre class="code yaml">resolution: 224*2</pre><p>This is now twice the width and height of <a href="https://github.com/openai/CLIP/">CLIP</a>'s image input
-window or four times as much pixels as before.</p>
+<pre class="code yaml">resolution: 224*2</pre><p>This is now <strong>twice</strong> the width and height of <a href="https://github.com/openai/CLIP/">CLIP</a>'s image input
+window or <strong>four</strong> times as much pixels as before.</p>
 <p><img src="static/img/hpl2.png" alt="stuff is only good in the middle"></p>
 <p>What did happen? Well, the 
 <a href="#targetstransformscenter_crop">center_crop</a> transformation
-crops a <a href="https://github.com/openai/CLIP/">CLIP</a>-sized window from the middle of a 448² image. 
-Now the effect of the random rotation is actually visible. 
-But most of the</p>
-<p>Just go ahead, play with <a href="https://github.com/defgsus/CLIPig/">CLIPig</a> and consume a lot of your 
-life and work time. If stuck, check the <a href="#reference">reference</a> 
-and the lists of available <a href="#transforms">transforms</a> and 
-<a href="#constraints">constraints</a>.</p>
+crops a <a href="https://github.com/openai/CLIP/">CLIP</a>-sized 224² window from the middle of a 448² image. 
+It is not helpful unless to show us the effect of the 
+random rotation.</p>
 <p>We could add the <a href="#targetstransformsrandom_shift">random_shift</a>
 transform to move the <a href="https://github.com/openai/CLIP/">CLIP</a> window to every position of the 
 training image. Let's just do that and also increase the
@@ -401,9 +410,7 @@ of H.P.'s birthday party.</p>
 <p><img src="static/img/hpl-fractal.png" alt="a colorful cthulhuian fractal"></p>
 <p>Well done CLIP, well done.</p>
 <p>But back to the topic</p>
-<p>I guess, everyone has to judge for themselves if this
-is worth 8 minutes of GPU time. Personally, i am quite 
-excited and would like to continue..</p>
+<p>...</p>
 
 
            </div>

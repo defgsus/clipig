@@ -270,10 +270,15 @@ saturation a lot so the
 [saturation constraint](#targetconstraintssaturation)
 is used to reduce it to acceptable levels.
 
-I'll end this experiment here because my almost-3 years old 
+I'll end this experiment here because my 3 years old kid 
 clearly approves the image to depict *curly spoons*. 
 And you should know the basic pieces now, that are needed to 
 create your desired fantasy images. 
+
+Just go ahead, play with CLIPig and consume a lot of your 
+life and work time. If stuck, check the [reference](reference.md) 
+and the lists of available [transforms](reference.md#transforms) and 
+[constraints](reference.md#constraints).
 
 But there's one thing left: **How do i increase 
 the resolution?**
@@ -311,22 +316,16 @@ in front:
 resolution: 224*2
 ```
 
-This is now twice the width and height of CLIP's image input
-window or four times as much pixels as before.
+This is now **twice** the width and height of CLIP's image input
+window or **four** times as much pixels as before.
 
 ![stuff is only good in the middle](static/img/hpl2.png)
 
 What did happen? Well, the 
 [center_crop](#targetstransformscenter_crop) transformation
-crops a CLIP-sized window from the middle of a 448² image. 
-Now the effect of the random rotation is actually visible. 
-But most of the  
-
-
-Just go ahead, play with CLIPig and consume a lot of your 
-life and work time. If stuck, check the [reference](#reference) 
-and the lists of available [transforms](#transforms) and 
-[constraints](#constraints).
+crops a CLIP-sized 224² window from the middle of a 448² image. 
+It is not helpful unless to show us the effect of the 
+random rotation. 
 
 We could add the [random_shift](#targetstransformsrandom_shift)
 transform to move the CLIP window to every position of the 
