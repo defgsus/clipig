@@ -431,7 +431,7 @@ PARAMETERS = {
           and then the worst matching feature is selected. While `best` mode will generally 
           increase the influence of one or a few features, the `worst` mode will try to increase
           the influence of all features equally.
-        - 'mix': All individual features are averaged together 
+        - `mix`: All individual features are averaged together 
           (respecting their individual [weights](#targetsfeaturesweight))
           and the resulting feature is compared with the features of the current image.
           This actually works quite well!  
