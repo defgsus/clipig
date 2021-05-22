@@ -9,8 +9,9 @@
   
     <title>{{title}}</title>
 
-    <link rel="stylesheet" href="../static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="../static/css/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="static/css/basic.css" type="text/css" />-
+    <link rel="stylesheet" href="static/css/theme.css" type="text/css" />-
+    <link rel="stylesheet" href="static/css/pygments.css" type="text/css" />
 </head>
 
 <body class="wy-body-for-nav">
@@ -21,14 +22,14 @@
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
 
-            <a href="#" class="icon icon-home">{{title}}</a>
+            <a href="index.html" class="icon icon-home">CLIPig</a>
           
         </div>
 
         
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
-
+        {{side-nav}}
             
               <p class="caption"><span class="caption-text">Tutorials</span></p>
 <ul>
@@ -96,74 +97,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="elastipy">
-<h1>elastipy<a class="headerlink" href="#elastipy" title="Permalink to this headline">¶</a></h1>
-<p>Welcome, Seeker of Aggregated Data!</p>
-<p>May thou find the information about the usage of
-<strong>elastipy</strong> on these pages.</p>
-<div class="toctree-wrapper compound">
-<p class="caption"><span class="caption-text">Tutorials</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="quickref.html">Overview</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="quickref.html#configuration">configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickref.html#aggregations">aggregations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickref.html#nested-aggregations-and-metrics">nested aggregations and metrics</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickref.html#queries">queries</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickref.html#exporting">exporting</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="tutorial.html">don’t be plastic, elastipy!</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="tutorial.html#exporting-some-objects">exporting some objects</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorial.html#query-oh-elastipyia">query oh elastipyia</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorial.html#agitated-aggregation">agitated aggregation</a></li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="toctree-wrapper compound">
-<p class="caption"><span class="caption-text">Reference</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="reference/search.html">Search</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="reference/search.html#supported-queries">supported queries</a></li>
-<li class="toctree-l2"><a class="reference internal" href="reference/search.html#search-interface">search interface</a></li>
-<li class="toctree-l2"><a class="reference internal" href="reference/search.html#search-parameters">search parameters</a></li>
-<li class="toctree-l2"><a class="reference internal" href="reference/search.html#printing-utilities">printing utilities</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="reference/aggregation.html">Aggregation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="reference/aggregation.html#supported-aggregations">supported aggregations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="reference/aggregation.html#value-access">value access</a></li>
-<li class="toctree-l2"><a class="reference internal" href="reference/aggregation.html#aggregation-interface">aggregation interface</a></li>
-<li class="toctree-l2"><a class="reference internal" href="reference/aggregation.html#printing-utilities">printing utilities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="reference/aggregation.html#plotting">plotting</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="reference/exporter.html">Exporter</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="reference/exporter.html#reference">reference</a></li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="toctree-wrapper compound">
-<p class="caption"><span class="caption-text">Examples</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="examples/gitlogs.html">git commit analytics</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="examples/gitlogs.html#activity">activity</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/gitlogs.html#authors">authors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/gitlogs.html#commit-messages">commit messages</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/gitlogs.html#files">files</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="examples/plotting-maps.html">Plotting maps</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="examples/plotting-maps.html#coordinate-conversion">Coordinate conversion</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/plotting-maps.html#plotly-backend">plotly backend</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/plotting-maps.html#matplotlib-backend">matplotlib backend</a></li>
-</ul>
-</li>
-</ul>
-</div>
-</div>
-
+            {{content}}
 
            </div>
            
