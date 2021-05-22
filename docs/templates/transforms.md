@@ -7,6 +7,6 @@ Here's a list of all available transformations:
 
 {{transforms}}
 
-All [transforms](#transforms) that do not change the 
+All [transforms](reference.md#transforms) that do not change the 
 resolution of the image are also available as 
-[post processing](#postproc) effects.
+[post processing](reference.md#postproc) effects.

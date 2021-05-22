@@ -109,9 +109,9 @@ a_map:
   first_key: first value
   second_key: second value  # a comment</pre><p>And that's all to know about YAML for our purposes.</p>
 <p>Now in <a href="https://github.com/defgsus/CLIPig/">CLIPig</a> the <em>desire</em> for an image is expressed as a 
-<a href="#targets">target</a>.
+<a href="reference.md#targets">target</a>.
 There can be multiple targets and each target can have multiple 
-target <a href="#targetsfeatures">features</a>.</p>
+target <a href="reference.md#targetsfeatures">features</a>.</p>
 <pre class="code yaml">targets:
   - features:
       - text: a curly spoon</pre><p>To follow the walk-through, call</p>
@@ -131,13 +131,13 @@ in machine learning.</p>
 artistic variations, spoken of earlier. The art is in showing 
 different parts of the image to <a href="https://github.com/openai/CLIP/">CLIP</a> when evaluating the 
 feature similarities.</p>
-<p>This is accomplished via <a href="#transforms">transforms</a>:</p>
+<p>This is accomplished via <a href="transforms.md">transforms</a>:</p>
 <pre class="code yaml">targets:
   - features:
       - text: a curly spoon
   transforms:
     - random_shift: 0 1</pre><p><img src="static/img/demo2.png" alt="a slightly better rendered curly spoon"></p>
-<p>The <a href="#targetstransformsrandom_shift">random_shift</a> transformation
+<p>The <a href="reference.md#targetstransformsrandom_shift">random_shift</a> transformation
 simply moves the image center to a random position, before
 each evaluation by <a href="https://github.com/openai/CLIP/">CLIP</a>. The edges are wrapped around so the
 outcome is actually a repeatable texture! The object of interest
@@ -149,7 +149,7 @@ in the background but the spoon does not show as much.</p>
 because actual letters appeared to increase the similarity 
 nevertheless. It got to <strong>50%</strong>.</p>
 <p>Another method to inspire <a href="https://github.com/openai/CLIP/">CLIP</a> is 
-<a href="#targetstransformsrandom_rotation">random rotation</a>.</p>
+<a href="reference.md#targetstransformsrandom_rotation">random rotation</a>.</p>
 <pre class="code yaml">targets:
   - features:
       - text: a curly spoon
@@ -179,15 +179,15 @@ curliness but it's still not quite recognizable as a spoon.</p>
   - blur: 
       kernel_size: 31*ti</pre><p><img src="static/img/demo4.png" alt="a not so bad rendered curly spoon"></p>
 <p>In desperation we just throw more computation at the
-problem by increasing the <a href="#targetsbatch_size">batch size</a>. 
+problem by increasing the <a href="reference.md#targetsbatch_size">batch size</a>. 
 This results in a runtime of about 2 minutes on 1500 cuda cores.</p>
 <p>Then, <code>on a plate</code> was added to the target text to make 
 <a href="https://github.com/openai/CLIP/">CLIP</a> somewhat more opinionated about the background.</p>
-<p>Some <a href="#targetstransformsnoise">noise</a> is added to each image 
+<p>Some <a href="reference.md#targetstransformsnoise">noise</a> is added to each image 
 before showing it to <a href="https://github.com/openai/CLIP/">CLIP</a> and a <a href="https://en.wikipedia.org/wiki/Gaussian_blur">gaussian blur</a> is added
 to the backpropagation <a href="https://en.wikipedia.org/wiki/Loss_function">loss</a>.</p>
 <p>For details about the <code>noise: 0.1*ti</code> line, please check out the
-<a href="#expressions">expressions</a> section. Sufficient to say that it 
+<a href="expressions.md">expressions</a> section. Sufficient to say that it 
 decreases the amount of noise over time.</p>
 <p>The noise makes <a href="https://github.com/defgsus/CLIPig/">CLIPig</a> kind of <em>think twice</em> about the way 
 a pixel is adjusted. The blur as a training loss tends 
@@ -224,22 +224,22 @@ postproc:
 <img src="static/img/demo6-b.png" alt="quite good spoon with curly handle"></p>
 <p>Changes made:</p>
 <ul>
-<li><a href="#targetstransformsnoise">Noise</a> and <a href="#targetsconstraintsblur">blur</a> 
+<li><a href="reference.md#targetstransformsnoise">Noise</a> and <a href="reference.md#targetsconstraintsblur">blur</a> 
 are kept at high values throughout the whole training. </li>
-<li>The <a href="#targetsfeaturestext">text target</a> is made extra specific.</li>
-<li>The <a href="#targetstransformsrepeat">repeat</a> and 
-<a href="#targetstransformscenter_crop">center crop</a> transforms
+<li>The <a href="reference.md#targetsfeaturestext">text target</a> is made extra specific.</li>
+<li>The <a href="reference.md#targetstransformsrepeat">repeat</a> and 
+<a href="reference.md#targetstransformscenter_crop">center crop</a> transforms
 help avoiding the <em>under-development</em> of the corners by the 
-<a href="#targetstransformsrandom_rotation">random rotation</a>.</li>
-<li><p>A <a href="#postproc">post processing</a> effect adds a small 
-<a href="#postprocborder">border</a> that forces the contents to be 
+<a href="reference.md#targetstransformsrandom_rotation">random rotation</a>.</li>
+<li><p>A <a href="reference.md#postproc">post processing</a> effect adds a small 
+<a href="reference.md#postprocborder">border</a> that forces the contents to be 
 created more in the center of the image instead of close 
 to or on one of the repeating edges.</p>
 <p>Post-processing effects are applied every epoch and change
 the image pixels directly without interfering with the
-backpropagation stage. All <a href="#transforms">transforms</a> that
+backpropagation stage. All <a href="transforms.md">transforms</a> that
 do not change the resolution are available as 
-<a href="#postproc">post processing</a> effects.</p>
+<a href="reference.md#postproc">post processing</a> effects.</p>
 </li>
 </ul>
 <p>There is not much else visible in the images because the 
@@ -289,11 +289,11 @@ postproc:
 - border:
     size: 1
     color: 0.15 0.1 0.05</pre><p><img src="static/img/demo8-c.png" alt="pretty good recognizable curly spoons"></p>
-<p>The <a href="#targetstransformsmul">mul transformation</a> reduces
+<p>The <a href="reference.md#targetstransformsmul">mul transformation</a> reduces
 the color range that <a href="https://github.com/openai/CLIP/">CLIP</a> is seeing so the resulting color
 range is increased. Of course, this also increases the 
 saturation a lot so the 
-<a href="#targetconstraintssaturation">saturation constraint</a>
+<a href="reference.md#targetconstraintssaturation">saturation constraint</a>
 is used to reduce it to acceptable levels.</p>
 <p>I'll end this experiment here because my 3 years old kid 
 clearly approves the image to depict <em>curly spoons</em>. 
@@ -332,14 +332,14 @@ in front:</p>
 window or <strong>four</strong> times as much pixels as before.</p>
 <p><img src="static/img/hpl2.png" alt="stuff is only good in the middle"></p>
 <p>What did happen? Well, the 
-<a href="#targetstransformscenter_crop">center_crop</a> transformation
+<a href="reference.md#targetstransformscenter_crop">center_crop</a> transformation
 crops a <a href="https://github.com/openai/CLIP/">CLIP</a>-sized 224² window from the middle of a 448² image. 
 It is not helpful unless to show us the effect of the 
 random rotation.</p>
-<p>We could add the <a href="#targetstransformsrandom_shift">random_shift</a>
+<p>We could add the <a href="reference.md#targetstransformsrandom_shift">random_shift</a>
 transform to move the <a href="https://github.com/openai/CLIP/">CLIP</a> window to every position of the 
 training image. Let's just do that and also increase the
-<a href="#targetsbatch_size">batch_size</a> from <strong>5</strong> to <strong>20</strong> since
+<a href="reference.md#targetsbatch_size">batch_size</a> from <strong>5</strong> to <strong>20</strong> since
 we have 4 times the pixels to process.</p>
 <p><img src="static/img/hpl3.png" alt="nice graphics all over the place"></p>
 <p>There are many Lovecrafts now. It's like in this 
@@ -349,7 +349,7 @@ a head.</p>
 <p>Clearly, <a href="https://github.com/openai/CLIP/">CLIP</a> does not get a good view of the whole image but
 just assembles parts of it without the knowledge of how they
 relate to each other.</p>
-<p>The <a href="#targetstransformsrandom_scale">random_scale</a> 
+<p>The <a href="reference.md#targetstransformsrandom_scale">random_scale</a> 
 transformation allows us to <em>'zoom'</em> in or out of the
 image so we can show <a href="https://github.com/openai/CLIP/">CLIP</a> a mixture of the whole image
 and details of it.</p>
@@ -362,9 +362,9 @@ Well, not entirely. The noise and artifacts are of higher
 resolution ;)</p>
 <p><img src="static/img/hpl4-c.png" alt="blurry but a good composition"></p>
 <p>Now, at some point in training we randomly 
-<a href="#targetstransformsrandom_scale">scale</a> 
+<a href="reference.md#targetstransformsrandom_scale">scale</a> 
 between the full resolution and the zoomed-in details
-and enable the <a href="#targetstransformsrandom_shift">random_shift</a>.</p>
+and enable the <a href="reference.md#targetstransformsrandom_shift">random_shift</a>.</p>
 <p><code>0. if t &lt; .4 else 1.</code> is python/<a href="https://github.com/defgsus/CLIPig/">CLIPig</a> talk for 
 <em>zero below 40% else one</em>.</p>
 <pre class="code yaml">epochs: 300

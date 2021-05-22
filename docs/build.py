@@ -46,6 +46,7 @@ class MarkdownParser(mistune.Markdown):
         final = final.replace("{{title}}", self.renderer.title or "")
         final = final.replace("{{content}}", html_content)
         return {
+            "markdown": text,
             "template": final,
             "title": self.renderer.title,
             "headers": self.renderer.headers,
@@ -107,6 +108,13 @@ def render_templates(templates: List[str]):
         for name, template in templates.items()
     }
     for name, template in templates.items():
+
+        markdown_file = f"{name}.md"
+        if name == "index":
+            markdown_file = "README.md"
+
+        print("writing", DOC_PATH / markdown_file)
+        (DOC_PATH / markdown_file).write_text(template["markdown"])
 
         navigation = []
         for n, t in templates.items():

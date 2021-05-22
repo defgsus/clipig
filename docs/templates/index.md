@@ -3,7 +3,7 @@
 CLIPig generates images by using the CLIP network as an art critique. 
 
 A bunch of pixels is continuously adjusted to increase the 
-similarity of their [features](#targetsfeatures) with some user-defined
+similarity of their [features](reference.md#targetsfeatures) with some user-defined
 target features. Both features are derived via CLIP.
 
 Through [backpropagation](https://en.wikipedia.org/wiki/Backpropagation),
@@ -19,10 +19,9 @@ which requires a bit of documentation.
 Please browse through the *walk-through* to get an overview and follow 
 the links to the reference pages and any point.
 
-- [Walk-through](#walk-through)
-- [Command line interface](#command-line-interface)
-- [Expressions](#expressions)
-- [Expression variables](#expression-variables)
-- [Transforms](#transforms)
-- [Constraints](#constraints)
-- [Parameter reference](#reference)
+- [Walk-through](walkthrough.md)
+- [Command line interface](cli.md)
+- [Expressions](expressions.md)
+- [Transforms](transforms.md)
+- [Constraints](constraints.md)
+- [Parameter reference](reference.md)
