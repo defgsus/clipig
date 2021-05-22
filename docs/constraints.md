@@ -14,8 +14,8 @@ Here's a list of all available constraints:
 - [border](reference.md#targetsconstraintsborder): Adds a border with a specific size and color to the training loss.
 - [contrast](reference.md#targetsconstraintscontrast): Pushes the contrast above or below a threshold value.
 - [edge_mean](reference.md#targetsconstraintsedge_mean): Adds the difference between the current image and
-    and an edge-detected version to the training constraint.
-- [mean](reference.md#targetsconstraintsmean): Pushes the image color mean above or below a threshold value
+    and an edge-detected version to the training loss.
+- [mean](reference.md#targetsconstraintsmean): Pushes the image color mean above or below a threshold value.
 - [noise](reference.md#targetsconstraintsnoise): Adds the difference between the current image and
     a noisy image to the training loss.
 - [normalize](reference.md#targetsconstraintsnormalize): Adds image normalization to the training loss.

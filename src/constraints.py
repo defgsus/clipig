@@ -176,7 +176,7 @@ class AboveBelowConstraintBase(ConstraintBase):
 
 class MeanConstraint(AboveBelowConstraintBase):
     """
-    Pushes the image color mean above or below a threshold value
+    Pushes the image color mean above or below a threshold value.
     """
     NAME = "mean"
     WEIGHT_FACTOR = 100.
@@ -280,7 +280,7 @@ class BlurConstraint(ConstraintBase):
 class EdgeMeanConstraint(AboveBelowConstraintBase):
     """
     Adds the difference between the current image and
-    and an edge-detected version to the training constraint.
+    and an edge-detected version to the training loss.
 
     A gaussian blur is used to detect the edges:
 

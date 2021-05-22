@@ -270,7 +270,7 @@ targets:
       degree: -30 30
       center: .4 .6
   - center_crop: 224
-  - mul: 1./5.         # [CLIP](https://github.com/openai/CLIP/) only sees 1/5th of the color range
+  - mul: 1./5.         # only show a 5th of the color range
   constraints:
   - blur:
       kernel_size: 51
@@ -292,7 +292,7 @@ saturation a lot so the
 [saturation constraint](reference.md#targetsconstraintssaturation)
 is used to reduce it to acceptable levels.
 
-I'll end this experiment here because my 3 years old kid 
+I'll end this experiment here because my 3 years old daughter 
 clearly approves the image to depict *curly spoons*. 
 And you should know the basic pieces now, that are needed to 
 create your desired fantasy images. 
@@ -313,7 +313,8 @@ birthday party`.
 
 ![pretty good lovecraft at a birthday party](static/img/hpl1.png)
 
-If you don't know Lovecraft, he's one of the earliest and 
+If you don't know [Lovecraft](https://en.wikipedia.org/wiki/H._P._Lovecraft), 
+he's one of the earliest and 
 spookiest fantasy authors with stories about creepy and
 *unearthly* things and obviously enough fan-art has found it's
 way into [CLIP](https://github.com/openai/CLIP/)'s convolutional weight matrices. The green guy
@@ -328,7 +329,7 @@ right place above the shoulders, aso. Similarity to *Lovecraft at
 a birthday party* got to **61%**, despite the creepy head. 
 [CLIP](https://github.com/openai/CLIP/) just imagined the face at two different 
 positions. If we continue training for long enough, it *might* 
-correct the face. But only, if it increases similarity to the
+correct the face. But only, if that increases similarity to the
 target feature.
 
 Anyways, let's increase the resolution by putting this line
@@ -364,16 +365,18 @@ a head.
 
 Clearly, [CLIP](https://github.com/openai/CLIP/) does not get a good view of the whole image but
 just assembles parts of it without the knowledge of how they
-relate to each other.
+relate to each other. It's perfectly fine for textures and
+fantasy wallpapers but let's see if we can create a good 
+composition in higher resolution.
 
 The [random_scale](reference.md#targetstransformsrandom_scale) 
 transformation allows us to *'zoom'* in or out of the
 image so we can show [CLIP](https://github.com/openai/CLIP/) a mixture of the whole image
 and details of it.
 
-Imagine a zoom, or scale, of **0.5** on the trained image.
+Imagine a zoom, or scale, of **0.5** on the training image.
 That would mean that [CLIP](https://github.com/openai/CLIP/) sees twice as much in each 
-direction or 4 times as much in the whole. Exactly or new
+direction or 4 times as much in the whole. Exactly our new
 resolution. Of course it would not look better than resizing an
 image to a larger resolution with some bilinear filtering.
 Well, not entirely. The noise and artifacts are of higher
@@ -429,8 +432,8 @@ It's quite good at parts but, wait! There's already another
 Lovecraft developing in the background. And that's what is to be 
 expected. The training target of that Lovecraftian party is
 simply applied at all points of the image and [CLIP](https://github.com/openai/CLIP/) won't 
-jude the whole frame less similar to the target when every
-face is that of Howard Phillips???.
+jude the whole frame less similar to the target just because every
+face is that of Howard Phillips.
 
 The above snapshot is kind'o good but the repetitions will
 increase with higher resolutions. It would be more like a fractal

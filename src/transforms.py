@@ -437,7 +437,7 @@ class FNoise(TransformBase):
 class Edge(TransformBase):
     """
     This removes everything except edges and generally has a bad effect on image
-    quality. It might be useful, however...
+    quality. It might be useful, however.
 
     A gaussian blur is used to detect the edges:
 
@@ -639,7 +639,7 @@ class RandomTranslate(TransformBase):
 
 class Shift(TransformBase):
     """
-    This translates the pixels of the image.
+    This translates the image while wrapping the edges around.
 
     Pixels that are moved outside get attached on the other side.
     """

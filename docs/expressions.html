@@ -114,7 +114,7 @@ also support <a href="#Expression-variables">variables</a>
 and the expression will be evaluated
 every time the value is needed.</p>
 <p>E.g., if you want thrice the <a href="https://github.com/openai/CLIP/">CLIP</a>-resolution of 224x224 pixels
-but are too lazy to calculate it, just say:</p>
+but have reasons to not calculate it, just say:</p>
 <pre class="code yaml">resolution: 224*3</pre><blockquote><p><strong>Note</strong>: Parameters that expect lists (like <strong>resolution</strong> above)
 copy a single value to all entries of the list. A list can 
 be specified with</p>
@@ -124,7 +124,7 @@ be specified with</p>
   - 480</pre></li>
 <li>with commas:<pre class="code yaml">resolution: 640, 480</pre></li>
 <li>or simply with spaces<pre class="code yaml">resolution: 640 480</pre>If you type expressions, you might want to use spaces or 
-commas. In cse of list parameters you'll need to use the 
+commas. In case of list parameters you'll need to use the 
 YAML lists:<pre class="code yaml">resolution:
 - 224 * 3
 - pow(224, 1.2)</pre></li>

@@ -485,7 +485,7 @@ A number greater or equal to 1 is considered a pixel coordinate
 ### `targets.transforms.edge`
 
 This removes everything except edges and generally has a bad effect on image
-quality. It might be useful, however...
+quality. It might be useful, however.
 
 A [gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur) is used to detect the edges:
 
@@ -764,7 +764,7 @@ Two numbers to specify **x** and **y** separately.
 
 expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
-This translates the pixels of the image.
+This translates the image while wrapping the edges around.
 
 Pixels that are moved outside get attached on the other side.
 
@@ -924,7 +924,7 @@ values in the range of `[0, 1]`.
 ### `postproc.edge`
 
 This removes everything except edges and generally has a bad effect on image
-quality. It might be useful, however...
+quality. It might be useful, however.
 
 A [gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur) is used to detect the edges:
 
@@ -1137,7 +1137,7 @@ Two numbers to specify **x** and **y** separately.
 
 expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
-This translates the pixels of the image.
+This translates the image while wrapping the edges around.
 
 Pixels that are moved outside get attached on the other side.
 
@@ -1455,7 +1455,7 @@ image.
 ### `targets.constraints.edge_mean`
 
 Adds the difference between the current image and
-and an edge-detected version to the training constraint.
+and an edge-detected version to the training loss.
 
 A [gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur) is used to detect the edges:
 
@@ -1573,7 +1573,7 @@ Two numbers define sigma for **x** and **y** separately.
 
 ### `targets.constraints.mean`
 
-Pushes the image color mean above or below a threshold value
+Pushes the image color mean above or below a threshold value.
 
 #### `targets.constraints.mean.above`
 

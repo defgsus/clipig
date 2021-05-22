@@ -468,7 +468,7 @@ values in the range of <code>[0, 1]</code>.</p>
 A number greater or equal to 1 is considered a pixel coordinate</p>
 <h3 id="targetstransformsedge"><code>targets.transforms.edge</code></h3>
 <p>This removes everything except edges and generally has a bad effect on image
-quality. It might be useful, however...</p>
+quality. It might be useful, however.</p>
 <p>A <a href="https://en.wikipedia.org/wiki/Gaussian_blur">gaussian blur</a> is used to detect the edges:</p>
 <pre class="code None">edge = amount * abs(image - blur(image))
 
@@ -610,7 +610,7 @@ are filled with black (zero).</p>
 <h3 id="targetstransformsshift"><code>targets.transforms.shift</code></h3>
 <p><code>list of length 2 of float</code> no default</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
-<p>This translates the pixels of the image.</p>
+<p>This translates the image while wrapping the edges around.</p>
 <p>Pixels that are moved outside get attached on the other side.</p>
 <p>A number <strong>larger 1</strong> or <strong>smaller -1</strong> translates by the actual pixels.</p>
 <p>A number <strong>between -1 and 1</strong> translates by the fraction of the image resolution.
@@ -695,7 +695,7 @@ values in the range of <code>[0, 1]</code>.</p>
 <hr>
 <h3 id="postprocedge"><code>postproc.edge</code></h3>
 <p>This removes everything except edges and generally has a bad effect on image
-quality. It might be useful, however...</p>
+quality. It might be useful, however.</p>
 <p>A <a href="https://en.wikipedia.org/wiki/Gaussian_blur">gaussian blur</a> is used to detect the edges:</p>
 <pre class="code None">edge = amount * abs(image - blur(image))
 
@@ -800,7 +800,7 @@ are filled with black (zero).</p>
 <h4 id="postprocshift"><code>postproc.shift</code></h4>
 <p><code>list of length 2 of float</code> no default</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
-<p>This translates the pixels of the image.</p>
+<p>This translates the image while wrapping the edges around.</p>
 <p>Pixels that are moved outside get attached on the other side.</p>
 <p>A number <strong>larger 1</strong> or <strong>smaller -1</strong> translates by the actual pixels.</p>
 <p>A number <strong>between -1 and 1</strong> translates by the fraction of the image resolution.
@@ -1016,7 +1016,7 @@ is the mean of the squared difference of each vector variable. Compared to
 </ul>
 <h3 id="targetsconstraintsedge_mean"><code>targets.constraints.edge_mean</code></h3>
 <p>Adds the difference between the current image and
-and an edge-detected version to the training constraint.</p>
+and an edge-detected version to the training loss.</p>
 <p>A <a href="https://en.wikipedia.org/wiki/Gaussian_blur">gaussian blur</a> is used to detect the edges:</p>
 <pre class="code None">edge = amount * abs(image - blur(image))
 
@@ -1093,7 +1093,7 @@ Must be an <strong>odd</strong>, <strong>positive</strong> integer.</p>
 <p>If not specified it will default to <code>0.3 * ((kernel_size - 1) * 0.5 - 1) + 0.8</code>.</p>
 <p>Two numbers define sigma for <strong>x</strong> and <strong>y</strong> separately.</p>
 <h3 id="targetsconstraintsmean"><code>targets.constraints.mean</code></h3>
-<p>Pushes the image color mean above or below a threshold value</p>
+<p>Pushes the image color mean above or below a threshold value.</p>
 <h4 id="targetsconstraintsmeanabove"><code>targets.constraints.mean.above</code></h4>
 <p><code>list of length 3 of float</code> no default</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>

@@ -6,7 +6,7 @@ and the expression will be evaluated
 every time the value is needed. 
 
 E.g., if you want thrice the CLIP-resolution of 224x224 pixels
-but are too lazy to calculate it, just say:
+but have reasons to not calculate it, just say:
 
 ```yaml
 resolution: 224*3
@@ -30,7 +30,7 @@ resolution: 224*3
 >   resolution: 640 480
 >   ```
 > If you type expressions, you might want to use spaces or 
-> commas. In cse of list parameters you'll need to use the 
+> commas. In case of list parameters you'll need to use the 
 > YAML lists:
 > ```yaml
 > resolution:

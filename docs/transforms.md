@@ -2,6 +2,10 @@
 
 Transforms shape the area of the trained image before showing
 it to [CLIP](https://github.com/openai/CLIP/) for evaluation. 
+
+All [transforms](reference.md#targetstransforms) that do not change the 
+resolution of the image are also available as 
+[post processing](reference.md#postproc) effects.
   
 Here's a list of all available transformations:
 
@@ -12,7 +16,7 @@ Here's a list of all available transformations:
 - [clamp](reference.md#targetstransformsclamp): Clamps the pixels into a fixed range.
 - [crop](reference.md#targetstransformscrop): Crops a specified section from the image.
 - [edge](reference.md#targetstransformsedge): This removes everything except edges and generally has a bad effect on image
-    quality. It might be useful, however...
+    quality. It might be useful, however.
 - [fnoise](reference.md#targetstransformsfnoise): Adds noise to the image's fourier space.
 - [mul](reference.md#targetstransformsmul): Multiplies all pixels by a fixed value.
 - [noise](reference.md#targetstransformsnoise): Adds noise to the image.
@@ -25,9 +29,4 @@ Here's a list of all available transformations:
 - [repeat](reference.md#targetstransformsrepeat): Repeats the image a number of times in the right and bottom direction.
 - [resize](reference.md#targetstransformsresize): The resolution of the image is changed.
 - [rotate](reference.md#targetstransformsrotate): Rotates the image.
-- [shift](reference.md#targetstransformsshift): This translates the pixels of the image.
-
-
-All [transforms](reference.md#targetstransforms) that do not change the 
-resolution of the image are also available as 
-[post processing](reference.md#postproc) effects.
+- [shift](reference.md#targetstransformsshift): This translates the image while wrapping the edges around.
