@@ -8,7 +8,9 @@ import torchvision.transforms as VT
 import torchvision.transforms.functional as VF
 
 from .expression import Expression, ExpressionContext
-from .parameters import Parameter, SequenceParameter, FrameTimeParameter
+from .parameters import (
+    Parameter, SequenceParameter, FrameTimeParameter, _add_constraints_parameters
+)
 from .strings import value_str
 
 
@@ -527,3 +529,6 @@ class NoiseConstraint(ConstraintBase):
         noisy_image = image + std * torch.randn(*image.shape).to(image.device)
 
         return 100. * self.loss_function(image, noisy_image, context)
+
+
+_add_constraints_parameters(constraints)

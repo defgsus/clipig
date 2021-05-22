@@ -540,18 +540,7 @@ def _add_parameters(prefix: str, classes: dict, expr_groups: Tuple[str, ...] = N
                 PARAMETERS[f"{prefix}.{name}.{param_name}"] = _add_args(value)
 
 
-def _add_class_parameters():
-    from .transforms import transformations
-    from .constraints import constraints
-
-    PARAMETERS["targets.transforms"] = PlaceholderParameter(
-        list, default=list(),
-        doc="""
-        Transforms shape the area of the trained image before showing
-        it to CLIP for evaluation. 
-        """
-    )
-    _add_parameters("targets.transforms", transformations, expr_groups=EXPR_GROUPS.target_transform)
+def _add_constraints_parameters(constraints: dict):
 
     PARAMETERS["targets.constraints"] = PlaceholderParameter(
         list, default=list(),
@@ -563,6 +552,18 @@ def _add_class_parameters():
         """
     )
     _add_parameters("targets.constraints", constraints, expr_groups=EXPR_GROUPS.target_constraint)
+
+
+def _add_transforms_parameters(transformations: dict):
+
+    PARAMETERS["targets.transforms"] = PlaceholderParameter(
+        list, default=list(),
+        doc="""
+        Transforms shape the area of the trained image before showing
+        it to CLIP for evaluation. 
+        """
+    )
+    _add_parameters("targets.transforms", transformations, expr_groups=EXPR_GROUPS.target_transform)
 
     postprocs = {
         name: klass
@@ -603,7 +604,7 @@ def _add_class_parameters():
     _add_parameters("postproc", postprocs, expr_groups=EXPR_GROUPS.postproc)
 
 
-_add_class_parameters()
+# _add_class_parameters()
 
 
 def parse_arguments(gui_mode: bool = False) -> dict:

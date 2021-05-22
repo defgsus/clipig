@@ -12,7 +12,7 @@ from torchvision.utils import save_image, make_grid
 
 from .expression import Expression, ExpressionContext
 from .parameters import (
-    Parameter, SequenceParameter, FrameTimeParameter
+    Parameter, SequenceParameter, FrameTimeParameter, _add_transforms_parameters
 )
 
 Int = Union[int, Expression]
@@ -846,3 +846,6 @@ class Clamp(TransformBase):
 #         #    return f_space.real
 #         #else:
 #         #    return f_space.imag
+
+
+_add_transforms_parameters(transformations)

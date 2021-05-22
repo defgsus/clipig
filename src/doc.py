@@ -140,9 +140,7 @@ def strip_doc(doc: Optional[str]) -> Optional[str]:
     return doc.strip()
 
 
-def render_documentation():
-    path = Path(__file__).resolve().parent.parent / "docs"
-    template = (path / "_doc_template.md").read_text()
+def render_markdown_documentation(template: str) -> str:
     template = prepare_doc_string(template)
 
     for key, render_func in (
@@ -158,7 +156,7 @@ def render_documentation():
 
         template = template.replace("{{%s}}" % key, text)
 
-    (path / "README.md").write_text(template)
+    return template
 
 
 def dump_constraints(file: Optional[TextIO] = None):

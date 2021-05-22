@@ -40,6 +40,19 @@ EXPRESSION_ARGS = {
             "time_inverse3": {"alias": "ti3"},
             "time_inverse4": {"alias": "ti4"},
             "time_inverse5": {"alias": "ti5"},
+            "time_step": {
+                "type": "function(float, float)",
+                "doc": """
+                A function that returns a float in the range [0, 1]
+                during the time interval defined by the two values.
+                ```python
+                time_step(0, 1)    # increases from zero to one during whole training
+                time_step(0.5, 1)  # increases from zero to one during second half of training
+                time_step(0.5, 0)  # decreases from one to zero during first half of training
+                ```
+                """,
+                "alias": "ts",
+            },
         }
     },
 
@@ -164,6 +177,9 @@ class Expression:
                 name: 0.
                 for name in self.arguments
             }
+            if "time_step" in self.arguments:
+                args["time_step"] = lambda a, b: a
+
             self(**args)
         except Exception as e:
             raise ValueError(

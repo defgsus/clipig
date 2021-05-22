@@ -276,6 +276,20 @@ class ImageTraining:
             self.epoch = epoch
             self.epoch_f = epoch_f = epoch / max(1, self.parameters["epochs"] - 1)
 
+            def _step(a: float, b: float) -> float:
+                inv = False
+                if b < a:
+                    a, b = b, a
+                    inv = True
+
+                if self.epoch_f < a:
+                    s = 0.
+                elif self.epoch_f > b or a == b:
+                    s = 1.
+                else:
+                    s = (self.epoch_f - a) / (b - a)
+                return 1. - s if inv else s
+
             expression_context = ExpressionContext(
                 epoch=epoch,
                 time=epoch_f,
@@ -288,6 +302,7 @@ class ImageTraining:
                 time_inverse3=math.pow(1.-epoch_f, 3),
                 time_inverse4=math.pow(1.-epoch_f, 4),
                 time_inverse5=math.pow(1.-epoch_f, 5),
+                time_step=_step,
             )
 
             if self.pixel_model is None:
