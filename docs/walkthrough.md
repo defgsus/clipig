@@ -1,5 +1,7 @@
 # Walk-through
 
+## YAML basics
+
 First of all, [CLIPig](https://github.com/defgsus/CLIPig/)-experiments are defined in [YAML](https://yaml.org/) 
 files. I actually prefer [JSON](https://www.json.org/) but it 
 does not support comments out of the box and is quite strict 
@@ -18,6 +20,26 @@ a_map:
 ```
 
 And that's all to know about YAML for our purposes. 
+
+There is one particularity in CLIPig: Value lists can be defined
+via YAML lists or via comma or space separation, e.g:
+
+```yaml
+resolution:
+ - 1024
+ - 768
+```
+
+is the same as 
+```yaml
+resolution: 1024 768
+```
+or
+```yaml
+resolution: 1024, 768
+```
+
+## Defining targets
 
 Now in [CLIPig](https://github.com/defgsus/CLIPig/) the *desire* for an image is expressed as a 
 [target](reference.md#targets).

@@ -32,6 +32,8 @@
         <p class="caption"><a class="reference internal" href="index.html"><span class="caption-text">Intro</span></a></p>
 <p class="caption"><a class="reference internal" href="walkthrough.html"><span class="caption-text">Walk-through</span></a></p>
 <ul>
+<li class="toctree-l2"><a class="reference internal" href="walkthrough.html#YAML-basics">YAML basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="walkthrough.html#Defining-targets">Defining targets</a></li>
 <li class="toctree-l2"><a class="reference internal" href="walkthrough.html#Increasing-resolution">Increasing resolution</a></li>
 </ul>
 <p class="caption"><a class="reference internal" href="cli.html"><span class="caption-text">command line interface</span></a></p>
@@ -95,6 +97,7 @@
            <div itemprop="articleBody">
             
             <h1 id="Walk-through">Walk-through</h1>
+<h2 id="YAML-basics">YAML basics</h2>
 <p>First of all, <a href="https://github.com/defgsus/CLIPig/">CLIPig</a>-experiments are defined in <a href="https://yaml.org/">YAML</a> 
 files. I actually prefer <a href="https://www.json.org/">JSON</a> but it 
 does not support comments out of the box and is quite strict 
@@ -108,6 +111,13 @@ quite human-friendly in YAML:</p>
 a_map:
   first_key: first value
   second_key: second value  # a comment</pre><p>And that's all to know about YAML for our purposes.</p>
+<p>There is one particularity in CLIPig: Value lists can be defined
+via YAML lists or via comma or space separation, e.g:</p>
+<pre class="code yaml">resolution:
+ - 1024
+ - 768</pre><p>is the same as</p>
+<pre class="code yaml">resolution: 1024 768</pre><p>or</p>
+<pre class="code yaml">resolution: 1024, 768</pre><h2 id="Defining-targets">Defining targets</h2>
 <p>Now in <a href="https://github.com/defgsus/CLIPig/">CLIPig</a> the <em>desire</em> for an image is expressed as a 
 <a href="reference.html#targets">target</a>.
 There can be multiple targets and each target can have multiple 
@@ -417,9 +427,6 @@ of H.P.'s birthday party.</p>
            
           </div>
           <footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="quickref.html" class="btn btn-neutral float-right" title="Overview" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
 
   <hr/>
 

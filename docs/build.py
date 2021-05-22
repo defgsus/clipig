@@ -79,6 +79,9 @@ def render_navigation(navigation: List[Tuple[int, str, str]]) -> str:
     links = []
     li_open = False
     for level, name, url in navigation:
+        if len(name.split(".")) > 3:
+            continue
+
         if level == 0:
             if li_open:
                 links.append("</ul>")
