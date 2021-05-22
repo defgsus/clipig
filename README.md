@@ -2,31 +2,33 @@
 
 Dear seeker!
 
-This is yet another generative gradient-descent engine using OpenAI's 
+This is probably one of many generative gradient-descent engines using OpenAI's 
 [CLIP](https://github.com/openai/CLIP/) network to rate the similarity 
 between generated pixels and a CLIP-feature, typically given in the 
-form of natural language.
+form of natural language:
 
 ![kissing cthuluhu](docs/static/img/kissing-cthulhu.png)
-(*kissing cthulhu*)
+*"kissing cthulhu"*
 
 CLIPig uses no sophisticated image generation network, just ordinary RGB pixel planes.
 
 The outstanding thing, maybe, and the reason for developing it, is it's configuration interface.
-I got pretty tired of constantly changing actual code during various experiments so i started
+I got pretty tired of constantly changing actual code during various experiments 
+and then loosing stuff i did before so i started
 this new project which fulfills *most* desires through yaml configuration files. 
 
-Please read the **[documentation](docs/README.md)** or gather 
-everything from this example:
+Please read the **[documentation](https://defgsus.github.io/clipig/)** 
+(or as [markdown](https://defgsus.github.io/clipig/docs/README.md))
+or gather everything from this example:
 
-### example yaml config
+### example experiment
 
 ```yaml
 resolution: 512
 epochs: 200
 
 learnrate: 1.5
-learnrate_scale: (1. - .95 * pow(t, 5.))   # 't' is training epoch in [0, 1] range
+learnrate_scale: 1. - .95 * pow(t, 5.)   # 't' is training epoch in [0, 1] range
 
 targets:
 
@@ -61,14 +63,14 @@ postproc:
 ```
 
 As you can see, it supports 
-- expressions
-- multiple targets
-- multiple features per target
-- CLIP features from texts or images
+- [expressions](docs/expressions.md)
+- multiple [targets](docs/reference.md#targets)
+- multiple [features](docs/reference.md#targetsfeatures) per target
+- CLIP features from [texts](docs/reference.md#targetsfeaturestext) or [images](docs/reference.md#targetsfeaturesimage)
 - negative weights!
-- arbitrary pixel transformation chains
-- a couple of other constraints that can be added to the loss
-- a couple of image post-processing effects 
+- arbitrary pixel [transformation](docs/transforms.md) chains
+- a couple of other [constraints](docs/constraints.md) that can be added to the loss
+- a couple of image [post-processing](docs/reference.md#postproc) effects 
 - scheduling via `start` and `end` parameters
 
 ---
@@ -82,14 +84,14 @@ python clipig.py examples/strawberries.yaml -o ./images/
 ```
 
 It will save an image to `./images/strawberries.png`. If such a file exists, 
-a number is attached to the filename or incremented automatically. It will never
-overwrite an existing file.
+a number is attached to the filename or incremented automatically. **It will never
+overwrite an existing file.**
 
-There is a **GUI** version for **interactive fun** but it's even more hacked together
+The **GUI** version for **interactive fun** but it's even more hacked together
 than the rest. Install `pyqt5` and start it with:
 
 ```bash
-python clipig-gui.py
+python clipig-gui.py examples/strawberries.yaml
 ```
 
 It's possible to change the configuration during training which is funny and horrible alike. 
@@ -131,7 +133,8 @@ to be a uniform something with some objects carved out. Although, there are coun
 examples that show promise:
 
 ![2d-platform with ](docs/static/img/2d-platformer.png)
-(*2d platformer*)
+
+*"2d platformer"*
 
 If you feel you can help or want to discuss things, please 
 [open an issue](https://github.com/defgsus/clipig/issues).
@@ -140,6 +143,6 @@ If you feel you can help or want to discuss things, please
 ---
 
 ![CLIP-generated strawberry image](docs/static/img/strawberry.png)
-(*strawberry* - well, i did not make this up. things are sometimes strangely 
-interconnected in CLIP)
 
+"*strawberry*" - well, i did not make this up. things are sometimes strangely 
+interconnected in CLIP
