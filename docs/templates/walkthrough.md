@@ -145,7 +145,7 @@ decreases the amount of noise over time.
 
 The noise makes CLIPig kind of *think twice* about the way 
 a pixel is adjusted. The blur as a training loss tends 
-to blur out the areas where CLIP is not interested in, while 
+to blur out the areas where CLIP is not much interested in, while 
 the points of interest are constantly updated and are not 
 blurred as much. Unfortunately both methods also help to 
 create new artifacts. And this is where those
@@ -157,7 +157,7 @@ text to `a photo of a curly spoon`?
 
 ![almost a photo of a curly spoon](static/img/demo5.png)
 
-Ah, i see where CLIP is going to. Indeed funny, 
+Ah, i see where you are going, CLIP! Indeed funny, 
 but not enough for a proof-of-concept.
 
 ```yaml
@@ -277,6 +277,8 @@ create your desired fantasy images.
 
 But there's one thing left: **How do i increase 
 the resolution?**
+
+## Increasing resolution
 
 Okay, let's start with a new theme. Take the curly spoon script
 from above and replace the text with `h.p. lovecraft at a 
@@ -419,4 +421,6 @@ of H.P.'s birthday party.
 
 Well done CLIP, well done.
 
-But back to the topic
+But back to the topic 
+
+...
