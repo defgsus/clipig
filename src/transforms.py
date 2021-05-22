@@ -765,6 +765,34 @@ class Multiply(TransformBase):
         return (image.reshape(3, -1) * color).reshape(image.shape)
 
 
+class Mean(TransformBase):
+    """
+    Adjust the mean color value.
+    """
+    NAME = "mean"
+    PARAMS = {
+        "mean": SequenceParameter(
+            float, length=3, default=None,
+            doc="""
+            Three numbers specify **red**, **green** and **blue** while a 
+            single number specifies a gray-scale color.
+            """
+        ),
+    }
+
+    def __init__(self, mean: List[float]):
+        super().__init__()
+        self.mean = mean
+
+    def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+        desired_mean = torch.Tensor(context(self.mean)).to(image.device)
+        image_mean = image.reshape(3, -1).mean(dim=1)
+
+        offset = (desired_mean - image_mean).reshape(3, 1, 1)
+
+        return image + offset
+
+
 class Clamp(TransformBase):
     """
     Clamps the pixels into a fixed range.
