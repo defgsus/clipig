@@ -1,6 +1,6 @@
 import unittest
 
-from src.expression import Expression, ExpressionContext
+from src.expression import Expression, ExpressionContext, EXPRESSION_ARGS
 from src.parameters import set_parameter_defaults, convert_params
 
 
@@ -13,11 +13,13 @@ class TestExpression(unittest.TestCase):
         self.assertEqual([1.2, 3.4], ctx([Expression(float, "1.2"), 3.4]))
 
     def test_expression_param(self):
-        ctx = ExpressionContext(a=2, b=3)
-        self.assertEqual(6, ctx(Expression(int, "a * b", "a", "b")))
+        ctx = ExpressionContext(learnrate=2, learnrate_scale=3)
+        self.assertEqual(6, ctx(
+            Expression(int, "learnrate * learnrate_scale", ("learnrate",))
+        ))
         self.assertEqual([5, 6], ctx([
-            Expression(int, "a+b", "a", "b"),
-            Expression(int, "a*b", "a", "b"),
+            Expression(int, "learnrate + learnrate_scale", ("learnrate", )),
+            Expression(int, "learnrate * learnrate_scale", ("learnrate", )),
         ]))
 
     def test_expression_math(self):

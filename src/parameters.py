@@ -20,19 +20,16 @@ class Parameter:
             default: Any = None,
             null: bool = False,
             doc: Optional[str] = None,
-            expression: bool = False,
-            expression_args: Optional[Sequence[str]] = None,
+            expression_groups: Optional[Sequence[str]] = None,
     ):
         self.doc = doc
         self.types = list(types) if isinstance(types, Sequence) else [types]
         self.null = null
         self.default = default
-        self.expression = expression or bool(expression_args)
-        expression_args = expression_args or EXPR_ARGS.DEFAULT
-        self.expression_args = list(expression_args)
+        self.expression_groups = list(expression_groups) if expression_groups is not None else []
 
         assert len(self.types)
-        assert len(self.types) == 1 or not self.expression
+        assert len(self.types) == 1 or not self.expression_groups
 
     def copy(self):
         return self.__class__(
@@ -40,8 +37,7 @@ class Parameter:
             default=self.default,
             null=self.null,
             doc=self.doc,
-            expression=self.expression,
-            expression_args=self.expression_args,
+            expression_groups=self.expression_groups,
         )
 
     def convert(self, x: Any) -> Any:
@@ -71,17 +67,17 @@ class Parameter:
             except:
                 pass
 
-        if not self.expression:
+        if not self.expression_groups:
             if len(self.types) == 1:
                 raise ValueError(
-                    f"Expected type '{self.types[0]}', got '{x}'"
+                    f"Expected type '{self.types[0].__name__}', got '{x}'"
                 )
             else:
                 raise ValueError(
                     f"Expected one of types {self.types}, got '{x}'"
                 )
 
-        exp = Expression(self.types[0], x, *self.expression_args)
+        exp = Expression(self.types[0], x, self.expression_groups)
         exp.validate()
         return exp
 
@@ -135,16 +131,14 @@ class SequenceParameter(Parameter):
             default: Any = None,
             null: bool = False,
             doc: Optional[str] = None,
-            expression: bool = False,
-            expression_args: Optional[Sequence[str]] = None,
+            expression_groups: Optional[Sequence[str]] = None,
     ):
         super().__init__(
             types=types,
             default=default,
             null=null,
             doc=doc,
-            expression=expression,
-            expression_args=expression_args,
+            expression_groups=expression_groups,
         )
         self.length = length
 
@@ -155,8 +149,7 @@ class SequenceParameter(Parameter):
             default=self.default,
             null=self.null,
             doc=self.doc,
-            expression=self.expression,
-            expression_args=self.expression_args,
+            expression_groups=self.expression_groups,
         )
 
     def convert(self, x: Any) -> Any:
@@ -193,30 +186,20 @@ class PlaceholderParameter(Parameter):
     pass
 
 
-class EXPR_ARGS:
-
-    MINIMAL = (
-        "epoch",
-        "t", "t2", "t3", "t4", "t5",
-        "ti", "ti2", "ti3", "ti4", "ti5",
-    )
-
-    LEARNRATE = (
-        "lr", "learnrate",
-        "lrs", "learnrate_scale",
-    )
-
-    DEFAULT = MINIMAL + LEARNRATE
-
-    TARGET_TRANSFORM = DEFAULT
-
-    TARGET_FEATURE = DEFAULT + (
-        "sim", "similarity",
-    )
-
-    TARGET_CONSTRAINT = DEFAULT + (
-        "sim", "similarity",
-    )
+class EXPR_GROUPS:
+    """
+    Just a little grouping to make code updates easier.
+    The grouping is not visible in the docs, instead
+    it represents the processing stages.
+    """
+    basic = ("time", )
+    resolution = basic
+    learnrate = basic + ("resolution", )
+    postproc = learnrate + ("learnrate", )
+    target = learnrate + ("learnrate", )
+    target_transform = target
+    target_feature = target + ("target_feature", )
+    target_constraint = target + ("target_constraint", )
 
 
 PARAMETERS = {
@@ -267,15 +250,26 @@ PARAMETERS = {
     ),
     "resolution": SequenceParameter(
         int, length=2, default=[224, 224],
-        doc="Resolution of the image to create. A single number for square images or two "
-            "numbers for width and height."
+        doc="""
+        Resolution of the image to create. A single number for square images or two 
+        numbers for width and height.
+        
+        It supports expression variables so you can actually change the resolution
+        during training, e.g:
+        ```yaml
+        resolution:
+        - 224 if t < .2 else 448
+        ```
+        would change the resolution from 224x224 to 448x448 at 20% of training time.
+        """,
+        expression_groups=EXPR_GROUPS.resolution,
     ),
     "model": Parameter(
         str, default="ViT-B/32",
         doc=("The pre-trained CLIP model to use. Options are " +
              ", ".join(f"`{m}`" for m in clip.available_models()) +
              "\n\nThe models are downloaded from `openaipublic.azureedge.net` and stored "
-             "in the current user's cache directory"
+             "in the user's `~/.cache/` directory"
              )
     ),
     "device": Parameter(
@@ -283,7 +277,7 @@ PARAMETERS = {
         doc="The device to run the training on. Can be `cpu`, `cuda`, `cuda:1` etc.",
     ),
     "learnrate": Parameter(
-        float, default=1., expression_args=EXPR_ARGS.MINIMAL,
+        float, default=1., expression_groups=EXPR_GROUPS.learnrate,
         doc="""
         The learning rate of the optimizer. 
         
@@ -295,7 +289,7 @@ PARAMETERS = {
         """
     ),
     "learnrate_scale": Parameter(
-        float, default=1., expression_args=EXPR_ARGS.MINIMAL,
+        float, default=1., expression_groups=EXPR_GROUPS.learnrate,
         doc="""
         A scaling parameter for the actual learning rate.
         
@@ -360,21 +354,21 @@ PARAMETERS = {
         doc="""
         This is a list of *targets* that define the desired image. 
         
-        Most important are the [features](#targetsfeatures) where
+        Most important are the [features](reference.md#targetsfeatures) where
         texts or images are defined which get converted into CLIP
         features and then drive the image creation process.
         
-        It's possible to add additional [constraints](#targetsconstraints)
+        It's possible to add additional [constraints](reference.md#targetsconstraints)
         which alter image creation without using CLIP, 
-        e.g. the image [mean](#targetsconstraintsmean), 
-        [saturation](#targetsconstraintssaturation) 
-        or [gaussian blur](#targetsconstraintsblur).
+        e.g. the image [mean](reference.md#targetsconstraintsmean), 
+        [saturation](reference.md#targetsconstraintssaturation) 
+        or [gaussian blur](reference.md#targetsconstraintsblur).
         """
     ),
     "targets.active": Parameter(
         bool, default=True,
         doc="""
-        A boolean to turn of the target during development. 
+        A boolean to turn off the target during development. 
         
         This is just a convenience parameter. To turn of a target
         during testing without deleting all the parameters, simply 
@@ -399,16 +393,17 @@ PARAMETERS = {
         doc="""End frame of the target. The whole target is inactive after this time."""
     ),
     "targets.weight": Parameter(
-        float, default=1., expression=True, expression_args=EXPR_ARGS.TARGET_CONSTRAINT,
+        float, default=1., expression_groups=EXPR_GROUPS.target_constraint,
         doc="""
-        Weight factor that is multiplied with all the weights of [features](#targetsfeatures)
-        and [constraints](#targetsconstraints). 
+        Weight factor that is multiplied with all the weights of 
+        [features](reference.md#targetsfeatures)
+        and [constraints](reference.md#targetsconstraints). 
         """
     ),
     "targets.batch_size": Parameter(
         int, default=1,
         doc="""
-        The number of image frames to process during one [epoch](#epochs). 
+        The number of image frames to process during one [epoch](reference.md#epochs). 
         
         In machine learning the batch size is one of the important and magic hyper-parameters.
         They control how many different training samples are included into one weight update.
@@ -426,9 +421,9 @@ PARAMETERS = {
     "targets.select": Parameter(
         str, default="all",
         doc="""
-        Selects the way how multiple [features](#targetsfeatures) are handled.
+        Selects the way how multiple [features](reference.md#targetsfeatures) are handled.
         
-        - `all`: All feature losses (multiplied with their individual [weights](#targetsfeaturesweight)) 
+        - `all`: All feature losses (multiplied with their individual [weights](reference.md#targetsfeaturesweight)) 
           are added together.
         - `best`: The [similarity](https://en.wikipedia.org/wiki/Cosine_similarity) between the 
           features of the current image pixels and each desired feature is calculated and the 
@@ -437,8 +432,8 @@ PARAMETERS = {
           and then the worst matching feature is selected. While `best` mode will generally 
           increase the influence of one or a few features, the `worst` mode will try to increase
           the influence of all features equally.
-        - 'mix': All individual features are averaged together 
-          (respecting their individual [weights](#targetsfeaturesweight))
+        - `mix`: All individual features are averaged together 
+          (respecting their individual [weights](reference.md#targetsfeaturesweight))
           and the resulting feature is compared with the features of the current image.
           This actually works quite well!  
         """
@@ -451,7 +446,7 @@ PARAMETERS = {
         The CLIP network is used to convert texts or images
         into a 512-dimensional vector of [latent variables](https://en.wikipedia.org/wiki/Latent_variable).
         
-        In the image creation process each [target](#targets) takes a section of the current image, 
+        In the image creation process each [target](reference.md#targets) takes a section of the current image, 
         shows it to CLIP and compares the resulting feature vector with the vector of each defined feature.
         
         Through [backpropagation](https://en.wikipedia.org/wiki/Backpropagation) each pixel is then 
@@ -472,8 +467,8 @@ PARAMETERS = {
         Path or URL to an image file 
         ([supported formats](https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html)).
         
-        Alternatively to [text](#targetsfeaturestext) an image can be converted into the
-        [target feature](#targetsfeatures). 
+        Alternatively to [text](reference.md#targetsfeaturestext) an image can be converted into the
+        [target feature](reference.md#targetsfeatures). 
         
         Currently the image is **resized to 224x224, ignoring the aspect-ratio** 
         to fit into the CLIP input window.
@@ -491,7 +486,7 @@ PARAMETERS = {
         doc="End frame of the specific feature"
     ),
     "targets.features.weight": Parameter(
-        float, default=1., expression=True, expression_args=EXPR_ARGS.TARGET_FEATURE,
+        float, default=1., expression_groups=EXPR_GROUPS.target_feature,
         doc="""
         A weight parameter to control the influence of a specific feature of a target.
         
@@ -503,7 +498,7 @@ PARAMETERS = {
         str, default="cosine",
         doc="""
         The [loss function](https://en.wikipedia.org/wiki/Loss_function) used to calculate the 
-        difference (or error) between current and desired [feature](#targetsfeatures).
+        difference (or error) between current and desired [feature](reference.md#targetsfeatures).
         
         - `cosine`: The loss function is `1 - cosine_similarity(current, target)`.
           The CLIP network was trained using 
@@ -513,21 +508,20 @@ PARAMETERS = {
           is the mean of the absolute difference of each vector variable.
         - `l2` or `mse`: [Mean squared error](https://en.wikipedia.org/wiki/Mean_squared_error)
           is the mean of the squared difference of each vector variable. Compared to 
-          *mean absolute error*, it produces a smaller loss for small differences and 
-          a larger loss for large differences.
+          *mean absolute error*, it produces a smaller loss for small differences 
+          (below 1.0) and a larger loss for large differences.
         """
     ),
 }
 
 
-def _add_parameters(prefix: str, classes: dict, expr_args: Tuple[str, ...] = None):
+def _add_parameters(prefix: str, classes: dict, expr_groups: Tuple[str, ...] = None):
     from .doc import strip_doc
     def _add_args(p: Parameter) -> Parameter:
-        if not expr_args:
+        if not expr_groups:
             return p
         p = p.copy()
-        p.expression = True
-        p.expression_args = expr_args
+        p.expression_groups = expr_groups
         return p
 
     for name in sorted(classes.keys()):
@@ -547,17 +541,7 @@ def _add_parameters(prefix: str, classes: dict, expr_args: Tuple[str, ...] = Non
                 PARAMETERS[f"{prefix}.{name}.{param_name}"] = _add_args(value)
 
 
-def _add_class_parameters():
-    from .transforms import transformations
-    from .constraints import constraints
-    PARAMETERS["targets.transforms"] = PlaceholderParameter(
-        list, default=list(),
-        doc="""
-        Transforms shape the area of the trained image before showing
-        it to CLIP for evaluation. 
-        """
-    )
-    _add_parameters("targets.transforms", transformations, expr_args=EXPR_ARGS.TARGET_TRANSFORM)
+def _add_constraints_parameters(constraints: dict):
 
     PARAMETERS["targets.constraints"] = PlaceholderParameter(
         list, default=list(),
@@ -565,10 +549,22 @@ def _add_class_parameters():
         Constraints do influence the trained image without using CLIP.
         
         They only affect the pixels that are processed by
-        the [transforms](#transforms) of the [target](#targets). 
+        the [transforms](transforms.md) of the [target](reference.md#targets). 
         """
     )
-    _add_parameters("targets.constraints", constraints, expr_args=EXPR_ARGS.TARGET_CONSTRAINT)
+    _add_parameters("targets.constraints", constraints, expr_groups=EXPR_GROUPS.target_constraint)
+
+
+def _add_transforms_parameters(transformations: dict):
+
+    PARAMETERS["targets.transforms"] = PlaceholderParameter(
+        list, default=list(),
+        doc="""
+        Transforms shape the area of the trained image before showing
+        it to CLIP for evaluation. 
+        """
+    )
+    _add_parameters("targets.transforms", transformations, expr_groups=EXPR_GROUPS.target_transform)
 
     postprocs = {
         name: klass
@@ -583,7 +579,7 @@ def _add_class_parameters():
             the image pixels directly without interfering with the
             backpropagation stage. 
             
-            All [transforms](#transforms) that do not change the resolution are 
+            All [transforms](transforms.md) that do not change the resolution are 
             available as post processing effects.
             """
         ),
@@ -606,10 +602,10 @@ def _add_class_parameters():
             doc="""End frame for the post-processing stage. The stage is inactive after this time."""
         ),
     })
-    _add_parameters("postproc", postprocs, expr_args=EXPR_ARGS.DEFAULT)
+    _add_parameters("postproc", postprocs, expr_groups=EXPR_GROUPS.postproc)
 
 
-_add_class_parameters()
+# _add_class_parameters()
 
 
 def parse_arguments(gui_mode: bool = False) -> dict:
@@ -810,7 +806,7 @@ def _recursive_convert_and_validate(data, parent_path: str):
         param: Parameter = PARAMETERS[path]
 
         try:
-            if param.expression and isinstance(value, Expression):
+            if param.expression_groups and isinstance(value, Expression):
                 return value
             return param.convert(value)
         except Exception as e:

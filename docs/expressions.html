@@ -1,0 +1,234 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+    <title>Expressions</title>
+
+    <link rel="stylesheet" href="static/css/basic.css" type="text/css" />-
+    <link rel="stylesheet" href="static/css/theme.css" type="text/css" />-
+    <link rel="stylesheet" href="static/css/pygments.css" type="text/css" />
+</head>
+
+<body class="wy-body-for-nav">
+
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+            <a href="index.html" class="icon icon-home">CLIPig</a>
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+        <p class="caption"><a class="reference internal" href="index.html"><span class="caption-text">Intro</span></a></p>
+<p class="caption"><a class="reference internal" href="walkthrough.html"><span class="caption-text">Walk-through</span></a></p>
+<p class="caption"><a class="reference internal" href="cli.html"><span class="caption-text">command line interface</span></a></p>
+<p class="caption"><a class="reference internal" href="expressions.html"><span class="caption-text">Expressions</span></a></p>
+<ul>
+<li class="toctree-l2"><a class="reference internal" href="expressions.html#Expression-variables">Expression variables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="expressions.html#time-variables">time variables</a></li>
+<li class="toctree-l4"><a class="reference internal" href="expressions.html#epoch-variable">epoch variable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="expressions.html#time-variable">time variable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="expressions.html#time_inverse-variable">time_inverse variable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="expressions.html#time_step-variable">time_step variable</a></li>
+<li class="toctree-l3"><a class="reference internal" href="expressions.html#resolution-variables">resolution variables</a></li>
+<li class="toctree-l4"><a class="reference internal" href="expressions.html#resolution-variable">resolution variable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="expressions.html#width-variable">width variable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="expressions.html#height-variable">height variable</a></li>
+<li class="toctree-l3"><a class="reference internal" href="expressions.html#learnrate-variables">learnrate variables</a></li>
+<li class="toctree-l4"><a class="reference internal" href="expressions.html#learnrate-variable">learnrate variable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="expressions.html#learnrate_scale-variable">learnrate_scale variable</a></li>
+<li class="toctree-l3"><a class="reference internal" href="expressions.html#target-feature-variables">target feature variables</a></li>
+<li class="toctree-l4"><a class="reference internal" href="expressions.html#similarity-variable">similarity variable</a></li>
+<li class="toctree-l3"><a class="reference internal" href="expressions.html#target-constraint-variables">target constraint variables</a></li>
+<li class="toctree-l4"><a class="reference internal" href="expressions.html#similarity-variable">similarity variable</a></li>
+</ul>
+<p class="caption"><a class="reference internal" href="transforms.html"><span class="caption-text">Transforms</span></a></p>
+</ul>
+<p class="caption"><a class="reference internal" href="constraints.html"><span class="caption-text">Constraints</span></a></p>
+</ul>
+<p class="caption"><a class="reference internal" href="reference.html"><span class="caption-text">Reference</span></a></p>
+</ul>
+
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Expressions</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Expressions</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <!--<a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>-->
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+            <h1 id="Expressions">Expressions</h1>
+<p><a href="https://github.com/defgsus/CLIPig/">CLIPig</a> supports expressions for all parameters. Some parameters
+also support <a href="#Expression-variables">variables</a> 
+and the expression will be evaluated
+every time the value is needed.</p>
+<p>E.g., if you want thrice the <a href="https://github.com/openai/CLIP/">CLIP</a>-resolution of 224x224 pixels
+but are too lazy to calculate it, just say:</p>
+<pre class="code yaml">resolution: 224*3</pre><blockquote><p><strong>Note</strong>: Parameters that expect lists (like <strong>resolution</strong> above)
+copy a single value to all entries of the list. A list can 
+be specified with</p>
+<ul>
+<li>YAML syntax:<pre class="code yaml">resolution: 
+  - 640
+  - 480</pre></li>
+<li>with commas:<pre class="code yaml">resolution: 640, 480</pre></li>
+<li>or simply with spaces<pre class="code yaml">resolution: 640 480</pre>If you type expressions, you might want to use spaces or 
+commas. In cse of list parameters you'll need to use the 
+YAML lists:<pre class="code yaml">resolution:
+- 224 * 3
+- pow(224, 1.2)</pre></li>
+</ul>
+</blockquote>
+<p>The result of an expression is automatically converted to 
+the desired type. So even if your <code>resolution</code> expression 
+generates a float it will be cast to integer before being used.</p>
+<blockquote><p><strong>Note</strong>: Divisions through zero and stuff like this will
+throw an error and stop the experiment.</p>
+</blockquote>
+<h2 id="Expression-variables">Expression variables</h2>
+<h3 id="time-variables">time variables</h3>
+<p>Holds variables that reference the current training time.</p>
+<h4 id="epoch-variable"><code>epoch</code> variable</h4>
+<p>type: <code>int</code></p>
+<p>The current epoch / frame, starting at zero.</p>
+<h4 id="time-variable"><code>time</code> variable</h4>
+<p>type: <code>float</code></p>
+<p>The current epoch / frame divided by the number of epochs, or in
+other words: A float ranging from <strong>0.0</strong> (start of training) to 
+<strong>1.0</strong> (end of training).</p>
+<h4 id="time_inverse-variable"><code>time_inverse</code> variable</h4>
+<p>type: <code>float</code></p>
+<p>One minus the current epoch / frame divided by the number of epochs, or in
+other words: A float ranging from <strong>1.0</strong> (start of training) to 
+<strong>0.0</strong> (end of training).</p>
+<h4 id="time_step-variable"><code>time_step</code> variable</h4>
+<p>type: <code>function(float, float)</code></p>
+<p>A function that returns a float in the range [0, 1]
+during the time interval defined by the two values.</p>
+<pre class="code python">time_step(0, 1)    # increases from zero to one during whole training
+time_step(0.5, 1)  # increases from zero to one during second half of training
+time_step(0.5, 0)  # decreases from one to zero during first half of training</pre><h3 id="resolution-variables">resolution variables</h3>
+<p>Holds the resolution of the training image.</p>
+<h4 id="resolution-variable"><code>resolution</code> variable</h4>
+<p>type: <code>[int, int]</code></p>
+<p>The resolution of the training image as list of <strong>width</strong> and <strong>height</strong>.</p>
+<h4 id="width-variable"><code>width</code> variable</h4>
+<p>type: <code>int</code></p>
+<p>The width of the training image.</p>
+<h4 id="height-variable"><code>height</code> variable</h4>
+<p>type: <code>int</code></p>
+<p>The width of the training image.</p>
+<h3 id="learnrate-variables">learnrate variables</h3>
+<p>The current values of <a href="reference.html#learnrate">learnrate</a> 
+and <a href="reference.html#learnrate_scale">learnrate_scale</a>
+which can be expressions themselves.</p>
+<h4 id="learnrate-variable"><code>learnrate</code> variable</h4>
+<p>type: <code>float</code></p>
+<p>The currently used <a href="reference.html#learnrate">learnrate</a></p>
+<h4 id="learnrate_scale-variable"><code>learnrate_scale</code> variable</h4>
+<p>type: <code>float</code></p>
+<p>The currently used <a href="reference.html#learnrate_scale">learnrate_scale</a></p>
+<h3 id="target-feature-variables">target feature variables</h3>
+<p>Variables available to <a href="reference.html#targetsfeatures">target features</a></p>
+<h4 id="similarity-variable"><code>similarity</code> variable</h4>
+<p>type: <code>float</code></p>
+<p>The <a href="https://en.wikipedia.org/wiki/Cosine_similarity">cosine similarity</a>
+of the <a href="https://github.com/openai/CLIP/">CLIP</a>-representation of the current, transformed image area 
+with the desired feature.</p>
+<p>The value is in the range [-100, 100].</p>
+<h3 id="target-constraint-variables">target constraint variables</h3>
+<p>Variables available to <a href="reference.html#targetsconstraints">constraints</a></p>
+<h4 id="similarity-variable"><code>similarity</code> variable</h4>
+<p>type: <code>float</code></p>
+<p>The mean of all <a href="https://en.wikipedia.org/wiki/Cosine_similarity">cosine similarities</a>
+of the <a href="https://github.com/openai/CLIP/">CLIP</a>-representation of the current, transformed image area 
+with the desired features of this target.</p>
+<p>The value is in the range [-100, 100].</p>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Stefan Berke.
+
+    </p>
+  </div>
+    
+
+    Built by scraping a <a href="https://www.sphinx-doc.org/">Sphinx</a>-generated documentation using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    
+   
+
+</body>
+</html>

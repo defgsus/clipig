@@ -8,7 +8,9 @@ import torchvision.transforms as VT
 import torchvision.transforms.functional as VF
 
 from .expression import Expression, ExpressionContext
-from .parameters import Parameter, SequenceParameter, FrameTimeParameter, EXPR_ARGS
+from .parameters import (
+    Parameter, SequenceParameter, FrameTimeParameter, _add_constraints_parameters
+)
 from .strings import value_str
 
 
@@ -37,6 +39,7 @@ class ConstraintBase(torch.nn.Module):
     def __init_subclass__(cls, **kwargs):
         if cls.NAME is not None:
             constraints[cls.NAME] = cls
+
         if cls.PARAMS is not None:
             cls.PARAMS = {
                 **cls.PARAMS,
@@ -65,8 +68,8 @@ class ConstraintBase(torch.nn.Module):
                       is the mean of the absolute difference of each vector variable.
                     - `l2` or `mse`: [Mean squared error](https://en.wikipedia.org/wiki/Mean_squared_error)
                       is the mean of the squared difference of each vector variable. Compared to 
-                      *mean absolute error*, it produces a smaller loss for small differences and 
-                      a larger loss for large differences.
+                      *mean absolute error*, it produces a smaller loss for small differences 
+                      (below 1.0) and a larger loss for large differences.
                     """
                 ),
             }
@@ -235,7 +238,7 @@ class BlurConstraint(ConstraintBase):
         "kernel_size": SequenceParameter(
             int, length=2, default=[3, 3],
             doc="""
-            The size of the pixel window. Must be an **odd*, **positive** integer. 
+            The size of the pixel window. Must be an **odd**, **positive** integer. 
             
             Two numbers define **width** and **height** separately.
             """
@@ -293,7 +296,7 @@ class EdgeMeanConstraint(AboveBelowConstraintBase):
             int, length=2, default=[3, 3],
             doc="""
             The size of the pixel window of the gaussian blur. 
-            Must be an **odd*, **positive** integer. 
+            Must be an **odd**, **positive** integer. 
             
             Two numbers define **width** and **height** separately.
             """
@@ -526,3 +529,6 @@ class NoiseConstraint(ConstraintBase):
         noisy_image = image + std * torch.randn(*image.shape).to(image.device)
 
         return 100. * self.loss_function(image, noisy_image, context)
+
+
+_add_constraints_parameters(constraints)

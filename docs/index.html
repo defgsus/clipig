@@ -1,0 +1,148 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+    <title>Intro</title>
+
+    <link rel="stylesheet" href="static/css/basic.css" type="text/css" />-
+    <link rel="stylesheet" href="static/css/theme.css" type="text/css" />-
+    <link rel="stylesheet" href="static/css/pygments.css" type="text/css" />
+</head>
+
+<body class="wy-body-for-nav">
+
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+            <a href="index.html" class="icon icon-home">CLIPig</a>
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+        <p class="caption"><a class="reference internal" href="index.html"><span class="caption-text">Intro</span></a></p>
+<p class="caption"><a class="reference internal" href="walkthrough.html"><span class="caption-text">Walk-through</span></a></p>
+<p class="caption"><a class="reference internal" href="cli.html"><span class="caption-text">command line interface</span></a></p>
+<p class="caption"><a class="reference internal" href="expressions.html"><span class="caption-text">Expressions</span></a></p>
+<p class="caption"><a class="reference internal" href="transforms.html"><span class="caption-text">Transforms</span></a></p>
+<p class="caption"><a class="reference internal" href="constraints.html"><span class="caption-text">Constraints</span></a></p>
+<p class="caption"><a class="reference internal" href="reference.html"><span class="caption-text">Reference</span></a></p>
+
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Intro</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Intro</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <!--<a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>-->
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+            <h1 id="Intro">Intro</h1>
+<p><a href="https://github.com/defgsus/CLIPig/">CLIPig</a> generates images by using the <a href="https://github.com/openai/CLIP/">CLIP</a> network as an art critique.</p>
+<p>A bunch of pixels is continuously adjusted to increase the 
+similarity of their <a href="reference.html#targetsfeatures">features</a> with some user-defined
+target features. Both features are derived via <a href="https://github.com/openai/CLIP/">CLIP</a>.</p>
+<p>Through <a href="https://en.wikipedia.org/wiki/Backpropagation">backpropagation</a>,
+the most common method of training artificial neural networks, the
+dissimilarity of trained features and target features is 
+translated back into pixel values which adjust the initial bunch of pixels
+just slightly. If we do this long enough, with some
+artistic variation in the processing pipeline, an actual image emerges.</p>
+<p><a href="https://github.com/defgsus/CLIPig/">CLIPig</a> is designed to allow a lot of control over those <em>variations</em> 
+which requires a bit of documentation.</p>
+<p>Please browse through the <em>walk-through</em> to get an overview and follow 
+the links to the reference pages and any point.</p>
+<ul>
+<li><a href="walkthrough.html">Walk-through</a></li>
+<li><a href="cli.html">Command line interface</a></li>
+<li><a href="expressions.html">Expressions</a></li>
+<li><a href="transforms.html">Transforms</a></li>
+<li><a href="constraints.html">Constraints</a></li>
+<li><a href="reference.html">Parameter reference</a></li>
+</ul>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Stefan Berke.
+
+    </p>
+  </div>
+    
+
+    Built by scraping a <a href="https://www.sphinx-doc.org/">Sphinx</a>-generated documentation using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    
+   
+
+</body>
+</html>

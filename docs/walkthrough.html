@@ -1,0 +1,460 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+    <title>Walk-through</title>
+
+    <link rel="stylesheet" href="static/css/basic.css" type="text/css" />-
+    <link rel="stylesheet" href="static/css/theme.css" type="text/css" />-
+    <link rel="stylesheet" href="static/css/pygments.css" type="text/css" />
+</head>
+
+<body class="wy-body-for-nav">
+
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+            <a href="index.html" class="icon icon-home">CLIPig</a>
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+        <p class="caption"><a class="reference internal" href="index.html"><span class="caption-text">Intro</span></a></p>
+<p class="caption"><a class="reference internal" href="walkthrough.html"><span class="caption-text">Walk-through</span></a></p>
+<ul>
+<li class="toctree-l2"><a class="reference internal" href="walkthrough.html#YAML-basics">YAML basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="walkthrough.html#Defining-targets">Defining targets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="walkthrough.html#Increasing-resolution">Increasing resolution</a></li>
+</ul>
+<p class="caption"><a class="reference internal" href="cli.html"><span class="caption-text">command line interface</span></a></p>
+</ul>
+<p class="caption"><a class="reference internal" href="expressions.html"><span class="caption-text">Expressions</span></a></p>
+</ul>
+<p class="caption"><a class="reference internal" href="transforms.html"><span class="caption-text">Transforms</span></a></p>
+</ul>
+<p class="caption"><a class="reference internal" href="constraints.html"><span class="caption-text">Constraints</span></a></p>
+</ul>
+<p class="caption"><a class="reference internal" href="reference.html"><span class="caption-text">Reference</span></a></p>
+</ul>
+
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Walk-through</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Walk-through</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <!--<a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>-->
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+            <h1 id="Walk-through">Walk-through</h1>
+<h2 id="YAML-basics">YAML basics</h2>
+<p>First of all, <a href="https://github.com/defgsus/CLIPig/">CLIPig</a>-experiments are defined in <a href="https://yaml.org/">YAML</a> 
+files. I actually prefer <a href="https://www.json.org/">JSON</a> but it 
+does not support comments out of the box and is quite strict 
+with those trailing commas and all that.. Anyways, the basic 
+desires of defining lists and key/value maps are indeed
+quite human-friendly in YAML:</p>
+<pre class="code yaml">a_list:
+  - first entry
+  - second entry
+
+a_map:
+  first_key: first value
+  second_key: second value  # a comment</pre><p>And that's all to know about YAML for our purposes.</p>
+<p>There is one particularity in CLIPig: Value lists can be defined
+via YAML lists or via comma or space separation, e.g:</p>
+<pre class="code yaml">resolution:
+ - 1024
+ - 768</pre><p>is the same as</p>
+<pre class="code yaml">resolution: 1024 768</pre><p>or</p>
+<pre class="code yaml">resolution: 1024, 768</pre><h2 id="Defining-targets">Defining targets</h2>
+<p>Now in <a href="https://github.com/defgsus/CLIPig/">CLIPig</a> the <em>desire</em> for an image is expressed as a 
+<a href="reference.html#targets">target</a>.
+There can be multiple targets and each target can have multiple 
+target <a href="reference.html#targetsfeatures">features</a>.</p>
+<pre class="code yaml">targets:
+  - features:
+      - text: a curly spoon</pre><p>To follow the walk-through, call</p>
+<pre class="code shell">python clipig-gui.py</pre><p>then paste the code inside the editor (top-left one) and 
+press <code>Alt-S</code> to start training and watch the image 
+emerge in realtime.</p>
+<p>So, what does the image look like?</p>
+<p><img src="static/img/demo1.png" alt="a badly rendered curly spoon"></p>
+<p>Yeah, well... I promised <em>images</em> and now i'm showing nothing 
+more than a psychedelic pixel mess.</p>
+<p>But indeed, <a href="https://github.com/openai/CLIP/">CLIP</a> does think this image to be <strong>95%</strong> similar 
+to the words <strong>a curly spoon</strong>. This is a top score that
+an actual photo would rarely get and a classic example of an 
+<a href="https://en.wikipedia.org/wiki/Adversarial_machine_learning">adversarial</a>
+in machine learning.</p>
+<p>To make it look more like an actual image we'll add some of those 
+artistic variations, spoken of earlier. The art is in showing 
+different parts of the image to <a href="https://github.com/openai/CLIP/">CLIP</a> when evaluating the 
+feature similarities.</p>
+<p>This is accomplished via <a href="transforms.html">transforms</a>:</p>
+<pre class="code yaml">targets:
+  - features:
+      - text: a curly spoon
+  transforms:
+    - random_shift: 0 1</pre><p><img src="static/img/demo2.png" alt="a slightly better rendered curly spoon"></p>
+<p>The <a href="reference.html#targetstransformsrandom_shift">random_shift</a> transformation
+simply moves the image center to a random position, before
+each evaluation by <a href="https://github.com/openai/CLIP/">CLIP</a>. The edges are wrapped around so the
+outcome is actually a repeatable texture! The object of interest
+might just not be in it's center.</p>
+<p>Apropos, the object of interest does look a tiny bit spoony to a
+human observer but not really, i'd say. There is a lot of curliness
+in the background but the spoon does not show as much.</p>
+<p>Also, <a href="https://github.com/openai/CLIP/">CLIP</a> obviously missed the curliness of the spoon 
+because actual letters appeared to increase the similarity 
+nevertheless. It got to <strong>50%</strong>.</p>
+<p>Another method to inspire <a href="https://github.com/openai/CLIP/">CLIP</a> is 
+<a href="reference.html#targetstransformsrandom_rotate">random rotation</a>.</p>
+<pre class="code yaml">targets:
+  - features:
+      - text: a curly spoon
+  transforms:
+    - random_rotate:
+        degree: -90 90
+        center: 0.3 .7</pre><p><img src="static/img/demo3.png" alt="a slightly better rendered curly spoon"></p>
+<p>Each evaluated image is first rotated randomly between -90 and +90 
+degree with a random center in the middle 2/3rds of the image. This
+does not create a repeatable texture and the edges are typically 
+a bit underdeveloped because they get rotated out of the visible 
+area some amount of time.</p>
+<p>The image shows some good areas with shiny metal and spoony 
+curliness but it's still not quite recognizable as a spoon.</p>
+<p>Let's jump forward and add some other stuff:</p>
+<pre class="code yaml">targets:
+- batch_size: 5
+  features:
+  - text: a curly spoon on a plate
+  transforms:
+  - noise: 0.1*ti
+  - random_shift: -.1 .1
+  - random_rotate:
+      degree: -3 3
+      center: 0.3 .7
+  constraints:
+  - blur: 
+      kernel_size: 31*ti</pre><p><img src="static/img/demo4.png" alt="a not so bad rendered curly spoon"></p>
+<p>In desperation we just throw more computation at the
+problem by increasing the <a href="reference.html#targetsbatch_size">batch size</a>. 
+This results in a runtime of about 2 minutes on 1500 cuda cores.</p>
+<p>Then, <code>on a plate</code> was added to the target text to make 
+<a href="https://github.com/openai/CLIP/">CLIP</a> somewhat more opinionated about the background.</p>
+<p>Some <a href="reference.html#targetstransformsnoise">noise</a> is added to each image 
+before showing it to <a href="https://github.com/openai/CLIP/">CLIP</a> and a <a href="https://en.wikipedia.org/wiki/Gaussian_blur">gaussian blur</a> is added
+to the backpropagation <a href="https://en.wikipedia.org/wiki/Loss_function">loss</a>.</p>
+<p>For details about the <code>noise: 0.1*ti</code> line, please check out the
+<a href="expressions.html">expressions</a> section. Sufficient to say that it 
+decreases the amount of noise over time.</p>
+<p>The noise makes <a href="https://github.com/defgsus/CLIPig/">CLIPig</a> kind of <em>think twice</em> about the way 
+a pixel is adjusted. The blur as a training loss tends 
+to blur out the areas where <a href="https://github.com/openai/CLIP/">CLIP</a> is not much interested in, while 
+the points of interest are constantly updated and are not 
+blurred as much. Unfortunately both methods also help to 
+create new artifacts. And this is where those
+<em>variations</em> start to become <em>artistic</em>. 
+It certainly takes some patience.</p>
+<p>And maybe the correct language. What if we change the target 
+text to <code>a photo of a curly spoon</code>?</p>
+<p><img src="static/img/demo5.png" alt="almost a photo of a curly spoon"></p>
+<p>Ah, i see where you are going, CLIP! Indeed funny, 
+but not enough for a proof-of-concept.</p>
+<pre class="code yaml">targets:
+- batch_size: 5
+  features:
+  - text: close-up of a spoon with a curly handle
+  transforms:
+  - noise: 0.1
+  - repeat: 3
+  - random_rotate:
+      degree: -30 30
+      center: .4 .6
+  - center_crop: 224
+  constraints:
+  - blur: 
+      kernel_size: 51
+
+postproc:
+- border:
+    size: 1 1
+    color: 0.15 0.1 0.05</pre><p><img src="static/img/demo6.png" alt="quite good spoon with curly handle"> 
+<img src="static/img/demo6-b.png" alt="quite good spoon with curly handle"></p>
+<p>Changes made:</p>
+<ul>
+<li><a href="reference.html#targetstransformsnoise">Noise</a> and <a href="reference.html#targetsconstraintsblur">blur</a> 
+are kept at high values throughout the whole training. </li>
+<li>The <a href="reference.html#targetsfeaturestext">text target</a> is made extra specific.</li>
+<li>The <a href="reference.html#targetstransformsrepeat">repeat</a> and 
+<a href="reference.html#targetstransformscenter_crop">center crop</a> transforms
+help avoiding the <em>under-development</em> of the corners by the 
+<a href="reference.html#targetstransformsrandom_rotate">random rotation</a>.</li>
+<li><p>A <a href="reference.html#postproc">post processing</a> effect adds a small 
+<a href="reference.html#postprocborder">border</a> that forces the contents to be 
+created more in the center of the image instead of close 
+to or on one of the repeating edges.</p>
+<p>Post-processing effects are applied every epoch and change
+the image pixels directly without interfering with the
+backpropagation stage. All <a href="transforms.html">transforms</a> that
+do not change the resolution are available as 
+<a href="reference.html#postproc">post processing</a> effects.</p>
+</li>
+</ul>
+<p>There is not much else visible in the images because the 
+<code>close-up of ...</code> in the target text and, more profoundly, 
+the high noise and blur constraints do not allow anything 
+else to emerge.</p>
+<p>Just to give an idea what <a href="https://github.com/openai/CLIP/">CLIP</a> is actually <em>thinking</em> about
+curly spoons, the target text is replced with with 
+<code>a lot of curly spoons</code> and the noise value is lowered to 
+allow some more uncertainty in the resulting image:</p>
+<p><img src="static/img/demo7.png" alt="washed-out fantasies about curly spoon"></p>
+<p>There are some different concepts visible. Curls made of
+spoon faces, curls with interwoven spoon fragments and 
+an actual head with curly hair, which probably is to be 
+expected when using such a specific adjective.</p>
+<p>The <strong>contrast</strong> of the image is not as good as the previous 
+ones. Generally, <a href="https://github.com/openai/CLIP/">CLIP</a> does not require a lot of contrast to 
+identify things so it's not automatically increased to <em>normal</em>
+levels. The previous images had a higher noise amount which
+actually increased the contrast because areas of low contrast
+simply disappear in the noise. Unfortunately, the high noise
+deviation only lets things emerge where <a href="https://github.com/openai/CLIP/">CLIP</a> is very certain
+about. <em>Curly spoons</em> do not represent a well-known archetype, 
+it seems.</p>
+<p>There is a trick, though! We can show <a href="https://github.com/openai/CLIP/">CLIP</a> the image with 
+much less contrast so the changes it applies become
+larger changes in the final image.</p>
+<pre class="code yaml">targets:
+- batch_size: 5
+  features:
+  - text: a lot of curly spoons
+  transforms:
+  - noise: 0.1
+  - repeat: 3
+  - random_rotate:
+      degree: -30 30
+      center: .4 .6
+  - center_crop: 224
+  - mul: 1./5.         # [CLIP](https://github.com/openai/CLIP/) only sees 1/5th of the color range
+  constraints:
+  - blur:
+      kernel_size: 51
+  - saturation:        # The desired saturation is lowered
+      below: .01       
+      weight: 10.
+postproc:
+- border:
+    size: 1
+    color: 0.15 0.1 0.05</pre><p><img src="static/img/demo8-c.png" alt="pretty good recognizable curly spoons"></p>
+<p>The <a href="reference.html#targetstransformsmul">mul transformation</a> reduces
+the color range that <a href="https://github.com/openai/CLIP/">CLIP</a> is seeing so the resulting color
+range is increased. Of course, this also increases the 
+saturation a lot so the 
+<a href="reference.html#targetsconstraintssaturation">saturation constraint</a>
+is used to reduce it to acceptable levels.</p>
+<p>I'll end this experiment here because my 3 years old kid 
+clearly approves the image to depict <em>curly spoons</em>. 
+And you should know the basic pieces now, that are needed to 
+create your desired fantasy images.</p>
+<p>Just go ahead, play with <a href="https://github.com/defgsus/CLIPig/">CLIPig</a> and consume a lot of your 
+life and work time. If stuck, check the <a href="reference.html">reference</a> 
+and the lists of available <a href="transforms.html">transforms</a> and 
+<a href="constraints.html">constraints</a>.</p>
+<p>But there's one thing left: <strong>How do i increase 
+the resolution?</strong></p>
+<h2 id="Increasing-resolution">Increasing resolution</h2>
+<p>Okay, let's start with a new theme. Take the curly spoon script
+from above and replace the text with <code>h.p. lovecraft at a 
+birthday party</code>.</p>
+<p><img src="static/img/hpl1.png" alt="pretty good lovecraft at a birthday party"></p>
+<p>If you don't know Lovecraft, he's one of the earliest and 
+spookiest fantasy authors with stories about creepy and
+<em>unearthly</em> things and obviously enough fan-art has found it's
+way into <a href="https://github.com/openai/CLIP/">CLIP</a>'s convolutional weight matrices. The green guy
+there must be a children's birthday version of <em>Cthulhu</em>, an 
+age-old murderous god living in the sea, waiting for a come-back
+as leader of a blood-thirsty army of fanatics.</p>
+<p>Why does Lovecraft have .. ahh, two faces? Well, my personal 
+feeling is that <a href="https://github.com/openai/CLIP/">CLIP</a> does not reject a face just because 
+it's melted together with parts of other faces or not at the
+right place above the shoulders, aso. Similarity to <em>Lovecraft at
+a birthday party</em> got to <strong>61%</strong>, despite the creepy head. 
+<a href="https://github.com/openai/CLIP/">CLIP</a> just imagined the face at two different 
+positions. If we continue training for long enough, it <em>might</em> 
+correct the face. But only, if it increases similarity to the
+target feature.</p>
+<p>Anyways, let's increase the resolution by putting this line
+in front:</p>
+<pre class="code yaml">resolution: 224*2</pre><p>This is now <strong>twice</strong> the width and height of <a href="https://github.com/openai/CLIP/">CLIP</a>'s image input
+window or <strong>four</strong> times as much pixels as before.</p>
+<p><img src="static/img/hpl2.png" alt="stuff is only good in the middle"></p>
+<p>What did happen? Well, the 
+<a href="reference.html#targetstransformscenter_crop">center_crop</a> transformation
+crops a <a href="https://github.com/openai/CLIP/">CLIP</a>-sized 224² window from the middle of a 448² image. 
+It is not helpful unless to show us the effect of the 
+random rotation.</p>
+<p>We could add the <a href="reference.html#targetstransformsrandom_shift">random_shift</a>
+transform to move the <a href="https://github.com/openai/CLIP/">CLIP</a> window to every position of the 
+training image. Let's just do that and also increase the
+<a href="reference.html#targetsbatch_size">batch_size</a> from <strong>5</strong> to <strong>20</strong> since
+we have 4 times the pixels to process.</p>
+<p><img src="static/img/hpl3.png" alt="nice graphics all over the place"></p>
+<p>There are many Lovecrafts now. It's like in this 
+John Malkovich movie when John Malkovich truckles through the
+door that leads into his own head. There's even a body without
+a head.</p>
+<p>Clearly, <a href="https://github.com/openai/CLIP/">CLIP</a> does not get a good view of the whole image but
+just assembles parts of it without the knowledge of how they
+relate to each other.</p>
+<p>The <a href="reference.html#targetstransformsrandom_scale">random_scale</a> 
+transformation allows us to <em>'zoom'</em> in or out of the
+image so we can show <a href="https://github.com/openai/CLIP/">CLIP</a> a mixture of the whole image
+and details of it.</p>
+<p>Imagine a zoom, or scale, of <strong>0.5</strong> on the trained image.
+That would mean that <a href="https://github.com/openai/CLIP/">CLIP</a> sees twice as much in each 
+direction or 4 times as much in the whole. Exactly or new
+resolution. Of course it would not look better than resizing an
+image to a larger resolution with some bilinear filtering.
+Well, not entirely. The noise and artifacts are of higher
+resolution ;)</p>
+<p><img src="static/img/hpl4-c.png" alt="blurry but a good composition"></p>
+<p>Now, at some point in training we randomly 
+<a href="reference.html#targetstransformsrandom_scale">scale</a> 
+between the full resolution and the zoomed-in details
+and enable the <a href="reference.html#targetstransformsrandom_shift">random_shift</a>.</p>
+<p><code>0. if t &lt; .4 else 1.</code> is python/<a href="https://github.com/defgsus/CLIPig/">CLIPig</a> talk for 
+<em>zero below 40% else one</em>.</p>
+<pre class="code yaml">epochs: 300
+resolution: 224*2
+targets:
+  - batch_size: 20
+    features:
+      - text: h.p. lovecraft at a birthday party
+    transforms:
+      - noise: 0.1
+      - repeat: 3
+      - random_shift:
+          - 0
+          - 0 if t &lt; .4 else 1. 
+      - random_rotate:
+          degree: -30 30
+          center: .4 .6
+      - random_scale:
+          - .5
+          - .5 if t &lt; .4 else 1.
+      - center_crop: 224
+      - mul: 1./5.
+    constraints:
+      - blur:
+          kernel_size: 51
+      - saturation:
+          below: .01
+          weight: 10.
+postproc:
+  - border:
+      size: 1
+      color: 0.15 0.1 0.05</pre><p><img src="static/img/hpl4-d.png" alt="high-res composition"></p>
+<p>It's quite good at parts but, wait! There's already another 
+Lovecraft developing in the background. And that's what is to be 
+expected. The training target of that Lovecraftian party is
+simply applied at all points of the image and <a href="https://github.com/openai/CLIP/">CLIP</a> won't 
+jude the whole frame less similar to the target when every
+face is that of Howard Phillips???.</p>
+<p>The above snapshot is kind'o good but the repetitions will
+increase with higher resolutions. It would be more like a fractal
+of H.P.'s birthday party.</p>
+<p>... Well actually, let's see <em>a fractal of H.P.'s birthday party</em></p>
+<p><img src="static/img/hpl-fractal.png" alt="a colorful cthulhuian fractal"></p>
+<p>Well done CLIP, well done.</p>
+<p>But back to the topic</p>
+<p>...</p>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Stefan Berke.
+
+    </p>
+  </div>
+    
+
+    Built by scraping a <a href="https://www.sphinx-doc.org/">Sphinx</a>-generated documentation using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    
+   
+
+</body>
+</html>

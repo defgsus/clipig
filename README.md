@@ -7,7 +7,7 @@ This is yet another generative gradient-descent engine using OpenAI's
 between generated pixels and a CLIP-feature, typically given in the 
 form of natural language.
 
-![kissing cthuluhu](docs/kissing-cthulhu.png)
+![kissing cthuluhu](docs/static/img/kissing-cthulhu.png)
 (*kissing cthulhu*)
 
 CLIPig uses no sophisticated image generation network, just ordinary RGB pixel planes.
@@ -109,8 +109,6 @@ The author does not have enough time!
 Then there are bugs in there and stuff that is not yet tested 
 or even implemented.
 
-Expressions are not yet documented.
-
 But the major concern is the image quality. Just adjusting pixels so that CLIP does like them
 generally creates horrible grids and artifacts. A good first step to avoid them is 
 a relatively small learning rate and random rotation like:
@@ -132,7 +130,7 @@ significant foreground and less significant background. Generally, the image oft
 to be a uniform something with some objects carved out. Although, there are counter 
 examples that show promise:
 
-![2d-platform with ](docs/2d-platformer.png)
+![2d-platform with ](docs/static/img/2d-platformer.png)
 (*2d platformer*)
 
 If you feel you can help or want to discuss things, please 
@@ -141,7 +139,7 @@ If you feel you can help or want to discuss things, please
 
 ---
 
-![CLIP-generated strawberry image](docs/strawberry.png)
+![CLIP-generated strawberry image](docs/static/img/strawberry.png)
 (*strawberry* - well, i did not make this up. things are sometimes strangely 
 interconnected in CLIP)
 

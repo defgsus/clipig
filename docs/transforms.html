@@ -1,0 +1,155 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+    <title>Transforms</title>
+
+    <link rel="stylesheet" href="static/css/basic.css" type="text/css" />-
+    <link rel="stylesheet" href="static/css/theme.css" type="text/css" />-
+    <link rel="stylesheet" href="static/css/pygments.css" type="text/css" />
+</head>
+
+<body class="wy-body-for-nav">
+
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+            <a href="index.html" class="icon icon-home">CLIPig</a>
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+        <p class="caption"><a class="reference internal" href="index.html"><span class="caption-text">Intro</span></a></p>
+<p class="caption"><a class="reference internal" href="walkthrough.html"><span class="caption-text">Walk-through</span></a></p>
+<p class="caption"><a class="reference internal" href="cli.html"><span class="caption-text">command line interface</span></a></p>
+<p class="caption"><a class="reference internal" href="expressions.html"><span class="caption-text">Expressions</span></a></p>
+<p class="caption"><a class="reference internal" href="transforms.html"><span class="caption-text">Transforms</span></a></p>
+<p class="caption"><a class="reference internal" href="constraints.html"><span class="caption-text">Constraints</span></a></p>
+<p class="caption"><a class="reference internal" href="reference.html"><span class="caption-text">Reference</span></a></p>
+
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Transforms</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Transforms</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <!--<a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>-->
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+            <h1 id="Transforms">Transforms</h1>
+<p>Transforms shape the area of the trained image before showing
+it to <a href="https://github.com/openai/CLIP/">CLIP</a> for evaluation.</p>
+<p>Here's a list of all available transformations:</p>
+<ul>
+<li><a href="reference.html#targetstransformsadd">add</a>: Adds a fixed value to all pixels.</li>
+<li><a href="reference.html#targetstransformsblur">blur</a>: A gaussian blur is applied to the pixels.</li>
+<li><a href="reference.html#targetstransformsborder">border</a>: Draws a border on the edge of the image. The resolution is not changed.</li>
+<li><a href="reference.html#targetstransformscenter_crop">center_crop</a>: Crops an image of the given resolution from the center.</li>
+<li><a href="reference.html#targetstransformsclamp">clamp</a>: Clamps the pixels into a fixed range.</li>
+<li><a href="reference.html#targetstransformscrop">crop</a>: Crops a specified section from the image.</li>
+<li><a href="reference.html#targetstransformsedge">edge</a>: This removes everything except edges and generally has a bad effect on image
+  quality. It might be useful, however...</li>
+<li><a href="reference.html#targetstransformsfnoise">fnoise</a>: Adds noise to the image's fourier space.</li>
+<li><a href="reference.html#targetstransformsmul">mul</a>: Multiplies all pixels by a fixed value.</li>
+<li><a href="reference.html#targetstransformsnoise">noise</a>: Adds noise to the image.</li>
+<li><a href="reference.html#targetstransformspad">pad</a>: Pads the image with additional pixels at the borders.</li>
+<li><a href="reference.html#targetstransformsrandom_crop">random_crop</a>: Crops a section of the specified resolution from a random position in the image.</li>
+<li><a href="reference.html#targetstransformsrandom_rotate">random_rotate</a>: Randomly rotates the image.</li>
+<li><a href="reference.html#targetstransformsrandom_scale">random_scale</a>: Randomly scales an image in the range specified.</li>
+<li><a href="reference.html#targetstransformsrandom_shift">random_shift</a>: This randomly translates the pixels of the image.</li>
+<li><a href="reference.html#targetstransformsrandom_translate">random_translate</a>: Randomly translates an image in the specified range.</li>
+<li><a href="reference.html#targetstransformsrepeat">repeat</a>: Repeats the image a number of times in the right and bottom direction.</li>
+<li><a href="reference.html#targetstransformsresize">resize</a>: The resolution of the image is changed.</li>
+<li><a href="reference.html#targetstransformsrotate">rotate</a>: Rotates the image.</li>
+<li><a href="reference.html#targetstransformsshift">shift</a>: This translates the pixels of the image.</li>
+</ul>
+<p>All <a href="reference.html#targetstransforms">transforms</a> that do not change the 
+resolution of the image are also available as 
+<a href="reference.html#postproc">post processing</a> effects.</p>
+
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Stefan Berke.
+
+    </p>
+  </div>
+    
+
+    Built by scraping a <a href="https://www.sphinx-doc.org/">Sphinx</a>-generated documentation using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    
+   
+
+</body>
+</html>

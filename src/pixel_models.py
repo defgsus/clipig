@@ -1,4 +1,4 @@
-from typing import Union, Sequence, Type, Tuple, Optional
+from typing import Union, Sequence, Type, Tuple, Optional, List
 
 import numpy as np
 import torch
@@ -8,7 +8,7 @@ import torchvision.transforms.functional as VF
 from torchvision.utils import save_image
 import PIL.Image
 
-from .images import load_image_tensor
+from .images import load_image_tensor, resize_crop
 
 
 class PixelsBase(torch.nn.Module):
@@ -30,6 +30,9 @@ class PixelsBase(torch.nn.Module):
         raise NotImplementedError
 
     def initialize(self, parameters: dict):
+        raise NotImplementedError
+
+    def resize(self, resolution: List[int]):
         raise NotImplementedError
 
 
@@ -55,11 +58,7 @@ class PixelsRGB(PixelsBase):
             img = load_image_tensor(parameters["image"])
 
         if img is not None:
-            if img.shape != self.pixels.shape:
-                scale = min(img.shape[1:]) / min(self.resolution)
-                img = VF.resize(img, [int(img.shape[2] / scale), int(img.shape[1] / scale)])
-                img = VF.center_crop(img, self.resolution)
-            pixels = img
+            pixels = resize_crop(img, self.resolution)
 
             if not parameters["image_tensor"]:
                 pixels = pixels * std.reshape(-1, 1, 1) + mean.reshape(-1, 1, 1)
@@ -73,6 +72,12 @@ class PixelsRGB(PixelsBase):
 
         with torch.no_grad():
             self.pixels[...] = pixels
+
+    def resize(self, resolution: List[int]):
+        self.resolution = list(resolution)
+        self.pixels = torch.nn.Parameter(
+            VF.resize(self.pixels, self.resolution[::-1])
+        )
 
     def info_str(self) -> str:
         return f"mean rgbs " \

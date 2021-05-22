@@ -20,6 +20,7 @@ from tqdm import tqdm
 from .parameters import save_yaml_config
 from .files import make_filename_dir, change_extension
 from .pixel_models import PixelsRGB
+from .optimizers import create_optimizer
 from .expression import Expression, ExpressionContext
 from . import transforms as transform_modules
 from . import constraints as constraint_modules
@@ -62,7 +63,9 @@ class ImageTraining:
         self._clip_model = None
         self.clip_preprocess = None
 
-        self.pixel_model = PixelsRGB(parameters["resolution"]).to(self.device)
+        self.pixel_model: PixelsRGB = None
+        self.optimizer = None
+        self.base_learnrate = None
 
         self.epoch = self.parameters["start_epoch"]
         self.epoch_f = self.epoch / max(1, self.parameters["epochs"] - 1)
@@ -70,43 +73,6 @@ class ImageTraining:
         # for threaded access
         self._stop = False
         self._running = False
-
-        if self.parameters["optimizer"] == "adam":
-            self.base_learnrate = 0.01
-            self.optimizer = torch.optim.Adam(
-                self.pixel_model.parameters(),
-                lr=self.base_learnrate,  # will be adjusted per epoch
-            )
-        elif self.parameters["optimizer"] == "sgd":
-            self.base_learnrate = 10.0
-            self.optimizer = torch.optim.SGD(
-                self.pixel_model.parameters(),
-                lr=self.base_learnrate,  # will be adjusted per epoch
-            )
-        elif self.parameters["optimizer"] == "sparse_adam":
-            self.base_learnrate = 0.01
-            self.optimizer = torch.optim.RMSprop(
-                self.pixel_model.parameters(),
-                lr=self.base_learnrate,  # will be adjusted per epoch
-            )
-        elif self.parameters["optimizer"] == "adadelta":
-            self.base_learnrate = 20.0
-            self.optimizer = torch.optim.Adadelta(
-                self.pixel_model.parameters(),
-                lr=self.base_learnrate,  # will be adjusted per epoch
-            )
-        elif self.parameters["optimizer"] == "rmsprob":
-            self.base_learnrate = 0.005
-            self.optimizer = torch.optim.RMSprop(
-                self.pixel_model.parameters(),
-                lr=self.base_learnrate,  # will be adjusted per epoch
-                centered=True,
-                # TODO: high momentum is quite useful for more 'chaotic' images but needs to
-                #   be adjustable by config expression
-                momentum=0.1,
-            )
-        else:
-            raise ValueError(f"Unknown optimizer '{self.parameters['optimizer']}'")
 
         self.targets = []
         self.postprocs = []
@@ -254,9 +220,18 @@ class ImageTraining:
 
             self.targets.append(target)
 
-    def initialize(self):
+    def initialize(self, context: ExpressionContext):
         self.log(2, "initializing pixels")
+        res = context(self.parameters["resolution"])
+        self.pixel_model = PixelsRGB(resolution=res).to(self.device)
         self.pixel_model.initialize(self.parameters["init"])
+        self.base_learnrate, self.optimizer = \
+            create_optimizer(self.pixel_model, self.parameters["optimizer"])
+
+    def _resize_pixel_model(self, res: List[int]):
+        self.pixel_model.resize(res)
+        self.base_learnrate, self.optimizer = \
+            create_optimizer(self.pixel_model, self.parameters["optimizer"])
 
     def train(self, initialize: bool = True):
         self._running = True
@@ -273,9 +248,6 @@ class ImageTraining:
 
         if not self.targets:
             self.setup_targets()
-
-        if initialize:
-            self.initialize()
 
         last_frame_time = None
         last_stats_time = 0
@@ -304,18 +276,46 @@ class ImageTraining:
             self.epoch = epoch
             self.epoch_f = epoch_f = epoch / max(1, self.parameters["epochs"] - 1)
 
+            def _step(a: float, b: float) -> float:
+                inv = False
+                if b < a:
+                    a, b = b, a
+                    inv = True
+
+                if self.epoch_f < a:
+                    s = 0.
+                elif self.epoch_f > b or a == b:
+                    s = 1.
+                else:
+                    s = (self.epoch_f - a) / (b - a)
+                return 1. - s if inv else s
+
             expression_context = ExpressionContext(
                 epoch=epoch,
-                t=epoch_f,
-                t2=math.pow(epoch_f, 2),
-                t3=math.pow(epoch_f, 3),
-                t4=math.pow(epoch_f, 4),
-                t5=math.pow(epoch_f, 5),
-                ti=1. - epoch_f,
-                ti2=math.pow(1.-epoch_f, 2),
-                ti3=math.pow(1.-epoch_f, 3),
-                ti4=math.pow(1.-epoch_f, 4),
-                ti5=math.pow(1.-epoch_f, 5),
+                time=epoch_f,
+                time2=math.pow(epoch_f, 2),
+                time3=math.pow(epoch_f, 3),
+                time4=math.pow(epoch_f, 4),
+                time5=math.pow(epoch_f, 5),
+                time_inverse=1. - epoch_f,
+                time_inverse2=math.pow(1.-epoch_f, 2),
+                time_inverse3=math.pow(1.-epoch_f, 3),
+                time_inverse4=math.pow(1.-epoch_f, 4),
+                time_inverse5=math.pow(1.-epoch_f, 5),
+                time_step=_step,
+            )
+
+            if self.pixel_model is None:
+                self.initialize(context=expression_context)
+
+            resolution = expression_context(self.parameters["resolution"])
+            if resolution != self.pixel_model.resolution:
+                self._resize_pixel_model(resolution)
+
+            expression_context = expression_context.add(
+                resolution=[self.pixel_model.pixels.shape[-1], self.pixel_model.pixels.shape[-2]],
+                width=self.pixel_model.pixels.shape[-1],
+                height=self.pixel_model.pixels.shape[-2],
             )
 
             # --- update learnrate ---
@@ -327,8 +327,8 @@ class ImageTraining:
                 g['lr'] = learnrate
 
             expression_context = expression_context.add(
-                lr=learnrate, learnrate=learnrate,
-                lrs=learnrate_scale, learnrate_scale=learnrate_scale,
+                learnrate=learnrate,
+                learnrate_scale=learnrate_scale,
             )
 
             forward_start_time = time.time()
@@ -381,8 +381,10 @@ class ImageTraining:
 
                 # --- retrieve CLIP features ---
 
+                target_pixels = torch.clamp(target_pixels, 0, 1)
                 norm_pixels = self.clip_preprocess.transforms[-1](target_pixels)
                 clip_features = self.clip_model.encode_image(norm_pixels)
+
                 clip_features = clip_features / clip_features.norm(dim=-1, keepdim=True)
 
                 # --- combine loss for each target ---
@@ -554,9 +556,9 @@ class ImageTraining:
                         target["feature_similarities"][i].append(float(similarities[i]), count=False)
 
             mean_sim = float(similarities.mean())
-            context = context.add(sim=mean_sim, similarity=mean_sim)
+            context = context.add(similarity=mean_sim)
         else:
-            context = context.add(sim=0., similarity=0.)
+            context = context.add(similarity=0.)
 
         # --- apply constraints ---
 
@@ -582,7 +584,7 @@ class ImageTraining:
 
         feature_weights = []
         for i, target_feature in enumerate(target["features"]):
-            feature_context = context.add(sim=float(similarities[i]), similarity=float(similarities[i]))
+            feature_context = context.add(similarity=float(similarities[i]))
             weight = feature_context(target["params"]["features"][i]["weight"])
             enable = self._check_start_end(*target["feature_start_ends"][i])
             feature_weights.append([weight, enable])
@@ -772,8 +774,11 @@ def get_feature_loss_function(name: str) -> Callable:
         return lambda x1, x2: F.mse_loss(x1, x2) * 100.
 
     elif name in ("cosine", ):
-        return lambda x1, x2: 1. - F.cosine_similarity(x1.unsqueeze(0), x2.unsqueeze(0))[0]
+        return cosine_similarity_loss
 
     else:
         raise ValueError(f"Invalid loss function '{name}'")
 
+
+def cosine_similarity_loss(x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
+    return 1. - F.cosine_similarity(x1.unsqueeze(0), x2.unsqueeze(0))[0]

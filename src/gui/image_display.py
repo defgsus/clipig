@@ -25,9 +25,20 @@ class ImageWidget(QWidget):
         self.canvas = ImageDisplayCanvas(self)
         self.scroll_area.setWidget(self.canvas)
 
+        lh = QHBoxLayout()
+        l.addLayout(lh)
+
+        self.repeat_input = QSpinBox(self)
+        lh.addWidget(self.repeat_input)
+        self.repeat_input.setRange(1, 10)
+        self.repeat_input.setValue(self.repeat)
+
+        self.repeat_input.setStatusTip(self.tr("repeat"))
+        self.repeat_input.valueChanged.connect(self.set_repeat)
+
         self.zoom_bar = QScrollBar(Qt.Horizontal, self)
-        l.addWidget(self.zoom_bar)
-        self.zoom_bar.setRange(1, 50)
+        lh.addWidget(self.zoom_bar)
+        self.zoom_bar.setRange(1, 500)
         self.zoom_bar.setValue(self.zoom)
         self.zoom_bar.valueChanged.connect(self.set_zoom)
 
@@ -35,8 +46,15 @@ class ImageWidget(QWidget):
     def zoom(self):
         return self.canvas.zoom
 
-    def set_zoom(self, z):
+    @property
+    def repeat(self):
+        return self.canvas.num_repeat
+
+    def set_zoom(self, z: int):
         self.canvas.set_zoom(z)
+
+    def set_repeat(self, r: int):
+        self.canvas.set_repeat(r)
 
     def set_image(self, img):
         if isinstance(img, PIL.Image.Image):
@@ -51,8 +69,8 @@ class ImageDisplayCanvas(QWidget):
         super().__init__(parent)
 
         self.image = None
-        self._zoom = 1
-        self.num_repeat = 3
+        self._zoom = 100
+        self.num_repeat = 1
         self._size = (10, 10)
 
     @property
@@ -61,6 +79,13 @@ class ImageDisplayCanvas(QWidget):
 
     def set_zoom(self, z):
         self._zoom = z
+        self.setFixedSize(
+            self._size[0] * self.zoom * self.num_repeat,
+            self._size[1] * self.zoom * self.num_repeat)
+        self.update()
+
+    def set_repeat(self, r : int):
+        self.num_repeat = max(1, r)
         self.setFixedSize(
             self._size[0] * self.zoom * self.num_repeat,
             self._size[1] * self.zoom * self.num_repeat)
@@ -84,7 +109,7 @@ class ImageDisplayCanvas(QWidget):
         )
 
         t = QTransform()
-        t.scale(self.zoom, self.zoom)
+        t.scale(self.zoom / 100., self.zoom / 100.)
 
         p.setTransform(t)
 
