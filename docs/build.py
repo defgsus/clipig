@@ -18,6 +18,7 @@ class Renderer(mistune.Renderer):
         super().__init__(**kwargs)
         self.title = None
         self.headers = []
+        self.links = []
 
     def header(self, text, level, raw=None):
         if level == 1 and not self.title:
@@ -26,6 +27,11 @@ class Renderer(mistune.Renderer):
         return '<h%d id="%s">%s</h%d>\n' % (
             level, to_anchor(strip_html(text)), text, level
         )
+
+    def link(self, link, title, text):
+        self.links.append(link)
+        link = link.replace(".md", ".html")
+        return super().link(link, title, text)
 
     def block_code(self, code, lang=None):
         code = mistune.escape(code, quote=True, smart_amp=False)
@@ -39,6 +45,7 @@ class MarkdownParser(mistune.Markdown):
 
     def parse(self, text) -> dict:
         self.renderer.headers = []
+        self.renderer.links = []
 
         html_content = super().parse(text)
 
@@ -50,6 +57,7 @@ class MarkdownParser(mistune.Markdown):
             "template": final,
             "title": self.renderer.title,
             "headers": self.renderer.headers,
+            "links": self.renderer.links,
         }
 
 
@@ -98,6 +106,37 @@ def to_anchor(a: str) -> str:
     return a
 
 
+def validate_links(templates: dict):
+    anchors = {
+        name: [to_anchor(h[1]) for h in t["headers"]]
+        for name, t in templates.items()
+    }
+
+    has_error = False
+    for name, t in templates.items():
+        for link in t["links"]:
+            if link.startswith("http"):
+                continue
+
+            if link.startswith("#"):
+                if link[1:] not in anchors[name]:
+                    print(f"Invalid anchor '{link}' in '{name}.md'")
+                    has_error = True
+            else:
+                link_s = link.split("#")
+                if not link_s[0].endswith(".md") or link_s[0][:-3] not in anchors:
+                    print(f"Invalid linked file '{link}' in '{name}.md'")
+                    has_error = True
+
+                if len(link_s) > 1:
+                    if link_s[1] not in anchors[link_s[0][:-3]]:
+                        print(f"Invalid anchor '{link}' in '{name}.md'")
+                        has_error = True
+
+    if has_error:
+        exit(-1)
+
+
 def render_templates(templates: List[str]):
     templates = {
         name: (DOC_PATH / "templates" / f"{name}.md").read_text()
@@ -107,6 +146,9 @@ def render_templates(templates: List[str]):
         name: MarkdownParser().parse(render_markdown_documentation(template))
         for name, template in templates.items()
     }
+
+    validate_links(templates)
+
     for name, template in templates.items():
 
         markdown_file = f"{name}.md"

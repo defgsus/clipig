@@ -1,7 +1,7 @@
 # Expressions
 
 CLIPig supports expressions for all parameters. Some parameters
-also support [variables](expressions.md#expression-variables) 
+also support [variables](#Expression-variables) 
 and the expression will be evaluated
 every time the value is needed. 
 

@@ -50,7 +50,7 @@ This is used by the GUI application to continue training after config changes.
 `list of length 2 of int` default: **`[224, 224]`**
 
 
-expression variables: [time](#time-variable)
+expression variables: [time](expressions.md#time-variables)
 
 Resolution of the image to create. A single number for square images or two 
 numbers for width and height.
@@ -82,7 +82,7 @@ The device to run the training on. Can be `cpu`, `cuda`, `cuda:1` etc.
 `float` default: **`1.0`**
 
 
-expression variables: [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 The learning rate of the optimizer. 
 
@@ -97,7 +97,7 @@ The learnrate value is available to other expressions as `lr` or `learnrate`.
 `float` default: **`1.0`**
 
 
-expression variables: [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 A scaling parameter for the actual learning rate.
 
@@ -168,15 +168,15 @@ This is used by the GUI application to continue training after config changes.
 
 This is a list of *targets* that define the desired image. 
 
-Most important are the [features](#targetsfeatures) where
+Most important are the [features](reference.md#targetsfeatures) where
 texts or images are defined which get converted into [CLIP](https://github.com/openai/CLIP/)
 features and then drive the image creation process.
 
-It's possible to add additional [constraints](#targetsconstraints)
+It's possible to add additional [constraints](reference.md#targetsconstraints)
 which alter image creation without using CLIP, 
-e.g. the image [mean](#targetsconstraintsmean), 
-[saturation](#targetsconstraintssaturation) 
-or [gaussian blur](#targetsconstraintsblur).
+e.g. the image [mean](reference.md#targetsconstraintsmean), 
+[saturation](reference.md#targetsconstraintssaturation) 
+or [gaussian blur](reference.md#targetsconstraintsblur).
 
 #### `targets.active`
 
@@ -224,16 +224,17 @@ End frame of the target. The whole target is inactive after this time.
 `float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
-Weight factor that is multiplied with all the weights of [features](#targetsfeatures)
-and [constraints](#targetsconstraints).
+Weight factor that is multiplied with all the weights of 
+[features](reference.md#targetsfeatures)
+and [constraints](reference.md#targetsconstraints).
 
 #### `targets.batch_size`
 
 `int` default: **`1`**
 
-The number of image frames to process during one [epoch](#epochs). 
+The number of image frames to process during one [epoch](reference.md#epochs). 
 
 In machine learning the batch size is one of the important and magic hyper-parameters.
 They control how many different training samples are included into one weight update.
@@ -251,9 +252,9 @@ the batch size until memory is exhausted.
 
 `str` default: **`all`**
 
-Selects the way how multiple [features](#targetsfeatures) are handled.
+Selects the way how multiple [features](reference.md#targetsfeatures) are handled.
 
-- `all`: All feature losses (multiplied with their individual [weights](#targetsfeaturesweight)) 
+- `all`: All feature losses (multiplied with their individual [weights](reference.md#targetsfeaturesweight)) 
   are added together.
 - `best`: The [similarity](https://en.wikipedia.org/wiki/Cosine_similarity) between the 
   features of the current image pixels and each desired feature is calculated and the 
@@ -263,7 +264,7 @@ Selects the way how multiple [features](#targetsfeatures) are handled.
   increase the influence of one or a few features, the `worst` mode will try to increase
   the influence of all features equally.
 - `mix`: All individual features are averaged together 
-  (respecting their individual [weights](#targetsfeaturesweight))
+  (respecting their individual [weights](reference.md#targetsfeaturesweight))
   and the resulting feature is compared with the features of the current image.
   This actually works quite well!
 
@@ -279,7 +280,7 @@ A list of features to drive the image creation.
 The [CLIP](https://github.com/openai/CLIP/) network is used to convert texts or images
 into a 512-dimensional vector of [latent variables](https://en.wikipedia.org/wiki/Latent_variable).
 
-In the image creation process each [target](#targets) takes a section of the current image, 
+In the image creation process each [target](reference.md#targets) takes a section of the current image, 
 shows it to [CLIP](https://github.com/openai/CLIP/) and compares the resulting feature vector with the vector of each defined feature.
 
 Through [backpropagation](https://en.wikipedia.org/wiki/Backpropagation) each pixel is then 
@@ -300,8 +301,8 @@ A word, sentence or paragraph that describes the desired image contents.
 Path or URL to an image file 
 ([supported formats](https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html)).
 
-Alternatively to [text](#targetsfeaturestext) an image can be converted into the
-[target feature](#targetsfeatures). 
+Alternatively to [text](reference.md#targetsfeaturestext) an image can be converted into the
+[target feature](reference.md#targetsfeatures). 
 
 Currently the image is **resized to 224x224, ignoring the aspect-ratio** 
 to fit into the [CLIP](https://github.com/openai/CLIP/) input window.
@@ -336,7 +337,7 @@ End frame of the specific feature
 `float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target feature](#target-feature-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target feature](expressions.md#target-feature-variables), [time](expressions.md#time-variables)
 
 A weight parameter to control the influence of a specific feature of a target.
 
@@ -348,7 +349,7 @@ Generate an image that is the least likely to that feature.
 `str` default: **`cosine`**
 
 The [loss function](https://en.wikipedia.org/wiki/Loss_function) used to calculate the 
-difference (or error) between current and desired [feature](#targetsfeatures).
+difference (or error) between current and desired [feature](reference.md#targetsfeatures).
 
 - `cosine`: The loss function is `1 - cosine_similarity(current, target)`.
   The [CLIP](https://github.com/openai/CLIP/) network was trained using 
@@ -376,7 +377,7 @@ it to [CLIP](https://github.com/openai/CLIP/) for evaluation.
 `list of length 3 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Adds a fixed value to all pixels.
 
@@ -386,6 +387,7 @@ single number specifies a gray-scale color.
 ### `targets.transforms.blur`
 
 A [gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur) is applied to the pixels.
+
 See [torchvision gaussian_blur](https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.functional.gaussian_blur).
 
 #### `targets.transforms.blur.kernel_size`
@@ -393,7 +395,7 @@ See [torchvision gaussian_blur](https://pytorch.org/vision/stable/transforms.htm
 `list of length 2 of int` default: **`[3, 3]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 The size of the pixel window. Must be an **odd**, **positive** integer. 
 
@@ -404,7 +406,7 @@ Two numbers define **width** and **height** separately.
 `list of length 2 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Gaussian kernel standard deviation. The larger, the more *blurry*.
 
@@ -421,7 +423,7 @@ Draws a border on the edge of the image. The resolution is not changed.
 `list of length 2 of int` default: **`[1, 1]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 One integer two specify **width** and **height** at the same time, 
 or two integers to specify them separately.
@@ -431,7 +433,7 @@ or two integers to specify them separately.
 `list of length 3 of float` default: **`[0.0, 0.0, 0.0]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 The color of the border as float numbers in the range `[0, 1]`.
 
@@ -443,9 +445,10 @@ to specify a gray-scale.
 `list of length 2 of int` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Crops an image of the given resolution from the center.
+
 See [torchvision center_crop](https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.functional.center_crop).
 
 One integer for square images, two numbers to specify **width** and **height**.
@@ -455,7 +458,7 @@ One integer for square images, two numbers to specify **width** and **height**.
 `list of length 2 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Clamps the pixels into a fixed range.
 
@@ -470,7 +473,7 @@ values in the range of `[0, 1]`.
 `list of length 4 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Crops a specified section from the image.
 
@@ -493,7 +496,7 @@ A [gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur) is used to detect
 `list of length 2 of int` default: **`[3, 3]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 The size of the pixel window used for [gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur). 
 Must be an **odd**, **positive** integer. 
@@ -505,7 +508,7 @@ Two numbers define **width** and **height** separately.
 `list of length 2 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Gaussian kernel standard deviation. The larger, the more *blurry*.
 
@@ -518,7 +521,7 @@ Two numbers define sigma for **x** and **y** separately.
 `list of length 3 of float` default: **`[1.0, 1.0, 1.0]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 A multiplier for the edge value. Three numbers to specify 
 **red**, **green** and **blue** separately.
@@ -528,17 +531,17 @@ A multiplier for the edge value. Three numbers to specify
 `list of length 3 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Adds noise to the image's fourier space.
 
-It's just a bit different than the normal [noise](#targetstransformsnoise).
+It's just a bit different than the normal [noise](reference.md#targetstransformsnoise).
 
 The noise has a scalable normal distribution around zero.
 
 Specifies the standard deviation of the noise distribution. 
 The actual value is multiplied by `15.0` to give a visually 
-similar distribution than the normal [noise](#targetstransformsnoise).
+similar distribution as the normal [noise](reference.md#targetstransformsnoise).
 
 One value or three values to specify **red**, **green** and **blue** separately.
 
@@ -547,7 +550,7 @@ One value or three values to specify **red**, **green** and **blue** separately.
 `list of length 3 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Multiplies all pixels by a fixed value.
 
@@ -559,7 +562,7 @@ single number specifies a gray-scale color.
 `list of length 3 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Adds noise to the image.
 
@@ -578,7 +581,7 @@ Pads the image with additional pixels at the borders.
 `list of length 2 of int` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 The number of columns/rows to add. 
 
@@ -593,7 +596,7 @@ the image and two rows on top and bottom respectively.
 `list of length 3 of float` default: **`[0.0, 0.0, 0.0]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 The color of the pixels that are padded around the image.
 
@@ -602,7 +605,7 @@ The color of the pixels that are padded around the image.
 `str` default: **`fill`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 The way the padded area is filled.
 
@@ -614,9 +617,10 @@ The way the padded area is filled.
 `list of length 2 of int` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Crops a section of the specified resolution from a random position in the image.
+
 See [torchvision random_crop](https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.functional.random_crop)
 
 One integer for square images, two numbers to specify **width** and **height**.
@@ -636,7 +640,7 @@ are filled with black (zero).
 `list of length 2 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 The minimum and maximum counter-clockwise angle of ration in degrees.
 
@@ -645,7 +649,7 @@ The minimum and maximum counter-clockwise angle of ration in degrees.
 `list of length 2 of float` default: **`[0.5, 0.5]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 The minimum and maximum center of rotation (for x and y) in the range `[0, 1]`.
 
@@ -654,9 +658,10 @@ The minimum and maximum center of rotation (for x and y) in the range `[0, 1]`.
 `list of length 2 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Randomly scales an image in the range specified.
+
 See [torchvision RandomAffine](https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.RandomAffine).
 
 The resolution does not change, only contents are scaled.
@@ -669,7 +674,7 @@ Minimum and maximum scale, where `0.5` means half and `2.0` means double.
 `list of length 2 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 This randomly translates the pixels of the image.
 
@@ -688,7 +693,7 @@ given it's resolution.
 `list of length 2 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Randomly translates an image in the specified range.
 
@@ -707,7 +712,7 @@ the range `-img_width * a < dx < img_width * a` and vertical shift is randomly s
 `list of length 2 of int` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Repeats the image a number of times in the right and bottom direction.
 
@@ -719,7 +724,7 @@ or two integers to specify them separately.
 `list of length 2 of int` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 The resolution of the image is changed.
 
@@ -737,7 +742,7 @@ are filled with black (zero).
 `float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 The counter-clockwise angle of ration in degrees (`[0, 360]`).
 
@@ -746,7 +751,7 @@ The counter-clockwise angle of ration in degrees (`[0, 360]`).
 `list of length 2 of float` default: **`[0.5, 0.5]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 The center of rotation in the range `[0, 1]`. 
 
@@ -757,7 +762,7 @@ Two numbers to specify **x** and **y** separately.
 `list of length 2 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 This translates the pixels of the image.
 
@@ -783,7 +788,7 @@ A list of post-processing effects that are applied every epoch and change
 the image pixels directly without interfering with the
 backpropagation stage. 
 
-All [transforms](#transforms) that do not change the resolution are 
+All [transforms](transforms.md) that do not change the resolution are 
 available as post processing effects.
 
 #### `postproc.active`
@@ -823,7 +828,7 @@ End frame for the post-processing stage. The stage is inactive after this time.
 `list of length 3 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Adds a fixed value to all pixels.
 
@@ -838,6 +843,7 @@ single number specifies a gray-scale color.
 ### `postproc.blur`
 
 A [gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur) is applied to the pixels.
+
 See [torchvision gaussian_blur](https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.functional.gaussian_blur).
 
 #### `postproc.blur.kernel_size`
@@ -845,7 +851,7 @@ See [torchvision gaussian_blur](https://pytorch.org/vision/stable/transforms.htm
 `list of length 2 of int` default: **`[3, 3]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 The size of the pixel window. Must be an **odd**, **positive** integer. 
 
@@ -856,7 +862,7 @@ Two numbers define **width** and **height** separately.
 `list of length 2 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Gaussian kernel standard deviation. The larger, the more *blurry*.
 
@@ -878,7 +884,7 @@ Draws a border on the edge of the image. The resolution is not changed.
 `list of length 2 of int` default: **`[1, 1]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 One integer two specify **width** and **height** at the same time, 
 or two integers to specify them separately.
@@ -888,7 +894,7 @@ or two integers to specify them separately.
 `list of length 3 of float` default: **`[0.0, 0.0, 0.0]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 The color of the border as float numbers in the range `[0, 1]`.
 
@@ -900,7 +906,7 @@ to specify a gray-scale.
 `list of length 2 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Clamps the pixels into a fixed range.
 
@@ -929,7 +935,7 @@ A [gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur) is used to detect
 `list of length 2 of int` default: **`[3, 3]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 The size of the pixel window used for [gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur). 
 Must be an **odd**, **positive** integer. 
@@ -941,7 +947,7 @@ Two numbers define **width** and **height** separately.
 `list of length 2 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Gaussian kernel standard deviation. The larger, the more *blurry*.
 
@@ -954,7 +960,7 @@ Two numbers define sigma for **x** and **y** separately.
 `list of length 3 of float` default: **`[1.0, 1.0, 1.0]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 A multiplier for the edge value. Three numbers to specify 
 **red**, **green** and **blue** separately.
@@ -964,17 +970,17 @@ A multiplier for the edge value. Three numbers to specify
 `list of length 3 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Adds noise to the image's fourier space.
 
-It's just a bit different than the normal [noise](#targetstransformsnoise).
+It's just a bit different than the normal [noise](reference.md#targetstransformsnoise).
 
 The noise has a scalable normal distribution around zero.
 
 Specifies the standard deviation of the noise distribution. 
 The actual value is multiplied by `15.0` to give a visually 
-similar distribution than the normal [noise](#targetstransformsnoise).
+similar distribution as the normal [noise](reference.md#targetstransformsnoise).
 
 One value or three values to specify **red**, **green** and **blue** separately.
 
@@ -983,7 +989,7 @@ One value or three values to specify **red**, **green** and **blue** separately.
 `list of length 3 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Multiplies all pixels by a fixed value.
 
@@ -995,7 +1001,7 @@ single number specifies a gray-scale color.
 `list of length 3 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Adds noise to the image.
 
@@ -1025,7 +1031,7 @@ are filled with black (zero).
 `list of length 2 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 The minimum and maximum counter-clockwise angle of ration in degrees.
 
@@ -1034,7 +1040,7 @@ The minimum and maximum counter-clockwise angle of ration in degrees.
 `list of length 2 of float` default: **`[0.5, 0.5]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 The minimum and maximum center of rotation (for x and y) in the range `[0, 1]`.
 
@@ -1043,9 +1049,10 @@ The minimum and maximum center of rotation (for x and y) in the range `[0, 1]`.
 `list of length 2 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Randomly scales an image in the range specified.
+
 See [torchvision RandomAffine](https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.RandomAffine).
 
 The resolution does not change, only contents are scaled.
@@ -1058,7 +1065,7 @@ Minimum and maximum scale, where `0.5` means half and `2.0` means double.
 `list of length 2 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 This randomly translates the pixels of the image.
 
@@ -1077,7 +1084,7 @@ given it's resolution.
 `list of length 2 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 Randomly translates an image in the specified range.
 
@@ -1108,7 +1115,7 @@ are filled with black (zero).
 `float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 The counter-clockwise angle of ration in degrees (`[0, 360]`).
 
@@ -1117,7 +1124,7 @@ The counter-clockwise angle of ration in degrees (`[0, 360]`).
 `list of length 2 of float` default: **`[0.5, 0.5]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 The center of rotation in the range `[0, 1]`. 
 
@@ -1128,7 +1135,7 @@ Two numbers to specify **x** and **y** separately.
 `list of length 2 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
 
 This translates the pixels of the image.
 
@@ -1153,7 +1160,7 @@ two numbers specify them separately.
 Constraints do influence the trained image without using [CLIP](https://github.com/openai/CLIP/).
 
 They only affect the pixels that are processed by
-the [transforms](#transforms) of the [target](#targets).
+the [transforms](transforms.md) of the [target](reference.md#targets).
 
 ### `targets.constraints.blur`
 
@@ -1174,7 +1181,7 @@ areas get blurred a lot.
 `list of length 2 of int` default: **`[3, 3]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 The size of the pixel window. Must be an **odd**, **positive** integer. 
 
@@ -1185,7 +1192,7 @@ Two numbers define **width** and **height** separately.
 `list of length 2 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 Gaussian kernel standard deviation. The larger, the more *blurry*.
 
@@ -1198,7 +1205,7 @@ Two numbers define sigma for **x** and **y** separately.
 `float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 A multiplier for the resulting loss value of the constraint.
 
@@ -1207,7 +1214,7 @@ A multiplier for the resulting loss value of the constraint.
 `int, float` default: **`0.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 Start frame of the constraints. The constraint is inactive before this time.
 
@@ -1226,7 +1233,7 @@ Start frame of the constraints. The constraint is inactive before this time.
 `int, float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 End frame of the constraints. The constraint is inactive after this time.
 
@@ -1245,7 +1252,7 @@ End frame of the constraints. The constraint is inactive after this time.
 `str` default: **`l2`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 The [loss function](https://en.wikipedia.org/wiki/Loss_function) 
 used to calculate the difference (or error) between current and desired 
@@ -1267,7 +1274,7 @@ Adds a border with a specific size and color to the training loss.
 `list of length 2 of int` default: **`[1, 1]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 One integer two specify **width** and **height** at the same time, 
 or two integers to specify them separately.
@@ -1277,7 +1284,7 @@ or two integers to specify them separately.
 `list of length 3 of float` default: **`[0.0, 0.0, 0.0]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 The color of the border as float numbers in the range `[0, 1]`.
 
@@ -1289,7 +1296,7 @@ to specify a gray-scale.
 `float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 A multiplier for the resulting loss value of the constraint.
 
@@ -1298,7 +1305,7 @@ A multiplier for the resulting loss value of the constraint.
 `int, float` default: **`0.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 Start frame of the constraints. The constraint is inactive before this time.
 
@@ -1317,7 +1324,7 @@ Start frame of the constraints. The constraint is inactive before this time.
 `int, float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 End frame of the constraints. The constraint is inactive after this time.
 
@@ -1336,7 +1343,7 @@ End frame of the constraints. The constraint is inactive after this time.
 `str` default: **`l2`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 The [loss function](https://en.wikipedia.org/wiki/Loss_function) 
 used to calculate the difference (or error) between current and desired 
@@ -1365,7 +1372,7 @@ and the mean of the higher pixels.
 `list of length 3 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 If specified, the training loss increases if the current value is
 below the `above` value.
@@ -1375,7 +1382,7 @@ below the `above` value.
 `list of length 3 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 If specified, the training loss increases if the current value is
 above the `below` value.
@@ -1385,7 +1392,7 @@ above the `below` value.
 `float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 A multiplier for the resulting loss value of the constraint.
 
@@ -1394,7 +1401,7 @@ A multiplier for the resulting loss value of the constraint.
 `int, float` default: **`0.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 Start frame of the constraints. The constraint is inactive before this time.
 
@@ -1413,7 +1420,7 @@ Start frame of the constraints. The constraint is inactive before this time.
 `int, float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 End frame of the constraints. The constraint is inactive after this time.
 
@@ -1432,7 +1439,7 @@ End frame of the constraints. The constraint is inactive after this time.
 `str` default: **`l2`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 The [loss function](https://en.wikipedia.org/wiki/Loss_function) 
 used to calculate the difference (or error) between current and desired 
@@ -1459,7 +1466,7 @@ A [gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur) is used to detect
 `list of length 3 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 If specified, the training loss increases if the current value is
 below the `above` value.
@@ -1469,7 +1476,7 @@ below the `above` value.
 `list of length 3 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 If specified, the training loss increases if the current value is
 above the `below` value.
@@ -1479,7 +1486,7 @@ above the `below` value.
 `float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 A multiplier for the resulting loss value of the constraint.
 
@@ -1488,7 +1495,7 @@ A multiplier for the resulting loss value of the constraint.
 `int, float` default: **`0.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 Start frame of the constraints. The constraint is inactive before this time.
 
@@ -1507,7 +1514,7 @@ Start frame of the constraints. The constraint is inactive before this time.
 `int, float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 End frame of the constraints. The constraint is inactive after this time.
 
@@ -1526,7 +1533,7 @@ End frame of the constraints. The constraint is inactive after this time.
 `str` default: **`l2`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 The [loss function](https://en.wikipedia.org/wiki/Loss_function) 
 used to calculate the difference (or error) between current and desired 
@@ -1544,7 +1551,7 @@ image.
 `list of length 2 of int` default: **`[3, 3]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 The size of the pixel window of the [gaussian blur](https://en.wikipedia.org/wiki/Gaussian_blur). 
 Must be an **odd**, **positive** integer. 
@@ -1556,7 +1563,7 @@ Two numbers define **width** and **height** separately.
 `list of length 2 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 Gaussian kernel standard deviation. The larger, the more *blurry*.
 
@@ -1573,7 +1580,7 @@ Pushes the image color mean above or below a threshold value
 `list of length 3 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 If specified, the training loss increases if the current value is
 below the `above` value.
@@ -1583,7 +1590,7 @@ below the `above` value.
 `list of length 3 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 If specified, the training loss increases if the current value is
 above the `below` value.
@@ -1593,7 +1600,7 @@ above the `below` value.
 `float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 A multiplier for the resulting loss value of the constraint.
 
@@ -1602,7 +1609,7 @@ A multiplier for the resulting loss value of the constraint.
 `int, float` default: **`0.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 Start frame of the constraints. The constraint is inactive before this time.
 
@@ -1621,7 +1628,7 @@ Start frame of the constraints. The constraint is inactive before this time.
 `int, float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 End frame of the constraints. The constraint is inactive after this time.
 
@@ -1640,7 +1647,7 @@ End frame of the constraints. The constraint is inactive after this time.
 `str` default: **`l2`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 The [loss function](https://en.wikipedia.org/wiki/Loss_function) 
 used to calculate the difference (or error) between current and desired 
@@ -1663,7 +1670,7 @@ a noisy image to the training loss.
 `list of length 3 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 Specifies the standard deviation of the noise distribution. 
 
@@ -1674,7 +1681,7 @@ One value or three values to specify **red**, **green** and **blue** separately.
 `float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 A multiplier for the resulting loss value of the constraint.
 
@@ -1683,7 +1690,7 @@ A multiplier for the resulting loss value of the constraint.
 `int, float` default: **`0.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 Start frame of the constraints. The constraint is inactive before this time.
 
@@ -1702,7 +1709,7 @@ Start frame of the constraints. The constraint is inactive before this time.
 `int, float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 End frame of the constraints. The constraint is inactive after this time.
 
@@ -1721,7 +1728,7 @@ End frame of the constraints. The constraint is inactive after this time.
 `str` default: **`l2`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 The [loss function](https://en.wikipedia.org/wiki/Loss_function) 
 used to calculate the difference (or error) between current and desired 
@@ -1747,7 +1754,7 @@ and [max](#targetsconstraintsnormalizemax).
 `list of length 3 of float` default: **`[0.0, 0.0, 0.0]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 The desired lowest value in the image. 
 
@@ -1758,7 +1765,7 @@ One color for gray-scale, three colors for **red**, **green** and **blue**.
 `list of length 3 of float` default: **`[1.0, 1.0, 1.0]`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 The desired highest value in the image. 
 
@@ -1769,7 +1776,7 @@ One color for gray-scale, three colors for **red**, **green** and **blue**.
 `float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 A multiplier for the resulting loss value of the constraint.
 
@@ -1778,7 +1785,7 @@ A multiplier for the resulting loss value of the constraint.
 `int, float` default: **`0.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 Start frame of the constraints. The constraint is inactive before this time.
 
@@ -1797,7 +1804,7 @@ Start frame of the constraints. The constraint is inactive before this time.
 `int, float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 End frame of the constraints. The constraint is inactive after this time.
 
@@ -1816,7 +1823,7 @@ End frame of the constraints. The constraint is inactive after this time.
 `str` default: **`l2`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 The [loss function](https://en.wikipedia.org/wiki/Loss_function) 
 used to calculate the difference (or error) between current and desired 
@@ -1841,7 +1848,7 @@ color channel to the mean of all channels.
 `list of length 3 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 If specified, the training loss increases if the current value is
 below the `above` value.
@@ -1851,7 +1858,7 @@ below the `above` value.
 `list of length 3 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 If specified, the training loss increases if the current value is
 above the `below` value.
@@ -1861,7 +1868,7 @@ above the `below` value.
 `float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 A multiplier for the resulting loss value of the constraint.
 
@@ -1870,7 +1877,7 @@ A multiplier for the resulting loss value of the constraint.
 `int, float` default: **`0.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 Start frame of the constraints. The constraint is inactive before this time.
 
@@ -1889,7 +1896,7 @@ Start frame of the constraints. The constraint is inactive before this time.
 `int, float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 End frame of the constraints. The constraint is inactive after this time.
 
@@ -1908,7 +1915,7 @@ End frame of the constraints. The constraint is inactive after this time.
 `str` default: **`l2`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 The [loss function](https://en.wikipedia.org/wiki/Loss_function) 
 used to calculate the difference (or error) between current and desired 
@@ -1931,7 +1938,7 @@ above or below a threshold value.
 `list of length 3 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 If specified, the training loss increases if the current value is
 below the `above` value.
@@ -1941,7 +1948,7 @@ below the `above` value.
 `list of length 3 of float` no default
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 If specified, the training loss increases if the current value is
 above the `below` value.
@@ -1951,7 +1958,7 @@ above the `below` value.
 `float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 A multiplier for the resulting loss value of the constraint.
 
@@ -1960,7 +1967,7 @@ A multiplier for the resulting loss value of the constraint.
 `int, float` default: **`0.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 Start frame of the constraints. The constraint is inactive before this time.
 
@@ -1979,7 +1986,7 @@ Start frame of the constraints. The constraint is inactive before this time.
 `int, float` default: **`1.0`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 End frame of the constraints. The constraint is inactive after this time.
 
@@ -1998,7 +2005,7 @@ End frame of the constraints. The constraint is inactive after this time.
 `str` default: **`l2`**
 
 
-expression variables: [learnrate](#learnrate-variable), [resolution](#resolution-variable), [target constraint](#target-constraint-variable), [time](#time-variable)
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target constraint](expressions.md#target-constraint-variables), [time](expressions.md#time-variables)
 
 The [loss function](https://en.wikipedia.org/wiki/Loss_function) 
 used to calculate the difference (or error) between current and desired 

@@ -354,15 +354,15 @@ PARAMETERS = {
         doc="""
         This is a list of *targets* that define the desired image. 
         
-        Most important are the [features](#targetsfeatures) where
+        Most important are the [features](reference.md#targetsfeatures) where
         texts or images are defined which get converted into CLIP
         features and then drive the image creation process.
         
-        It's possible to add additional [constraints](#targetsconstraints)
+        It's possible to add additional [constraints](reference.md#targetsconstraints)
         which alter image creation without using CLIP, 
-        e.g. the image [mean](#targetsconstraintsmean), 
-        [saturation](#targetsconstraintssaturation) 
-        or [gaussian blur](#targetsconstraintsblur).
+        e.g. the image [mean](reference.md#targetsconstraintsmean), 
+        [saturation](reference.md#targetsconstraintssaturation) 
+        or [gaussian blur](reference.md#targetsconstraintsblur).
         """
     ),
     "targets.active": Parameter(
@@ -395,14 +395,15 @@ PARAMETERS = {
     "targets.weight": Parameter(
         float, default=1., expression_groups=EXPR_GROUPS.target_constraint,
         doc="""
-        Weight factor that is multiplied with all the weights of [features](#targetsfeatures)
-        and [constraints](#targetsconstraints). 
+        Weight factor that is multiplied with all the weights of 
+        [features](reference.md#targetsfeatures)
+        and [constraints](reference.md#targetsconstraints). 
         """
     ),
     "targets.batch_size": Parameter(
         int, default=1,
         doc="""
-        The number of image frames to process during one [epoch](#epochs). 
+        The number of image frames to process during one [epoch](reference.md#epochs). 
         
         In machine learning the batch size is one of the important and magic hyper-parameters.
         They control how many different training samples are included into one weight update.
@@ -420,9 +421,9 @@ PARAMETERS = {
     "targets.select": Parameter(
         str, default="all",
         doc="""
-        Selects the way how multiple [features](#targetsfeatures) are handled.
+        Selects the way how multiple [features](reference.md#targetsfeatures) are handled.
         
-        - `all`: All feature losses (multiplied with their individual [weights](#targetsfeaturesweight)) 
+        - `all`: All feature losses (multiplied with their individual [weights](reference.md#targetsfeaturesweight)) 
           are added together.
         - `best`: The [similarity](https://en.wikipedia.org/wiki/Cosine_similarity) between the 
           features of the current image pixels and each desired feature is calculated and the 
@@ -432,7 +433,7 @@ PARAMETERS = {
           increase the influence of one or a few features, the `worst` mode will try to increase
           the influence of all features equally.
         - `mix`: All individual features are averaged together 
-          (respecting their individual [weights](#targetsfeaturesweight))
+          (respecting their individual [weights](reference.md#targetsfeaturesweight))
           and the resulting feature is compared with the features of the current image.
           This actually works quite well!  
         """
@@ -445,7 +446,7 @@ PARAMETERS = {
         The CLIP network is used to convert texts or images
         into a 512-dimensional vector of [latent variables](https://en.wikipedia.org/wiki/Latent_variable).
         
-        In the image creation process each [target](#targets) takes a section of the current image, 
+        In the image creation process each [target](reference.md#targets) takes a section of the current image, 
         shows it to CLIP and compares the resulting feature vector with the vector of each defined feature.
         
         Through [backpropagation](https://en.wikipedia.org/wiki/Backpropagation) each pixel is then 
@@ -466,8 +467,8 @@ PARAMETERS = {
         Path or URL to an image file 
         ([supported formats](https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html)).
         
-        Alternatively to [text](#targetsfeaturestext) an image can be converted into the
-        [target feature](#targetsfeatures). 
+        Alternatively to [text](reference.md#targetsfeaturestext) an image can be converted into the
+        [target feature](reference.md#targetsfeatures). 
         
         Currently the image is **resized to 224x224, ignoring the aspect-ratio** 
         to fit into the CLIP input window.
@@ -497,7 +498,7 @@ PARAMETERS = {
         str, default="cosine",
         doc="""
         The [loss function](https://en.wikipedia.org/wiki/Loss_function) used to calculate the 
-        difference (or error) between current and desired [feature](#targetsfeatures).
+        difference (or error) between current and desired [feature](reference.md#targetsfeatures).
         
         - `cosine`: The loss function is `1 - cosine_similarity(current, target)`.
           The CLIP network was trained using 
@@ -548,7 +549,7 @@ def _add_constraints_parameters(constraints: dict):
         Constraints do influence the trained image without using CLIP.
         
         They only affect the pixels that are processed by
-        the [transforms](#transforms) of the [target](#targets). 
+        the [transforms](transforms.md) of the [target](reference.md#targets). 
         """
     )
     _add_parameters("targets.constraints", constraints, expr_groups=EXPR_GROUPS.target_constraint)
@@ -578,7 +579,7 @@ def _add_transforms_parameters(transformations: dict):
             the image pixels directly without interfering with the
             backpropagation stage. 
             
-            All [transforms](#transforms) that do not change the resolution are 
+            All [transforms](transforms.md) that do not change the resolution are 
             available as post processing effects.
             """
         ),

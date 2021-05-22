@@ -61,6 +61,7 @@ class TransformBase:
 class Blur(TransformBase):
     """
     A gaussian blur is applied to the pixels.
+
     See [torchvision gaussian_blur](https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.functional.gaussian_blur).
     """
     NAME = "blur"
@@ -130,6 +131,7 @@ class Resize(TransformBase):
 class CenterCrop(TransformBase):
     """
     Crops an image of the given resolution from the center.
+
     See [torchvision center_crop](https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.functional.center_crop).
     """
     NAME = "center_crop"
@@ -155,6 +157,7 @@ class CenterCrop(TransformBase):
 class RandomCrop(TransformBase):
     """
     Crops a section of the specified resolution from a random position in the image.
+
     See [torchvision random_crop](https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.functional.random_crop)
     """
     NAME = "random_crop"
@@ -398,7 +401,7 @@ class FNoise(TransformBase):
     """
     Adds noise to the image's fourier space.
 
-    It's just a bit different than the normal [noise](#targetstransformsnoise).
+    It's just a bit different than the normal [noise](reference.md#targetstransformsnoise).
 
     The noise has a scalable normal distribution around zero.
     """
@@ -410,7 +413,7 @@ class FNoise(TransformBase):
             doc="""
             Specifies the standard deviation of the noise distribution. 
             The actual value is multiplied by `15.0` to give a visually 
-            similar distribution than the normal [noise](#targetstransformsnoise).
+            similar distribution as the normal [noise](reference.md#targetstransformsnoise).
             
             One value or three values to specify **red**, **green** and **blue** separately.
             """
@@ -578,6 +581,7 @@ class RandomRotate(TransformBase):
 class RandomScale(TransformBase):
     """
     Randomly scales an image in the range specified.
+
     See [torchvision RandomAffine](https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.RandomAffine).
 
     The resolution does not change, only contents are scaled.

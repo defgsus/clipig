@@ -85,7 +85,7 @@ because actual letters appeared to increase the similarity
 nevertheless. It got to **50%**. 
 
 Another method to inspire [CLIP](https://github.com/openai/CLIP/) is 
-[random rotation](reference.md#targetstransformsrandom_rotation). 
+[random rotation](reference.md#targetstransformsrandom_rotate). 
 
 ```yaml
 targets:
@@ -193,7 +193,7 @@ are kept at high values throughout the whole training.
 - The [repeat](reference.md#targetstransformsrepeat) and 
   [center crop](reference.md#targetstransformscenter_crop) transforms
   help avoiding the *under-development* of the corners by the 
-  [random rotation](reference.md#targetstransformsrandom_rotation).
+  [random rotation](reference.md#targetstransformsrandom_rotate).
 - A [post processing](reference.md#postproc) effect adds a small 
   [border](reference.md#postprocborder) that forces the contents to be 
   created more in the center of the image instead of close 
@@ -267,7 +267,7 @@ The [mul transformation](reference.md#targetstransformsmul) reduces
 the color range that [CLIP](https://github.com/openai/CLIP/) is seeing so the resulting color
 range is increased. Of course, this also increases the 
 saturation a lot so the 
-[saturation constraint](reference.md#targetconstraintssaturation)
+[saturation constraint](reference.md#targetsconstraintssaturation)
 is used to reduce it to acceptable levels.
 
 I'll end this experiment here because my 3 years old kid 
@@ -277,8 +277,8 @@ create your desired fantasy images.
 
 Just go ahead, play with [CLIPig](https://github.com/defgsus/CLIPig/) and consume a lot of your 
 life and work time. If stuck, check the [reference](reference.md) 
-and the lists of available [transforms](reference.md#transforms) and 
-[constraints](reference.md#constraints).
+and the lists of available [transforms](transforms.md) and 
+[constraints](constraints.md).
 
 But there's one thing left: **How do i increase 
 the resolution?**

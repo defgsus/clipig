@@ -87,7 +87,7 @@ def dump_parameters_md(file: Optional[TextIO] = None):
                 for n in sorted(set(param.expression_groups))
             ]
             print("\nexpression variables: " + ", ".join(
-                f"[{n}](#{n.replace(' ', '-')}-variable)"
+                f"[{n}](expressions.md#{n.replace(' ', '-')}-variables)"
                 for n in group_names
             ) + "\n", file=file)
 
@@ -168,7 +168,7 @@ def dump_constraints(file: Optional[TextIO] = None):
         if "\n\n" in text:
             text = text[:text.index("\n\n")]
 
-        print(f"- [{name}](#targetsconstraints{name}): {text}", file=file)
+        print(f"- [{name}](reference.md#targetsconstraints{name}): {text}", file=file)
 
 
 def dump_transforms(file: Optional[TextIO] = None):
@@ -180,7 +180,7 @@ def dump_transforms(file: Optional[TextIO] = None):
         if "\n\n" in text:
             text = text[:text.index("\n\n")]
 
-        print(f"- [{name}](#targetstransforms{name}): {text}", file=file)
+        print(f"- [{name}](reference.md#targetstransforms{name}): {text}", file=file)
 
 
 def dump_expression_variables(file: Optional[TextIO] = None):
@@ -193,6 +193,6 @@ def dump_expression_variables(file: Optional[TextIO] = None):
         for variable_name, variable in group["args"].items():
             if not variable.get("doc"):
                 continue
-            print(f"- #### `{variable_name}` variable\n", file=file)
-            print(f"  type: `{variable['type']}`\n", file=file)
-            print(prepare_doc_string(variable["doc"], indent=2), file=file)
+            print(f"#### `{variable_name}` variable\n", file=file)
+            print(f"type: `{variable['type']}`\n", file=file)
+            print(prepare_doc_string(variable["doc"]), file=file)

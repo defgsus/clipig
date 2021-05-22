@@ -282,7 +282,7 @@ then <code>1000</code> training steps will be performed.</p>
 <p>This is used by the GUI application to continue training after config changes.</p>
 <h4 id="resolution"><code>resolution</code></h4>
 <p><code>list of length 2 of int</code> default: <strong><code>[224, 224]</code></strong></p>
-<p>expression variables: <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#time-variables">time</a></p>
 <p>Resolution of the image to create. A single number for square images or two 
 numbers for width and height.</p>
 <p>It supports expression variables so you can actually change the resolution
@@ -298,7 +298,7 @@ during training, e.g:</p>
 <p>The device to run the training on. Can be <code>cpu</code>, <code>cuda</code>, <code>cuda:1</code> etc.</p>
 <h4 id="learnrate"><code>learnrate</code></h4>
 <p><code>float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The learning rate of the optimizer.</p>
 <p>Different optimizers have different learning rates that work well. 
 However, this value is scaled <em>by hand</em> so that <code>1.0</code> translates to 
@@ -306,7 +306,7 @@ about the same learning rate for each optimizer.</p>
 <p>The learnrate value is available to other expressions as <code>lr</code> or <code>learnrate</code>.</p>
 <h4 id="learnrate_scale"><code>learnrate_scale</code></h4>
 <p><code>float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>A scaling parameter for the actual learning rate.</p>
 <p>It's for convenience in the case when learnrate_scale is an expression like <code>1. - t</code>. 
 The actual learnrate can be overridden with fixed values like <code>2</code> or <code>3</code> in 
@@ -341,14 +341,14 @@ namely <code>[C, H, W]</code>, where <code>C</code> is number of colors (3),
 <hr>
 <h3 id="targets"><code>targets</code></h3>
 <p>This is a list of <em>targets</em> that define the desired image.</p>
-<p>Most important are the <a href="#targetsfeatures">features</a> where
+<p>Most important are the <a href="reference.html#targetsfeatures">features</a> where
 texts or images are defined which get converted into <a href="https://github.com/openai/CLIP/">CLIP</a>
 features and then drive the image creation process.</p>
-<p>It's possible to add additional <a href="#targetsconstraints">constraints</a>
+<p>It's possible to add additional <a href="reference.html#targetsconstraints">constraints</a>
 which alter image creation without using CLIP, 
-e.g. the image <a href="#targetsconstraintsmean">mean</a>, 
-<a href="#targetsconstraintssaturation">saturation</a> 
-or <a href="#targetsconstraintsblur">gaussian blur</a>.</p>
+e.g. the image <a href="reference.html#targetsconstraintsmean">mean</a>, 
+<a href="reference.html#targetsconstraintssaturation">saturation</a> 
+or <a href="reference.html#targetsconstraintsblur">gaussian blur</a>.</p>
 <h4 id="targetsactive"><code>targets.active</code></h4>
 <p><code>bool</code> default: <strong><code>True</code></strong></p>
 <p>A boolean to turn off the target during development.</p>
@@ -380,12 +380,13 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsweight"><code>targets.weight</code></h4>
 <p><code>float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
-<p>Weight factor that is multiplied with all the weights of <a href="#targetsfeatures">features</a>
-and <a href="#targetsconstraints">constraints</a>.</p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>Weight factor that is multiplied with all the weights of 
+<a href="reference.html#targetsfeatures">features</a>
+and <a href="reference.html#targetsconstraints">constraints</a>.</p>
 <h4 id="targetsbatch_size"><code>targets.batch_size</code></h4>
 <p><code>int</code> default: <strong><code>1</code></strong></p>
-<p>The number of image frames to process during one <a href="#epochs">epoch</a>.</p>
+<p>The number of image frames to process during one <a href="reference.html#epochs">epoch</a>.</p>
 <p>In machine learning the batch size is one of the important and magic hyper-parameters.
 They control how many different training samples are included into one weight update.</p>
 <p>With <a href="https://github.com/defgsus/CLIPig/">CLIPig</a> we are not training a neural network or anything complicated, we just
@@ -397,9 +398,9 @@ with a batch size of 10. The latter is much faster. Basically, you can increase
 the batch size until memory is exhausted.</p>
 <h4 id="targetsselect"><code>targets.select</code></h4>
 <p><code>str</code> default: <strong><code>all</code></strong></p>
-<p>Selects the way how multiple <a href="#targetsfeatures">features</a> are handled.</p>
+<p>Selects the way how multiple <a href="reference.html#targetsfeatures">features</a> are handled.</p>
 <ul>
-<li><code>all</code>: All feature losses (multiplied with their individual <a href="#targetsfeaturesweight">weights</a>) 
+<li><code>all</code>: All feature losses (multiplied with their individual <a href="reference.html#targetsfeaturesweight">weights</a>) 
 are added together.</li>
 <li><code>best</code>: The <a href="https://en.wikipedia.org/wiki/Cosine_similarity">similarity</a> between the 
 features of the current image pixels and each desired feature is calculated and the 
@@ -409,7 +410,7 @@ and then the worst matching feature is selected. While <code>best</code> mode wi
 increase the influence of one or a few features, the <code>worst</code> mode will try to increase
 the influence of all features equally.</li>
 <li><code>mix</code>: All individual features are averaged together 
-(respecting their individual <a href="#targetsfeaturesweight">weights</a>)
+(respecting their individual <a href="reference.html#targetsfeaturesweight">weights</a>)
 and the resulting feature is compared with the features of the current image.
 This actually works quite well!</li>
 </ul>
@@ -418,7 +419,7 @@ This actually works quite well!</li>
 <p>A list of features to drive the image creation.</p>
 <p>The <a href="https://github.com/openai/CLIP/">CLIP</a> network is used to convert texts or images
 into a 512-dimensional vector of <a href="https://en.wikipedia.org/wiki/Latent_variable">latent variables</a>.</p>
-<p>In the image creation process each <a href="#targets">target</a> takes a section of the current image, 
+<p>In the image creation process each <a href="reference.html#targets">target</a> takes a section of the current image, 
 shows it to <a href="https://github.com/openai/CLIP/">CLIP</a> and compares the resulting feature vector with the vector of each defined feature.</p>
 <p>Through <a href="https://en.wikipedia.org/wiki/Backpropagation">backpropagation</a> each pixel is then 
 slightly adjusted in a way that would make the <a href="https://github.com/openai/CLIP/">CLIP</a> feature more similar to the defined features.</p>
@@ -430,8 +431,8 @@ slightly adjusted in a way that would make the <a href="https://github.com/opena
 <p><code>str</code> no default</p>
 <p>Path or URL to an image file 
 (<a href="https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html">supported formats</a>).</p>
-<p>Alternatively to <a href="#targetsfeaturestext">text</a> an image can be converted into the
-<a href="#targetsfeatures">target feature</a>.</p>
+<p>Alternatively to <a href="reference.html#targetsfeaturestext">text</a> an image can be converted into the
+<a href="reference.html#targetsfeatures">target feature</a>.</p>
 <p>Currently the image is <strong>resized to 224x224, ignoring the aspect-ratio</strong> 
 to fit into the <a href="https://github.com/openai/CLIP/">CLIP</a> input window.</p>
 <p>If the path starts with <code>http://</code> or <code>https://</code> it's treated as an URL and the image 
@@ -456,14 +457,14 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsfeaturesweight"><code>targets.features.weight</code></h4>
 <p><code>float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-feature-variable">target feature</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-feature-variables">target feature</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>A weight parameter to control the influence of a specific feature of a target.</p>
 <p>Note that you can use negative weights as well which translates roughly to:
 Generate an image that is the least likely to that feature.</p>
 <h4 id="targetsfeaturesloss"><code>targets.features.loss</code></h4>
 <p><code>str</code> default: <strong><code>cosine</code></strong></p>
 <p>The <a href="https://en.wikipedia.org/wiki/Loss_function">loss function</a> used to calculate the 
-difference (or error) between current and desired <a href="#targetsfeatures">feature</a>.</p>
+difference (or error) between current and desired <a href="reference.html#targetsfeatures">feature</a>.</p>
 <ul>
 <li><code>cosine</code>: The loss function is <code>1 - cosine_similarity(current, target)</code>.
 The <a href="https://github.com/openai/CLIP/">CLIP</a> network was trained using 
@@ -482,21 +483,21 @@ is the mean of the squared difference of each vector variable. Compared to
 it to <a href="https://github.com/openai/CLIP/">CLIP</a> for evaluation.</p>
 <h3 id="targetstransformsadd"><code>targets.transforms.add</code></h3>
 <p><code>list of length 3 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Adds a fixed value to all pixels.</p>
 <p>Three numbers specify <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> while a 
 single number specifies a gray-scale color.</p>
 <h3 id="targetstransformsblur"><code>targets.transforms.blur</code></h3>
-<p>A <a href="https://en.wikipedia.org/wiki/Gaussian_blur">gaussian blur</a> is applied to the pixels.
-See <a href="https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.functional.gaussian_blur">torchvision gaussian_blur</a>.</p>
+<p>A <a href="https://en.wikipedia.org/wiki/Gaussian_blur">gaussian blur</a> is applied to the pixels.</p>
+<p>See <a href="https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.functional.gaussian_blur">torchvision gaussian_blur</a>.</p>
 <h4 id="targetstransformsblurkernel_size"><code>targets.transforms.blur.kernel_size</code></h4>
 <p><code>list of length 2 of int</code> default: <strong><code>[3, 3]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The size of the pixel window. Must be an <strong>odd</strong>, <strong>positive</strong> integer.</p>
 <p>Two numbers define <strong>width</strong> and <strong>height</strong> separately.</p>
 <h4 id="targetstransformsblursigma"><code>targets.transforms.blur.sigma</code></h4>
 <p><code>list of length 2 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Gaussian kernel standard deviation. The larger, the more <em>blurry</em>.</p>
 <p>If not specified it will default to <code>0.3 * ((kernel_size - 1) * 0.5 - 1) + 0.8</code>.</p>
 <p>Two numbers define sigma for <strong>x</strong> and <strong>y</strong> separately.</p>
@@ -504,24 +505,24 @@ See <a href="https://pytorch.org/vision/stable/transforms.html#torchvision.trans
 <p>Draws a border on the edge of the image. The resolution is not changed.</p>
 <h4 id="targetstransformsbordersize"><code>targets.transforms.border.size</code></h4>
 <p><code>list of length 2 of int</code> default: <strong><code>[1, 1]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>One integer two specify <strong>width</strong> and <strong>height</strong> at the same time, 
 or two integers to specify them separately.</p>
 <h4 id="targetstransformsbordercolor"><code>targets.transforms.border.color</code></h4>
 <p><code>list of length 3 of float</code> default: <strong><code>[0.0, 0.0, 0.0]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The color of the border as float numbers in the range <code>[0, 1]</code>.</p>
 <p>Three numbers for <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> or a single number 
 to specify a gray-scale.</p>
 <h3 id="targetstransformscenter_crop"><code>targets.transforms.center_crop</code></h3>
 <p><code>list of length 2 of int</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
-<p>Crops an image of the given resolution from the center.
-See <a href="https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.functional.center_crop">torchvision center_crop</a>.</p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>Crops an image of the given resolution from the center.</p>
+<p>See <a href="https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.functional.center_crop">torchvision center_crop</a>.</p>
 <p>One integer for square images, two numbers to specify <strong>width</strong> and <strong>height</strong>.</p>
 <h3 id="targetstransformsclamp"><code>targets.transforms.clamp</code></h3>
 <p><code>list of length 2 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Clamps the pixels into a fixed range.</p>
 <p>First number is the minimum allowed value for all color channels, 
 second is the maximum allowed value.</p>
@@ -529,7 +530,7 @@ second is the maximum allowed value.</p>
 values in the range of <code>[0, 1]</code>.</p>
 <h3 id="targetstransformscrop"><code>targets.transforms.crop</code></h3>
 <p><code>list of length 4 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Crops a specified section from the image.</p>
 <p>4 numbers: <strong>x</strong> and <strong>y</strong> of top-left corner followed by <strong>width</strong> and <strong>height</strong>.</p>
 <p>A number between 0 and 1 is considered a fraction of the full resolution.
@@ -542,40 +543,40 @@ quality. It might be useful, however...</p>
 
 </pre><h4 id="targetstransformsedgekernel_size"><code>targets.transforms.edge.kernel_size</code></h4>
 <p><code>list of length 2 of int</code> default: <strong><code>[3, 3]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The size of the pixel window used for <a href="https://en.wikipedia.org/wiki/Gaussian_blur">gaussian blur</a>. 
 Must be an <strong>odd</strong>, <strong>positive</strong> integer.</p>
 <p>Two numbers define <strong>width</strong> and <strong>height</strong> separately.</p>
 <h4 id="targetstransformsedgesigma"><code>targets.transforms.edge.sigma</code></h4>
 <p><code>list of length 2 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Gaussian kernel standard deviation. The larger, the more <em>blurry</em>.</p>
 <p>If not specified it will default to <code>0.3 * ((kernel_size - 1) * 0.5 - 1) + 0.8</code>.</p>
 <p>Two numbers define sigma for <strong>x</strong> and <strong>y</strong> separately.</p>
 <h4 id="targetstransformsedgeamount"><code>targets.transforms.edge.amount</code></h4>
 <p><code>list of length 3 of float</code> default: <strong><code>[1.0, 1.0, 1.0]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>A multiplier for the edge value. Three numbers to specify 
 <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> separately.</p>
 <h3 id="targetstransformsfnoise"><code>targets.transforms.fnoise</code></h3>
 <p><code>list of length 3 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Adds noise to the image's fourier space.</p>
-<p>It's just a bit different than the normal <a href="#targetstransformsnoise">noise</a>.</p>
+<p>It's just a bit different than the normal <a href="reference.html#targetstransformsnoise">noise</a>.</p>
 <p>The noise has a scalable normal distribution around zero.</p>
 <p>Specifies the standard deviation of the noise distribution. 
 The actual value is multiplied by <code>15.0</code> to give a visually 
-similar distribution than the normal <a href="#targetstransformsnoise">noise</a>.</p>
+similar distribution as the normal <a href="reference.html#targetstransformsnoise">noise</a>.</p>
 <p>One value or three values to specify <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> separately.</p>
 <h3 id="targetstransformsmul"><code>targets.transforms.mul</code></h3>
 <p><code>list of length 3 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Multiplies all pixels by a fixed value.</p>
 <p>Three numbers specify <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> while a 
 single number specifies a gray-scale color.</p>
 <h3 id="targetstransformsnoise"><code>targets.transforms.noise</code></h3>
 <p><code>list of length 3 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Adds noise to the image.</p>
 <p>The noise has a scalable normal distribution around zero.</p>
 <p>Specifies the standard deviation of the noise distribution.</p>
@@ -584,7 +585,7 @@ single number specifies a gray-scale color.</p>
 <p>Pads the image with additional pixels at the borders.</p>
 <h4 id="targetstransformspadsize"><code>targets.transforms.pad.size</code></h4>
 <p><code>list of length 2 of int</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The number of columns/rows to add.</p>
 <p>One integer to specify <strong>x</strong> and <strong>y</strong> at the same time, 
 or two integers to specify them separately.</p>
@@ -592,11 +593,11 @@ or two integers to specify them separately.</p>
 the image and two rows on top and bottom respectively.</p>
 <h4 id="targetstransformspadcolor"><code>targets.transforms.pad.color</code></h4>
 <p><code>list of length 3 of float</code> default: <strong><code>[0.0, 0.0, 0.0]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The color of the pixels that are padded around the image.</p>
 <h4 id="targetstransformspadmode"><code>targets.transforms.pad.mode</code></h4>
 <p><code>str</code> default: <strong><code>fill</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The way the padded area is filled.</p>
 <ul>
 <li><code>fill</code>: fills everything with the <code>color</code> value</li>
@@ -604,9 +605,9 @@ the image and two rows on top and bottom respectively.</p>
 </ul>
 <h3 id="targetstransformsrandom_crop"><code>targets.transforms.random_crop</code></h3>
 <p><code>list of length 2 of int</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
-<p>Crops a section of the specified resolution from a random position in the image.
-See <a href="https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.functional.random_crop">torchvision random_crop</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>Crops a section of the specified resolution from a random position in the image.</p>
+<p>See <a href="https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.functional.random_crop">torchvision random_crop</a></p>
 <p>One integer for square images, two numbers to specify <strong>width</strong> and <strong>height</strong>.</p>
 <h3 id="targetstransformsrandom_rotate"><code>targets.transforms.random_rotate</code></h3>
 <p>Randomly rotates the image.</p>
@@ -616,23 +617,23 @@ of the specified values.</p>
 are filled with black (zero).</p>
 <h4 id="targetstransformsrandom_rotatedegree"><code>targets.transforms.random_rotate.degree</code></h4>
 <p><code>list of length 2 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The minimum and maximum counter-clockwise angle of ration in degrees.</p>
 <h4 id="targetstransformsrandom_rotatecenter"><code>targets.transforms.random_rotate.center</code></h4>
 <p><code>list of length 2 of float</code> default: <strong><code>[0.5, 0.5]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The minimum and maximum center of rotation (for x and y) in the range <code>[0, 1]</code>.</p>
 <h3 id="targetstransformsrandom_scale"><code>targets.transforms.random_scale</code></h3>
 <p><code>list of length 2 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
-<p>Randomly scales an image in the range specified.
-See <a href="https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.RandomAffine">torchvision RandomAffine</a>.</p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>Randomly scales an image in the range specified.</p>
+<p>See <a href="https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.RandomAffine">torchvision RandomAffine</a>.</p>
 <p>The resolution does not change, only contents are scaled.
 Areas outside of the image are filled with black (zero).</p>
 <p>Minimum and maximum scale, where <code>0.5</code> means half and <code>2.0</code> means double.</p>
 <h3 id="targetstransformsrandom_shift"><code>targets.transforms.random_shift</code></h3>
 <p><code>list of length 2 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>This randomly translates the pixels of the image.</p>
 <p>Pixels that are moved outside get attached on the other side.</p>
 <p>Specifies the random range of translation.</p>
@@ -642,7 +643,7 @@ E.g., <code>shift: 0 1</code> would randomly translate the image to every possib
 given it's resolution.</p>
 <h3 id="targetstransformsrandom_translate"><code>targets.transforms.random_translate</code></h3>
 <p><code>list of length 2 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Randomly translates an image in the specified range.</p>
 <p>The resolution does not change.
 Areas outside of the image are filled with black (zero).</p>
@@ -653,13 +654,13 @@ the range <code>-img_width * a &lt; dx &lt; img_width * a</code> and vertical sh
 <code>-img_height * b &lt; dy &lt; img_height * b</code>.</p>
 <h3 id="targetstransformsrepeat"><code>targets.transforms.repeat</code></h3>
 <p><code>list of length 2 of int</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Repeats the image a number of times in the right and bottom direction.</p>
 <p>One integer to specify <strong>x</strong> and <strong>y</strong> at the same time, 
 or two integers to specify them separately.</p>
 <h3 id="targetstransformsresize"><code>targets.transforms.resize</code></h3>
 <p><code>list of length 2 of int</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The resolution of the image is changed.</p>
 <p>One integer for square images, two numbers to specify <strong>width</strong> and <strong>height</strong>.</p>
 <h3 id="targetstransformsrotate"><code>targets.transforms.rotate</code></h3>
@@ -668,16 +669,16 @@ or two integers to specify them separately.</p>
 are filled with black (zero).</p>
 <h4 id="targetstransformsrotatedegree"><code>targets.transforms.rotate.degree</code></h4>
 <p><code>float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The counter-clockwise angle of ration in degrees (<code>[0, 360]</code>).</p>
 <h4 id="targetstransformsrotatecenter"><code>targets.transforms.rotate.center</code></h4>
 <p><code>list of length 2 of float</code> default: <strong><code>[0.5, 0.5]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The center of rotation in the range <code>[0, 1]</code>.</p>
 <p>Two numbers to specify <strong>x</strong> and <strong>y</strong> separately.</p>
 <h3 id="targetstransformsshift"><code>targets.transforms.shift</code></h3>
 <p><code>list of length 2 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>This translates the pixels of the image.</p>
 <p>Pixels that are moved outside get attached on the other side.</p>
 <p>A number <strong>larger 1</strong> or <strong>smaller -1</strong> translates by the actual pixels.</p>
@@ -691,7 +692,7 @@ two numbers specify them separately.</p>
 <p>A list of post-processing effects that are applied every epoch and change
 the image pixels directly without interfering with the
 backpropagation stage.</p>
-<p>All <a href="#transforms">transforms</a> that do not change the resolution are 
+<p>All <a href="transforms.html">transforms</a> that do not change the resolution are 
 available as post processing effects.</p>
 <h4 id="postprocactive"><code>postproc.active</code></h4>
 <p><code>bool</code> default: <strong><code>True</code></strong></p>
@@ -719,22 +720,22 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="postprocadd"><code>postproc.add</code></h4>
 <p><code>list of length 3 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Adds a fixed value to all pixels.</p>
 <p>Three numbers specify <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> while a 
 single number specifies a gray-scale color.</p>
 <hr>
 <h3 id="postprocblur"><code>postproc.blur</code></h3>
-<p>A <a href="https://en.wikipedia.org/wiki/Gaussian_blur">gaussian blur</a> is applied to the pixels.
-See <a href="https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.functional.gaussian_blur">torchvision gaussian_blur</a>.</p>
+<p>A <a href="https://en.wikipedia.org/wiki/Gaussian_blur">gaussian blur</a> is applied to the pixels.</p>
+<p>See <a href="https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.functional.gaussian_blur">torchvision gaussian_blur</a>.</p>
 <h4 id="postprocblurkernel_size"><code>postproc.blur.kernel_size</code></h4>
 <p><code>list of length 2 of int</code> default: <strong><code>[3, 3]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The size of the pixel window. Must be an <strong>odd</strong>, <strong>positive</strong> integer.</p>
 <p>Two numbers define <strong>width</strong> and <strong>height</strong> separately.</p>
 <h4 id="postprocblursigma"><code>postproc.blur.sigma</code></h4>
 <p><code>list of length 2 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Gaussian kernel standard deviation. The larger, the more <em>blurry</em>.</p>
 <p>If not specified it will default to <code>0.3 * ((kernel_size - 1) * 0.5 - 1) + 0.8</code>.</p>
 <p>Two numbers define sigma for <strong>x</strong> and <strong>y</strong> separately.</p>
@@ -743,18 +744,18 @@ See <a href="https://pytorch.org/vision/stable/transforms.html#torchvision.trans
 <p>Draws a border on the edge of the image. The resolution is not changed.</p>
 <h4 id="postprocbordersize"><code>postproc.border.size</code></h4>
 <p><code>list of length 2 of int</code> default: <strong><code>[1, 1]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>One integer two specify <strong>width</strong> and <strong>height</strong> at the same time, 
 or two integers to specify them separately.</p>
 <h4 id="postprocbordercolor"><code>postproc.border.color</code></h4>
 <p><code>list of length 3 of float</code> default: <strong><code>[0.0, 0.0, 0.0]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The color of the border as float numbers in the range <code>[0, 1]</code>.</p>
 <p>Three numbers for <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> or a single number 
 to specify a gray-scale.</p>
 <h4 id="postprocclamp"><code>postproc.clamp</code></h4>
 <p><code>list of length 2 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Clamps the pixels into a fixed range.</p>
 <p>First number is the minimum allowed value for all color channels, 
 second is the maximum allowed value.</p>
@@ -769,40 +770,40 @@ quality. It might be useful, however...</p>
 
 </pre><h4 id="postprocedgekernel_size"><code>postproc.edge.kernel_size</code></h4>
 <p><code>list of length 2 of int</code> default: <strong><code>[3, 3]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The size of the pixel window used for <a href="https://en.wikipedia.org/wiki/Gaussian_blur">gaussian blur</a>. 
 Must be an <strong>odd</strong>, <strong>positive</strong> integer.</p>
 <p>Two numbers define <strong>width</strong> and <strong>height</strong> separately.</p>
 <h4 id="postprocedgesigma"><code>postproc.edge.sigma</code></h4>
 <p><code>list of length 2 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Gaussian kernel standard deviation. The larger, the more <em>blurry</em>.</p>
 <p>If not specified it will default to <code>0.3 * ((kernel_size - 1) * 0.5 - 1) + 0.8</code>.</p>
 <p>Two numbers define sigma for <strong>x</strong> and <strong>y</strong> separately.</p>
 <h4 id="postprocedgeamount"><code>postproc.edge.amount</code></h4>
 <p><code>list of length 3 of float</code> default: <strong><code>[1.0, 1.0, 1.0]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>A multiplier for the edge value. Three numbers to specify 
 <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> separately.</p>
 <h4 id="postprocfnoise"><code>postproc.fnoise</code></h4>
 <p><code>list of length 3 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Adds noise to the image's fourier space.</p>
-<p>It's just a bit different than the normal <a href="#targetstransformsnoise">noise</a>.</p>
+<p>It's just a bit different than the normal <a href="reference.html#targetstransformsnoise">noise</a>.</p>
 <p>The noise has a scalable normal distribution around zero.</p>
 <p>Specifies the standard deviation of the noise distribution. 
 The actual value is multiplied by <code>15.0</code> to give a visually 
-similar distribution than the normal <a href="#targetstransformsnoise">noise</a>.</p>
+similar distribution as the normal <a href="reference.html#targetstransformsnoise">noise</a>.</p>
 <p>One value or three values to specify <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> separately.</p>
 <h4 id="postprocmul"><code>postproc.mul</code></h4>
 <p><code>list of length 3 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Multiplies all pixels by a fixed value.</p>
 <p>Three numbers specify <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> while a 
 single number specifies a gray-scale color.</p>
 <h4 id="postprocnoise"><code>postproc.noise</code></h4>
 <p><code>list of length 3 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Adds noise to the image.</p>
 <p>The noise has a scalable normal distribution around zero.</p>
 <p>Specifies the standard deviation of the noise distribution.</p>
@@ -816,23 +817,23 @@ of the specified values.</p>
 are filled with black (zero).</p>
 <h4 id="postprocrandom_rotatedegree"><code>postproc.random_rotate.degree</code></h4>
 <p><code>list of length 2 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The minimum and maximum counter-clockwise angle of ration in degrees.</p>
 <h4 id="postprocrandom_rotatecenter"><code>postproc.random_rotate.center</code></h4>
 <p><code>list of length 2 of float</code> default: <strong><code>[0.5, 0.5]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The minimum and maximum center of rotation (for x and y) in the range <code>[0, 1]</code>.</p>
 <h4 id="postprocrandom_scale"><code>postproc.random_scale</code></h4>
 <p><code>list of length 2 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
-<p>Randomly scales an image in the range specified.
-See <a href="https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.RandomAffine">torchvision RandomAffine</a>.</p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>Randomly scales an image in the range specified.</p>
+<p>See <a href="https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.RandomAffine">torchvision RandomAffine</a>.</p>
 <p>The resolution does not change, only contents are scaled.
 Areas outside of the image are filled with black (zero).</p>
 <p>Minimum and maximum scale, where <code>0.5</code> means half and <code>2.0</code> means double.</p>
 <h4 id="postprocrandom_shift"><code>postproc.random_shift</code></h4>
 <p><code>list of length 2 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>This randomly translates the pixels of the image.</p>
 <p>Pixels that are moved outside get attached on the other side.</p>
 <p>Specifies the random range of translation.</p>
@@ -842,7 +843,7 @@ E.g., <code>shift: 0 1</code> would randomly translate the image to every possib
 given it's resolution.</p>
 <h4 id="postprocrandom_translate"><code>postproc.random_translate</code></h4>
 <p><code>list of length 2 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Randomly translates an image in the specified range.</p>
 <p>The resolution does not change.
 Areas outside of the image are filled with black (zero).</p>
@@ -858,16 +859,16 @@ the range <code>-img_width * a &lt; dx &lt; img_width * a</code> and vertical sh
 are filled with black (zero).</p>
 <h4 id="postprocrotatedegree"><code>postproc.rotate.degree</code></h4>
 <p><code>float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The counter-clockwise angle of ration in degrees (<code>[0, 360]</code>).</p>
 <h4 id="postprocrotatecenter"><code>postproc.rotate.center</code></h4>
 <p><code>list of length 2 of float</code> default: <strong><code>[0.5, 0.5]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The center of rotation in the range <code>[0, 1]</code>.</p>
 <p>Two numbers to specify <strong>x</strong> and <strong>y</strong> separately.</p>
 <h4 id="postprocshift"><code>postproc.shift</code></h4>
 <p><code>list of length 2 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>This translates the pixels of the image.</p>
 <p>Pixels that are moved outside get attached on the other side.</p>
 <p>A number <strong>larger 1</strong> or <strong>smaller -1</strong> translates by the actual pixels.</p>
@@ -880,7 +881,7 @@ two numbers specify them separately.</p>
 <h3 id="targetsconstraints"><code>targets.constraints</code></h3>
 <p>Constraints do influence the trained image without using <a href="https://github.com/openai/CLIP/">CLIP</a>.</p>
 <p>They only affect the pixels that are processed by
-the <a href="#transforms">transforms</a> of the <a href="#targets">target</a>.</p>
+the <a href="transforms.html">transforms</a> of the <a href="reference.html#targets">target</a>.</p>
 <h3 id="targetsconstraintsblur"><code>targets.constraints.blur</code></h3>
 <p>Adds the difference between the image and a blurred version to
 the training loss.</p>
@@ -893,22 +894,22 @@ updated and will stand out of the blur, while <em>unexciting</em>
 areas get blurred a lot.</p>
 <h4 id="targetsconstraintsblurkernel_size"><code>targets.constraints.blur.kernel_size</code></h4>
 <p><code>list of length 2 of int</code> default: <strong><code>[3, 3]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The size of the pixel window. Must be an <strong>odd</strong>, <strong>positive</strong> integer.</p>
 <p>Two numbers define <strong>width</strong> and <strong>height</strong> separately.</p>
 <h4 id="targetsconstraintsblursigma"><code>targets.constraints.blur.sigma</code></h4>
 <p><code>list of length 2 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Gaussian kernel standard deviation. The larger, the more <em>blurry</em>.</p>
 <p>If not specified it will default to <code>0.3 * ((kernel_size - 1) * 0.5 - 1) + 0.8</code>.</p>
 <p>Two numbers define sigma for <strong>x</strong> and <strong>y</strong> separately.</p>
 <h4 id="targetsconstraintsblurweight"><code>targets.constraints.blur.weight</code></h4>
 <p><code>float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>A multiplier for the resulting loss value of the constraint.</p>
 <h4 id="targetsconstraintsblurstart"><code>targets.constraints.blur.start</code></h4>
 <p><code>int, float</code> default: <strong><code>0.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Start frame of the constraints. The constraint is inactive before this time.</p>
 <ul>
 <li>an <code>int</code> number defines the time as epoch frame</li>
@@ -924,7 +925,7 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsconstraintsblurend"><code>targets.constraints.blur.end</code></h4>
 <p><code>int, float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>End frame of the constraints. The constraint is inactive after this time.</p>
 <ul>
 <li>an <code>int</code> number defines the time as epoch frame</li>
@@ -940,7 +941,7 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsconstraintsblurloss"><code>targets.constraints.blur.loss</code></h4>
 <p><code>str</code> default: <strong><code>l2</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The <a href="https://en.wikipedia.org/wiki/Loss_function">loss function</a> 
 used to calculate the difference (or error) between current and desired 
 image.</p>
@@ -956,22 +957,22 @@ is the mean of the squared difference of each vector variable. Compared to
 <p>Adds a border with a specific size and color to the training loss.</p>
 <h4 id="targetsconstraintsbordersize"><code>targets.constraints.border.size</code></h4>
 <p><code>list of length 2 of int</code> default: <strong><code>[1, 1]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>One integer two specify <strong>width</strong> and <strong>height</strong> at the same time, 
 or two integers to specify them separately.</p>
 <h4 id="targetsconstraintsbordercolor"><code>targets.constraints.border.color</code></h4>
 <p><code>list of length 3 of float</code> default: <strong><code>[0.0, 0.0, 0.0]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The color of the border as float numbers in the range <code>[0, 1]</code>.</p>
 <p>Three numbers for <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> or a single number 
 to specify a gray-scale.</p>
 <h4 id="targetsconstraintsborderweight"><code>targets.constraints.border.weight</code></h4>
 <p><code>float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>A multiplier for the resulting loss value of the constraint.</p>
 <h4 id="targetsconstraintsborderstart"><code>targets.constraints.border.start</code></h4>
 <p><code>int, float</code> default: <strong><code>0.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Start frame of the constraints. The constraint is inactive before this time.</p>
 <ul>
 <li>an <code>int</code> number defines the time as epoch frame</li>
@@ -987,7 +988,7 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsconstraintsborderend"><code>targets.constraints.border.end</code></h4>
 <p><code>int, float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>End frame of the constraints. The constraint is inactive after this time.</p>
 <ul>
 <li>an <code>int</code> number defines the time as epoch frame</li>
@@ -1003,7 +1004,7 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsconstraintsborderloss"><code>targets.constraints.border.loss</code></h4>
 <p><code>str</code> default: <strong><code>l2</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The <a href="https://en.wikipedia.org/wiki/Loss_function">loss function</a> 
 used to calculate the difference (or error) between current and desired 
 image.</p>
@@ -1024,21 +1025,21 @@ value is then the difference between the mean of the lower
 and the mean of the higher pixels.</p>
 <h4 id="targetsconstraintscontrastabove"><code>targets.constraints.contrast.above</code></h4>
 <p><code>list of length 3 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>If specified, the training loss increases if the current value is
 below the <code>above</code> value.</p>
 <h4 id="targetsconstraintscontrastbelow"><code>targets.constraints.contrast.below</code></h4>
 <p><code>list of length 3 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>If specified, the training loss increases if the current value is
 above the <code>below</code> value.</p>
 <h4 id="targetsconstraintscontrastweight"><code>targets.constraints.contrast.weight</code></h4>
 <p><code>float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>A multiplier for the resulting loss value of the constraint.</p>
 <h4 id="targetsconstraintscontraststart"><code>targets.constraints.contrast.start</code></h4>
 <p><code>int, float</code> default: <strong><code>0.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Start frame of the constraints. The constraint is inactive before this time.</p>
 <ul>
 <li>an <code>int</code> number defines the time as epoch frame</li>
@@ -1054,7 +1055,7 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsconstraintscontrastend"><code>targets.constraints.contrast.end</code></h4>
 <p><code>int, float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>End frame of the constraints. The constraint is inactive after this time.</p>
 <ul>
 <li>an <code>int</code> number defines the time as epoch frame</li>
@@ -1070,7 +1071,7 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsconstraintscontrastloss"><code>targets.constraints.contrast.loss</code></h4>
 <p><code>str</code> default: <strong><code>l2</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The <a href="https://en.wikipedia.org/wiki/Loss_function">loss function</a> 
 used to calculate the difference (or error) between current and desired 
 image.</p>
@@ -1090,21 +1091,21 @@ and an edge-detected version to the training constraint.</p>
 
 </pre><h4 id="targetsconstraintsedge_meanabove"><code>targets.constraints.edge_mean.above</code></h4>
 <p><code>list of length 3 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>If specified, the training loss increases if the current value is
 below the <code>above</code> value.</p>
 <h4 id="targetsconstraintsedge_meanbelow"><code>targets.constraints.edge_mean.below</code></h4>
 <p><code>list of length 3 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>If specified, the training loss increases if the current value is
 above the <code>below</code> value.</p>
 <h4 id="targetsconstraintsedge_meanweight"><code>targets.constraints.edge_mean.weight</code></h4>
 <p><code>float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>A multiplier for the resulting loss value of the constraint.</p>
 <h4 id="targetsconstraintsedge_meanstart"><code>targets.constraints.edge_mean.start</code></h4>
 <p><code>int, float</code> default: <strong><code>0.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Start frame of the constraints. The constraint is inactive before this time.</p>
 <ul>
 <li>an <code>int</code> number defines the time as epoch frame</li>
@@ -1120,7 +1121,7 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsconstraintsedge_meanend"><code>targets.constraints.edge_mean.end</code></h4>
 <p><code>int, float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>End frame of the constraints. The constraint is inactive after this time.</p>
 <ul>
 <li>an <code>int</code> number defines the time as epoch frame</li>
@@ -1136,7 +1137,7 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsconstraintsedge_meanloss"><code>targets.constraints.edge_mean.loss</code></h4>
 <p><code>str</code> default: <strong><code>l2</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The <a href="https://en.wikipedia.org/wiki/Loss_function">loss function</a> 
 used to calculate the difference (or error) between current and desired 
 image.</p>
@@ -1150,13 +1151,13 @@ is the mean of the squared difference of each vector variable. Compared to
 </ul>
 <h4 id="targetsconstraintsedge_meankernel_size"><code>targets.constraints.edge_mean.kernel_size</code></h4>
 <p><code>list of length 2 of int</code> default: <strong><code>[3, 3]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The size of the pixel window of the <a href="https://en.wikipedia.org/wiki/Gaussian_blur">gaussian blur</a>. 
 Must be an <strong>odd</strong>, <strong>positive</strong> integer.</p>
 <p>Two numbers define <strong>width</strong> and <strong>height</strong> separately.</p>
 <h4 id="targetsconstraintsedge_meansigma"><code>targets.constraints.edge_mean.sigma</code></h4>
 <p><code>list of length 2 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Gaussian kernel standard deviation. The larger, the more <em>blurry</em>.</p>
 <p>If not specified it will default to <code>0.3 * ((kernel_size - 1) * 0.5 - 1) + 0.8</code>.</p>
 <p>Two numbers define sigma for <strong>x</strong> and <strong>y</strong> separately.</p>
@@ -1164,21 +1165,21 @@ Must be an <strong>odd</strong>, <strong>positive</strong> integer.</p>
 <p>Pushes the image color mean above or below a threshold value</p>
 <h4 id="targetsconstraintsmeanabove"><code>targets.constraints.mean.above</code></h4>
 <p><code>list of length 3 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>If specified, the training loss increases if the current value is
 below the <code>above</code> value.</p>
 <h4 id="targetsconstraintsmeanbelow"><code>targets.constraints.mean.below</code></h4>
 <p><code>list of length 3 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>If specified, the training loss increases if the current value is
 above the <code>below</code> value.</p>
 <h4 id="targetsconstraintsmeanweight"><code>targets.constraints.mean.weight</code></h4>
 <p><code>float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>A multiplier for the resulting loss value of the constraint.</p>
 <h4 id="targetsconstraintsmeanstart"><code>targets.constraints.mean.start</code></h4>
 <p><code>int, float</code> default: <strong><code>0.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Start frame of the constraints. The constraint is inactive before this time.</p>
 <ul>
 <li>an <code>int</code> number defines the time as epoch frame</li>
@@ -1194,7 +1195,7 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsconstraintsmeanend"><code>targets.constraints.mean.end</code></h4>
 <p><code>int, float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>End frame of the constraints. The constraint is inactive after this time.</p>
 <ul>
 <li>an <code>int</code> number defines the time as epoch frame</li>
@@ -1210,7 +1211,7 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsconstraintsmeanloss"><code>targets.constraints.mean.loss</code></h4>
 <p><code>str</code> default: <strong><code>l2</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The <a href="https://en.wikipedia.org/wiki/Loss_function">loss function</a> 
 used to calculate the difference (or error) between current and desired 
 image.</p>
@@ -1227,16 +1228,16 @@ is the mean of the squared difference of each vector variable. Compared to
 a noisy image to the training loss.</p>
 <h4 id="targetsconstraintsnoisestd"><code>targets.constraints.noise.std</code></h4>
 <p><code>list of length 3 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Specifies the standard deviation of the noise distribution.</p>
 <p>One value or three values to specify <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> separately.</p>
 <h4 id="targetsconstraintsnoiseweight"><code>targets.constraints.noise.weight</code></h4>
 <p><code>float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>A multiplier for the resulting loss value of the constraint.</p>
 <h4 id="targetsconstraintsnoisestart"><code>targets.constraints.noise.start</code></h4>
 <p><code>int, float</code> default: <strong><code>0.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Start frame of the constraints. The constraint is inactive before this time.</p>
 <ul>
 <li>an <code>int</code> number defines the time as epoch frame</li>
@@ -1252,7 +1253,7 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsconstraintsnoiseend"><code>targets.constraints.noise.end</code></h4>
 <p><code>int, float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>End frame of the constraints. The constraint is inactive after this time.</p>
 <ul>
 <li>an <code>int</code> number defines the time as epoch frame</li>
@@ -1268,7 +1269,7 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsconstraintsnoiseloss"><code>targets.constraints.noise.loss</code></h4>
 <p><code>str</code> default: <strong><code>l2</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The <a href="https://en.wikipedia.org/wiki/Loss_function">loss function</a> 
 used to calculate the difference (or error) between current and desired 
 image.</p>
@@ -1287,21 +1288,21 @@ into the range of <a href="#targetsconstraintsnormalizemin">min</a>
 and <a href="#targetsconstraintsnormalizemax">max</a>.</p>
 <h4 id="targetsconstraintsnormalizemin"><code>targets.constraints.normalize.min</code></h4>
 <p><code>list of length 3 of float</code> default: <strong><code>[0.0, 0.0, 0.0]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The desired lowest value in the image.</p>
 <p>One color for gray-scale, three colors for <strong>red</strong>, <strong>green</strong> and <strong>blue</strong>.</p>
 <h4 id="targetsconstraintsnormalizemax"><code>targets.constraints.normalize.max</code></h4>
 <p><code>list of length 3 of float</code> default: <strong><code>[1.0, 1.0, 1.0]</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The desired highest value in the image.</p>
 <p>One color for gray-scale, three colors for <strong>red</strong>, <strong>green</strong> and <strong>blue</strong>.</p>
 <h4 id="targetsconstraintsnormalizeweight"><code>targets.constraints.normalize.weight</code></h4>
 <p><code>float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>A multiplier for the resulting loss value of the constraint.</p>
 <h4 id="targetsconstraintsnormalizestart"><code>targets.constraints.normalize.start</code></h4>
 <p><code>int, float</code> default: <strong><code>0.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Start frame of the constraints. The constraint is inactive before this time.</p>
 <ul>
 <li>an <code>int</code> number defines the time as epoch frame</li>
@@ -1317,7 +1318,7 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsconstraintsnormalizeend"><code>targets.constraints.normalize.end</code></h4>
 <p><code>int, float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>End frame of the constraints. The constraint is inactive after this time.</p>
 <ul>
 <li>an <code>int</code> number defines the time as epoch frame</li>
@@ -1333,7 +1334,7 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsconstraintsnormalizeloss"><code>targets.constraints.normalize.loss</code></h4>
 <p><code>str</code> default: <strong><code>l2</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The <a href="https://en.wikipedia.org/wiki/Loss_function">loss function</a> 
 used to calculate the difference (or error) between current and desired 
 image.</p>
@@ -1351,21 +1352,21 @@ is the mean of the squared difference of each vector variable. Compared to
 color channel to the mean of all channels.</p>
 <h4 id="targetsconstraintssaturationabove"><code>targets.constraints.saturation.above</code></h4>
 <p><code>list of length 3 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>If specified, the training loss increases if the current value is
 below the <code>above</code> value.</p>
 <h4 id="targetsconstraintssaturationbelow"><code>targets.constraints.saturation.below</code></h4>
 <p><code>list of length 3 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>If specified, the training loss increases if the current value is
 above the <code>below</code> value.</p>
 <h4 id="targetsconstraintssaturationweight"><code>targets.constraints.saturation.weight</code></h4>
 <p><code>float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>A multiplier for the resulting loss value of the constraint.</p>
 <h4 id="targetsconstraintssaturationstart"><code>targets.constraints.saturation.start</code></h4>
 <p><code>int, float</code> default: <strong><code>0.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Start frame of the constraints. The constraint is inactive before this time.</p>
 <ul>
 <li>an <code>int</code> number defines the time as epoch frame</li>
@@ -1381,7 +1382,7 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsconstraintssaturationend"><code>targets.constraints.saturation.end</code></h4>
 <p><code>int, float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>End frame of the constraints. The constraint is inactive after this time.</p>
 <ul>
 <li>an <code>int</code> number defines the time as epoch frame</li>
@@ -1397,7 +1398,7 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsconstraintssaturationloss"><code>targets.constraints.saturation.loss</code></h4>
 <p><code>str</code> default: <strong><code>l2</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The <a href="https://en.wikipedia.org/wiki/Loss_function">loss function</a> 
 used to calculate the difference (or error) between current and desired 
 image.</p>
@@ -1414,21 +1415,21 @@ is the mean of the squared difference of each vector variable. Compared to
 above or below a threshold value.</p>
 <h4 id="targetsconstraintsstdabove"><code>targets.constraints.std.above</code></h4>
 <p><code>list of length 3 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>If specified, the training loss increases if the current value is
 below the <code>above</code> value.</p>
 <h4 id="targetsconstraintsstdbelow"><code>targets.constraints.std.below</code></h4>
 <p><code>list of length 3 of float</code> no default</p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>If specified, the training loss increases if the current value is
 above the <code>below</code> value.</p>
 <h4 id="targetsconstraintsstdweight"><code>targets.constraints.std.weight</code></h4>
 <p><code>float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>A multiplier for the resulting loss value of the constraint.</p>
 <h4 id="targetsconstraintsstdstart"><code>targets.constraints.std.start</code></h4>
 <p><code>int, float</code> default: <strong><code>0.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Start frame of the constraints. The constraint is inactive before this time.</p>
 <ul>
 <li>an <code>int</code> number defines the time as epoch frame</li>
@@ -1444,7 +1445,7 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsconstraintsstdend"><code>targets.constraints.std.end</code></h4>
 <p><code>int, float</code> default: <strong><code>1.0</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>End frame of the constraints. The constraint is inactive after this time.</p>
 <ul>
 <li>an <code>int</code> number defines the time as epoch frame</li>
@@ -1460,7 +1461,7 @@ where 1.0 is the final epoch.</li>
 </ul>
 <h4 id="targetsconstraintsstdloss"><code>targets.constraints.std.loss</code></h4>
 <p><code>str</code> default: <strong><code>l2</code></strong></p>
-<p>expression variables: <a href="#learnrate-variable">learnrate</a>, <a href="#resolution-variable">resolution</a>, <a href="#target-constraint-variable">target constraint</a>, <a href="#time-variable">time</a></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-constraint-variables">target constraint</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The <a href="https://en.wikipedia.org/wiki/Loss_function">loss function</a> 
 used to calculate the difference (or error) between current and desired 
 image.</p>

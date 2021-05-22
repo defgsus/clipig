@@ -81,18 +81,19 @@ EXPRESSION_ARGS = {
     "learnrate": {
         "name": "learnrate",
         "doc": """
-        The current values of [learnrate](#learnrate) and [learnrate_scale](#learnrate_scale)
+        The current values of [learnrate](reference.md#learnrate) 
+        and [learnrate_scale](reference.md#learnrate_scale)
         which can be expressions themselves.
         """,
         "args": {
             "learnrate": {
                 "type": "float",
-                "doc": """The currently used [learnrate](#learnrate)""",
+                "doc": """The currently used [learnrate](reference.md#learnrate)""",
                 "alias": "lr",
             },
             "learnrate_scale": {
                 "type": "float",
-                "doc": """The currently used [learnrate_scale](#learnrate_scale)""",
+                "doc": """The currently used [learnrate_scale](reference.md#learnrate_scale)""",
                 "alias": "lrs",
             }
         }
@@ -101,7 +102,7 @@ EXPRESSION_ARGS = {
     "target_feature": {
         "name": "target feature",
         "doc": """
-        Variables available to [target features](#targetsfeatures)
+        Variables available to [target features](reference.md#targetsfeatures)
         """,
         "args": {
             "similarity": {
@@ -121,7 +122,7 @@ EXPRESSION_ARGS = {
     "target_constraint": {
         "name": "target constraint",
         "doc": """
-        Variables available to [constraints](#targetsconstraints)
+        Variables available to [constraints](reference.md#targetsconstraints)
         """,
         "args": {
             "similarity": {
