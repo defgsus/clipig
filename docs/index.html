@@ -7,7 +7,7 @@
   
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-    <title>{{title}}</title>
+    <title>Intro</title>
 
     <link rel="stylesheet" href="static/css/basic.css" type="text/css" />-
     <link rel="stylesheet" href="static/css/theme.css" type="text/css" />-
@@ -29,7 +29,13 @@
         
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
-        {{side-nav}}
+        <p class="caption"><a class="reference internal" href="index.html"><span class="caption-text">Intro</span></a></p>
+<p class="caption"><a class="reference internal" href="walkthrough.html"><span class="caption-text">Walk-through</span></a></p>
+<p class="caption"><a class="reference internal" href="cli.html"><span class="caption-text">command line interface</span></a></p>
+<p class="caption"><a class="reference internal" href="expressions.html"><span class="caption-text">Expressions</span></a></p>
+<p class="caption"><a class="reference internal" href="transforms.html"><span class="caption-text">Transforms</span></a></p>
+<p class="caption"><a class="reference internal" href="constraints.html"><span class="caption-text">Constraints</span></a></p>
+<p class="caption"><a class="reference internal" href="reference.html"><span class="caption-text">Reference</span></a></p>
 
         </div>
         
@@ -42,7 +48,7 @@
       <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">{{title}}</a>
+          <a href="#">Intro</a>
         
       </nav>
 
@@ -61,7 +67,7 @@
     
       <li><a href="#" class="icon icon-home"></a> &raquo;</li>
         
-      <li>{{title}}</li>
+      <li>Intro</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -80,7 +86,31 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-            {{content}}
+            <h1 id="Intro">Intro</h1>
+<p><a href="https://github.com/defgsus/CLIPig/">CLIPig</a> generates images by using the <a href="https://github.com/openai/CLIP/">CLIP</a> network as an art critique.</p>
+<p>A bunch of pixels is continuously adjusted to increase the 
+similarity of their <a href="#targetsfeatures">features</a> with some user-defined
+target features. Both features are derived via <a href="https://github.com/openai/CLIP/">CLIP</a>.</p>
+<p>Through <a href="https://en.wikipedia.org/wiki/Backpropagation">backpropagation</a>,
+the most common method of training artificial neural networks, the
+dissimilarity of trained features and target features is 
+translated back into pixel values which adjust the initial bunch of pixels
+just slightly. If we do this long enough, with some
+artistic variation in the processing pipeline, an actual image emerges.</p>
+<p><a href="https://github.com/defgsus/CLIPig/">CLIPig</a> is designed to allow a lot of control over those <em>variations</em> 
+which requires a bit of documentation.</p>
+<p>Please browse through the <em>walk-through</em> to get an overview and follow 
+the links to the reference pages and any point.</p>
+<ul>
+<li><a href="#walk-through">Walk-through</a></li>
+<li><a href="#command-line-interface">Command line interface</a></li>
+<li><a href="#expressions">Expressions</a></li>
+<li><a href="#expression-variables">Expression variables</a></li>
+<li><a href="#transforms">Transforms</a></li>
+<li><a href="#constraints">Constraints</a></li>
+<li><a href="#reference">Parameter reference</a></li>
+</ul>
+
 
            </div>
            

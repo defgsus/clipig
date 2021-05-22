@@ -62,7 +62,7 @@ targets:
 
 To follow the walk-through, call
 
-```shell script
+```shell
 python clipig-gui.py
 ```
 
@@ -464,7 +464,7 @@ excited and would like to continue..
 
 A yaml file is rendered via
 
-```shell script
+```shell
 python clipig.py demo.yaml -o images/
 ```
 
@@ -488,7 +488,7 @@ all defaults and the runtime in seconds as comment on the top.
 
 Multiple yaml files are merged into one set of parameters, e.g.:
 
-```shell script
+```shell
 python clipig.py best-meta-settings.yaml specific.yaml
 ```
 

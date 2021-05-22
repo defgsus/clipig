@@ -1,0 +1,150 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+    <title>Constraints</title>
+
+    <link rel="stylesheet" href="static/css/basic.css" type="text/css" />-
+    <link rel="stylesheet" href="static/css/theme.css" type="text/css" />-
+    <link rel="stylesheet" href="static/css/pygments.css" type="text/css" />
+</head>
+
+<body class="wy-body-for-nav">
+
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+            <a href="index.html" class="icon icon-home">CLIPig</a>
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+        <p class="caption"><a class="reference internal" href="index.html"><span class="caption-text">Intro</span></a></p>
+<p class="caption"><a class="reference internal" href="walkthrough.html"><span class="caption-text">Walk-through</span></a></p>
+<p class="caption"><a class="reference internal" href="cli.html"><span class="caption-text">command line interface</span></a></p>
+<p class="caption"><a class="reference internal" href="expressions.html"><span class="caption-text">Expressions</span></a></p>
+<p class="caption"><a class="reference internal" href="transforms.html"><span class="caption-text">Transforms</span></a></p>
+<p class="caption"><a class="reference internal" href="constraints.html"><span class="caption-text">Constraints</span></a></p>
+<p class="caption"><a class="reference internal" href="reference.html"><span class="caption-text">Reference</span></a></p>
+
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Constraints</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Constraints</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <!--<a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>-->
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+            <h1 id="Constraints">Constraints</h1>
+<p>Constraints do influence the trained image without using <a href="https://github.com/openai/CLIP/">CLIP</a>.
+E.g., the image <a href="#targetsconstraintsmean">mean</a> can be trained
+to be above or below a specific threshold.</p>
+<p>Constraints only affect the pixels that are processed by
+the <a href="#transforms">transforms</a> of the <a href="#targets">target</a>.</p>
+<p>Here's a list of all available constraints:</p>
+<ul>
+<li><a href="#targetsconstraintsblur">blur</a>: Adds the difference between the image and a blurred version to
+  the training loss.</li>
+<li><a href="#targetsconstraintsborder">border</a>: Adds a border with a specific size and color to the training loss.</li>
+<li><a href="#targetsconstraintscontrast">contrast</a>: Pushes the contrast above or below a threshold value.</li>
+<li><a href="#targetsconstraintsedge_mean">edge_mean</a>: Adds the difference between the current image and
+  and an edge-detected version to the training constraint.</li>
+<li><a href="#targetsconstraintsmean">mean</a>: Pushes the image color mean above or below a threshold value</li>
+<li><a href="#targetsconstraintsnoise">noise</a>: Adds the difference between the current image and
+  a noisy image to the training loss.</li>
+<li><a href="#targetsconstraintsnormalize">normalize</a>: Adds image normalization to the training loss.</li>
+<li><a href="#targetsconstraintssaturation">saturation</a>: Pushes the saturation above or below a threshold value.</li>
+<li><a href="#targetsconstraintsstd">std</a>: Pushes the <a href="https://en.wikipedia.org/wiki/Standard_deviation">standard deviation</a>
+  above or below a threshold value.</li>
+</ul>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="quickref.html" class="btn btn-neutral float-right" title="Overview" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Stefan Berke.
+
+    </p>
+  </div>
+    
+
+    Built by scraping a <a href="https://www.sphinx-doc.org/">Sphinx</a>-generated documentation using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  
+    
+   
+
+</body>
+</html>

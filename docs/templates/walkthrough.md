@@ -1,6 +1,6 @@
-# CLIPig walk-through
+# Walk-through
 
-First of all, experiments are defined in [YAML](https://yaml.org/) 
+First of all, CLIPig-experiments are defined in [YAML](https://yaml.org/) 
 files. I actually prefer [JSON](https://www.json.org/) but it 
 does not support comments out of the box and is quite strict 
 with those trailing commas and all that.. Anyways, the basic 
@@ -32,7 +32,7 @@ targets:
 
 To follow the walk-through, call
 
-```shell script
+```shell
 python clipig-gui.py
 ```
 
@@ -42,7 +42,7 @@ emerge in realtime.
 
 So, what does the image look like?
 
-![a badly rendered curly spoon](demo1.png)
+![a badly rendered curly spoon](static/img/demo1.png)
 
 Yeah, well... I promised *images* and now i'm showing nothing 
 more than a psychedelic pixel mess. 
@@ -68,7 +68,7 @@ targets:
     - random_shift: 0 1
 ```
 
-![a slightly better rendered curly spoon](demo2.png)
+![a slightly better rendered curly spoon](static/img/demo2.png)
 
 The [random_shift](#targetstransformsrandom_shift) transformation
 simply moves the image center to a random position, before
@@ -97,7 +97,7 @@ targets:
         center: 0.3 .7
 ```
 
-![a slightly better rendered curly spoon](demo3.png)
+![a slightly better rendered curly spoon](static/img/demo3.png)
 
 Each evaluated image is first rotated randomly between -90 and +90 
 degree with a random center in the middle 2/3rds of the image. This
@@ -126,7 +126,7 @@ targets:
       kernel_size: 31*ti
 ```
 
-![a not so bad rendered curly spoon](demo4.png)
+![a not so bad rendered curly spoon](static/img/demo4.png)
 
 In desperation we just throw more computation at the
 problem by increasing the [batch size](#targetsbatch_size). 
@@ -155,7 +155,7 @@ It certainly takes some patience.
 And maybe the correct language. What if we change the target 
 text to `a photo of a curly spoon`?
 
-![almost a photo of a curly spoon](demo5.png)
+![almost a photo of a curly spoon](static/img/demo5.png)
 
 Ah, i see where CLIP is going to. Indeed funny, 
 but not enough for a proof-of-concept.
@@ -182,8 +182,8 @@ postproc:
     color: 0.15 0.1 0.05
 ```
 
-![quite good spoon with curly handle](demo6.png) 
-![quite good spoon with curly handle](demo6-b.png)
+![quite good spoon with curly handle](static/img/demo6.png) 
+![quite good spoon with curly handle](static/img/demo6-b.png)
 
 Changes made:
 
@@ -215,7 +215,7 @@ curly spoons, the target text is replced with with
 `a lot of curly spoons` and the noise value is lowered to 
 allow some more uncertainty in the resulting image:
 
-![washed-out fantasies about curly spoon](demo7.png)
+![washed-out fantasies about curly spoon](static/img/demo7.png)
 
 There are some different concepts visible. Curls made of
 spoon faces, curls with interwoven spoon fragments and 
@@ -261,7 +261,7 @@ postproc:
     color: 0.15 0.1 0.05
 ```
 
-![pretty good recognizable curly spoons](demo8-c.png)
+![pretty good recognizable curly spoons](static/img/demo8-c.png)
 
 The [mul transformation](#targetstransformsmul) reduces
 the color range that CLIP is seeing so the resulting color
@@ -282,7 +282,7 @@ Okay, let's start with a new theme. Take the curly spoon script
 from above and replace the text with `h.p. lovecraft at a 
 birthday party`.
 
-![pretty good lovecraft at a birthday party](hpl1.png)
+![pretty good lovecraft at a birthday party](static/img/hpl1.png)
 
 If you don't know Lovecraft, he's one of the earliest and 
 spookiest fantasy authors with stories about creepy and
@@ -312,7 +312,7 @@ resolution: 224*2
 This is now twice the width and height of CLIP's image input
 window or four times as much pixels as before.
 
-![stuff is only good in the middle](hpl2.png)
+![stuff is only good in the middle](static/img/hpl2.png)
 
 What did happen? Well, the 
 [center_crop](#targetstransformscenter_crop) transformation
@@ -332,7 +332,7 @@ training image. Let's just do that and also increase the
 [batch_size](#targetsbatch_size) from **5** to **20** since
 we have 4 times the pixels to process.
 
-![nice graphics all over the place](hpl3.png)
+![nice graphics all over the place](static/img/hpl3.png)
 
 There are many Lovecrafts now. It's like in this 
 John Malkovich movie when John Malkovich truckles through the
@@ -356,7 +356,7 @@ image to a larger resolution with some bilinear filtering.
 Well, not entirely. The noise and artifacts are of higher
 resolution ;) 
 
-![blurry but a good composition](hpl4-c.png)
+![blurry but a good composition](static/img/hpl4-c.png)
 
 Now, at some point in training we randomly 
 [scale](#targetstransformsrandom_scale) 
@@ -400,7 +400,7 @@ postproc:
       color: 0.15 0.1 0.05
 ```
 
-![high-res composition](hpl4-d.png)
+![high-res composition](static/img/hpl4-d.png)
 
 It's quite good at parts but, wait! There's already another 
 Lovecraft developing in the background. And that's what is to be 
@@ -415,14 +415,8 @@ of H.P.'s birthday party.
 
 ... Well actually, let's see *a fractal of H.P.'s birthday party*
 
-![a colorful cthulhuian fractal](hpl-fractal.png)
+![a colorful cthulhuian fractal](static/img/hpl-fractal.png)
 
 Well done CLIP, well done.
 
 But back to the topic
-
-
-
-I guess, everyone has to judge for themselves if this
-is worth 8 minutes of GPU time. Personally, i am quite 
-excited and would like to continue..

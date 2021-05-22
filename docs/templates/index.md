@@ -1,4 +1,4 @@
-# CLIPig documentation
+# Intro
 
 CLIPig generates images by using the CLIP network as an art critique. 
 

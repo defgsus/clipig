@@ -2,7 +2,7 @@
 
 A yaml file is rendered via
 
-```shell script
+```shell
 python clipig.py demo.yaml -o images/
 ```
 
@@ -26,10 +26,10 @@ all defaults and the runtime in seconds as comment on the top.
 
 Multiple yaml files are merged into one set of parameters, e.g.:
 
-```shell script
+```shell
 python clipig.py best-meta-settings.yaml specific.yaml
 ```
 
 will parse `best-meta-settings.yaml` and then add anything
 from `sepcific.yaml` on top. List entries 
-like [targets](#targets) will be appended to the previous list.
+like [targets](reference.md#targets) will be appended to the previous list.
