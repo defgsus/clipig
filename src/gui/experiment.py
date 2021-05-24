@@ -89,13 +89,14 @@ class Experiment(QWidget):
         return self.image_display.image
 
     def get_config_header(self) -> str:
-        header = f"""# created by CLIPig-gui\n"""
         stats = self.trainer.running_counts()
         if stats:
-            header += f"""# overall training time: {stats['training_seconds']:.2f}
-# overall epochs: {stats['training_epochs']} 
-"""
-        return header
+            run_time = stats['training_seconds']
+            epoch = stats['training_epochs']
+        else:
+            run_time = self.trainer._trainer.training_seconds
+            epoch = self.trainer._trainer.epoch
+        return self.trainer._trainer.get_config_header(run_time=run_time, epoch=epoch)
 
     def slot_tool_button(self, id: str):
         # print("SLOT", id)

@@ -3,6 +3,7 @@ import math
 import random
 import traceback
 import argparse
+import datetime
 import time
 from typing import Union, Sequence, Type, Tuple, Optional, Callable, List
 
@@ -52,6 +53,7 @@ class ImageTraining:
         self.training_seconds = 0.
         self.forward_seconds = 0.
         self.backward_seconds = 0.
+        self.last_target_stats = ""
 
         if self.parameters["device"] == "auto":
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -104,6 +106,40 @@ class ImageTraining:
         self.log(2, f"saving {filename}")
         make_filename_dir(filename)
         save_image(self.pixel_model.forward(), filename)
+
+    def save_yaml(
+            self,
+            filename: str,
+            run_time: float,
+            epoch: Optional[int] = None
+    ):
+        if epoch is None:
+            epoch = self.epoch
+
+        self.log(2, f"exporting config {filename}")
+        make_filename_dir(filename)
+        save_yaml_config(
+            filename, self.parameters,
+            header=self.get_config_header(run_time=run_time, epoch=epoch),
+        )
+
+    def get_config_header(self, run_time: float, epoch: int,):
+        from .doc import strip_doc
+
+        epoch_time = run_time / max(1, self.epoch)
+
+        header = strip_doc(f"""
+        auto-generated at {datetime.datetime.now().replace(microsecond=0)}
+        epochs: {epoch} / {self.parameters['epochs']}
+        runtime: {run_time:.2f} seconds ({epoch_time:.3f}/epoch)
+        """)
+        if self.last_target_stats:
+            header += f"\ntargets:\n{self.last_target_stats}"
+
+        return "\n".join(
+            f"# {line}"
+            for line in header.splitlines()
+        )
 
     def setup_targets(self):
         self.log(2, "getting target features")
@@ -684,6 +720,7 @@ class ImageTraining:
             key: max(len(r.get(key) or "") for r in rows)
             for key in all_keys
         }
+        all_lines = []
         for row in rows:
             line = (
                 f"""{row["name"]:{lengths["name"]}} : """
@@ -702,6 +739,9 @@ class ImageTraining:
                     f"""{row["sim_max"]:{lengths["sim_max"]}})"""
                 )
             self.log(0, line)
+            all_lines.append(line)
+
+        self.last_target_stats = "\n".join(all_lines)
 
     def _check_start_end(
             self,
