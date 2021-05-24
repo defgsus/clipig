@@ -1,4 +1,5 @@
 import os
+import sys
 import pathlib
 import argparse
 from io import StringIO
@@ -687,7 +688,8 @@ def parse_arguments(gui_mode: bool = False) -> dict:
         if not output_name or output_name.endswith(os.path.sep):
             if not output_name:
                 output_name = f".{os.path.sep}"
-            output_name += pathlib.Path(filename).name
+            if filename != "-":
+                output_name += pathlib.Path(filename).name
             if "." in output_name:
                 output_name = ".".join(output_name.split(".")[:-1])
             output_name += ".png"
@@ -709,6 +711,9 @@ def parse_arguments(gui_mode: bool = False) -> dict:
         parameters = convert_params(parameters)
         set_parameter_defaults(parameters)
 
+    if output_name.endswith("/.png"):
+        output_name = output_name[:-4] + "output.png"
+
     if parameters:
         parameters["output"] = str(prepare_output_name(output_name, make_dir=False))
 
@@ -717,11 +722,14 @@ def parse_arguments(gui_mode: bool = False) -> dict:
 
 def load_yaml_config(filename: str, convert: bool = True) -> dict:
     try:
-        with open(filename) as fp:
-            params = yaml.safe_load(fp)
-            if convert:
-                params = convert_params(params)
-            return params
+        if filename == "-":
+            params = yaml.safe_load(sys.stdin)
+        else:
+            with open(filename) as fp:
+                params = yaml.safe_load(fp)
+        if convert:
+            params = convert_params(params)
+        return params
     except Exception as e:
         e.args = (f"{filename}: {e}", )
         raise
