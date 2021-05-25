@@ -268,6 +268,16 @@ Selects the way how multiple [features](reference.md#targetsfeatures) are handle
   and the resulting feature is compared with the features of the current image.
   This actually works quite well!
 
+#### `targets.feature_scale`
+
+`str` default: **`equal`**
+
+Adjusts the initial scaling of the similarity between training image and this feature. 
+
+- `equal`: All factors are 1.
+- `fair`: Factors are set such that the **initial frame** of the training image
+  has the same similarity with each feature.
+
 
 
 ---
@@ -343,6 +353,16 @@ A weight parameter to control the influence of a specific feature of a target.
 
 Note that you can use negative weights as well which translates roughly to:
 Generate an image that is the least likely to that feature.
+
+#### `targets.features.scale`
+
+`float` default: **`1.0`**
+
+
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [target feature](expressions.md#target-feature-variables), [time](expressions.md#time-variables)
+
+A scaling parameter that is multiplied with the **similarity** value to
+yield the actual similarity used, e.g., for **best_match** [select](#targetsselect).
 
 #### `targets.features.loss`
 
@@ -623,6 +643,7 @@ The way the padded area is filled.
 
 - `fill`: fills everything with the `color` value
 - `edge`: repeats the edge pixels
+- `wrap`: repeats the image from the opposite edge
 
 ### `targets.transforms.random_crop`
 

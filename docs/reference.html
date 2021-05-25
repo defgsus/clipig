@@ -61,12 +61,14 @@
 <li class="toctree-l4"><a class="reference internal" href="reference.html#targetsweight">targets.weight</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#targetsbatch_size">targets.batch_size</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#targetsselect">targets.select</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference.html#targetsfeature_scale">targets.feature_scale</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetsfeatures">targets.features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#targetsfeaturestext">targets.features.text</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#targetsfeaturesimage">targets.features.image</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#targetsfeaturesstart">targets.features.start</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#targetsfeaturesend">targets.features.end</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#targetsfeaturesweight">targets.features.weight</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference.html#targetsfeaturesscale">targets.features.scale</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#targetsfeaturesloss">targets.features.loss</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransforms">targets.transforms</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsadd">targets.transforms.add</a></li>
@@ -347,6 +349,14 @@ the influence of all features equally.</li>
 and the resulting feature is compared with the features of the current image.
 This actually works quite well!</li>
 </ul>
+<h4 id="targetsfeature_scale"><code>targets.feature_scale</code></h4>
+<p><code>str</code> default: <strong><code>equal</code></strong></p>
+<p>Adjusts the initial scaling of the similarity between training image and this feature.</p>
+<ul>
+<li><code>equal</code>: All factors are 1.</li>
+<li><code>fair</code>: Factors are set such that the <strong>initial frame</strong> of the training image
+has the same similarity with each feature.</li>
+</ul>
 <hr>
 <h3 id="targetsfeatures"><code>targets.features</code></h3>
 <p>A list of features to drive the image creation.</p>
@@ -394,6 +404,11 @@ where 1.0 is the final epoch.</li>
 <p>A weight parameter to control the influence of a specific feature of a target.</p>
 <p>Note that you can use negative weights as well which translates roughly to:
 Generate an image that is the least likely to that feature.</p>
+<h4 id="targetsfeaturesscale"><code>targets.features.scale</code></h4>
+<p><code>float</code> default: <strong><code>1.0</code></strong></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#target-feature-variables">target feature</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>A scaling parameter that is multiplied with the <strong>similarity</strong> value to
+yield the actual similarity used, e.g., for <strong>best_match</strong> <a href="#targetsselect">select</a>.</p>
 <h4 id="targetsfeaturesloss"><code>targets.features.loss</code></h4>
 <p><code>str</code> default: <strong><code>cosine</code></strong></p>
 <p>The <a href="https://en.wikipedia.org/wiki/Loss_function">loss function</a> used to calculate the 
@@ -541,6 +556,7 @@ the image and two rows on top and bottom respectively.</p>
 <ul>
 <li><code>fill</code>: fills everything with the <code>color</code> value</li>
 <li><code>edge</code>: repeats the edge pixels</li>
+<li><code>wrap</code>: repeats the image from the opposite edge</li>
 </ul>
 <h3 id="targetstransformsrandom_crop"><code>targets.transforms.random_crop</code></h3>
 <p><code>list of length 2 of int</code> no default</p>

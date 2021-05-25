@@ -178,6 +178,8 @@ class ImageTraining:
             features = []
             feature_loss_functions = []
             feature_start_ends = []
+            feature_auto_scales = None
+            feature_user_scales = []
             for feature_param in target_param["features"]:
                 if feature_param.get("text"):
                     tokens = clip.tokenize([feature_param["text"]]).to(self.device)
@@ -193,16 +195,21 @@ class ImageTraining:
                     feature_param.get("start") or 0.,
                     feature_param.get("end") or 0.,
                 ))
+                feature_user_scales.append(feature_param["scale"])
 
             if features:
                 features = torch.cat(features)
                 features = features / features.norm(dim=-1, keepdim=True)
+                if target_param["feature_scale"] != "equal":
+                    feature_auto_scales = self._get_features_scalings(features, target_param)
 
             target = {
                 "params": target_param,
                 "features": features,
                 "feature_loss_functions": feature_loss_functions,
                 "feature_start_ends": feature_start_ends,
+                "feature_auto_scales": feature_auto_scales,
+                "feature_user_scales": feature_user_scales,
 
                 # statistics ...
                 "count": 0,
@@ -256,6 +263,20 @@ class ImageTraining:
 
             self.targets.append(target)
 
+    def _get_features_scalings(self, features: torch.Tensor, target_param: dict) -> torch.Tensor:
+        with torch.no_grad():
+            #compare_image = torch.zeros([3, 224, 224]).to(features.device) + .1
+            compare_image = self.pixel_model.forward()
+            if compare_image.shape != torch.Size([3, 224, 224]):
+                compare_image = VF.resize(compare_image, [224, 224])
+            compare_image = self.clip_preprocess.transforms[-1](compare_image)
+            compare_feature = self.clip_model.encode_image(compare_image.unsqueeze(0))
+            compare_feature / compare_feature.norm(dim=-1, keepdim=True)
+            similarities = (features @ compare_feature.T).squeeze()
+            scales = 1. / similarities
+            scales /= scales.max()
+            return scales
+
     def initialize(self, context: ExpressionContext):
         self.log(2, "initializing pixels")
         res = context(self.parameters["resolution"])
@@ -281,9 +302,6 @@ class ImageTraining:
 
     def _train(self, initialize: bool = True):
         assert self.clip_model
-
-        if not self.targets:
-            self.setup_targets()
 
         last_frame_time = None
         last_stats_time = 0
@@ -343,6 +361,9 @@ class ImageTraining:
 
             if self.pixel_model is None:
                 self.initialize(context=expression_context)
+
+            if not self.targets:
+                self.setup_targets()
 
             resolution = expression_context(self.parameters["resolution"])
             if resolution != self.pixel_model.resolution:
@@ -529,7 +550,14 @@ class ImageTraining:
 
             similarities = 100. * target_features @ clip_feature.T
 
-            feature_weights = self._get_target_feature_weights(target, similarities, context)
+            if target["feature_auto_scales"] is not None:
+                similarities *= target["feature_auto_scales"]
+
+            similarities *= torch.Tensor([
+                context(w) for w in target["feature_user_scales"]
+            ]).to(similarities.device)
+
+            feature_weights: List[Tuple[float, bool]] = self._get_target_feature_weights(target, similarities, context)
 
             target["applied_feature_weights"] = []
 
@@ -615,7 +643,7 @@ class ImageTraining:
             target: dict,
             similarities: torch.Tensor,
             context: ExpressionContext
-    ) -> List[List[Union[float, bool]]]:
+    ) -> List[Tuple[float, bool]]:
         mode = target["params"]["select"]
 
         feature_weights = []
@@ -642,7 +670,7 @@ class ImageTraining:
         else:
             raise ValueError(f"Unknown feature selection mode '{mode}'")
 
-        return feature_weights
+        return [tuple(i) for i in feature_weights]
 
     def _post_epoch_statistics(
             self,

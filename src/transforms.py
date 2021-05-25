@@ -272,6 +272,7 @@ class Pad(TransformBase):
             
             - `fill`: fills everything with the `color` value
             - `edge`: repeats the edge pixels
+            - `wrap`: repeats the image from the opposite edge
             """
         )
     }

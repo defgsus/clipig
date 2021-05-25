@@ -439,6 +439,16 @@ PARAMETERS = {
           This actually works quite well!  
         """
     ),
+    "targets.feature_scale": Parameter(
+        str, default="equal",
+        doc="""
+        Adjusts the initial scaling of the similarity between training image and this feature. 
+        
+        - `equal`: All factors are 1.
+        - `fair`: Factors are set such that the **initial frame** of the training image
+          has the same similarity with each feature.
+        """
+    ),
     "targets.features": PlaceholderParameter(
         list, default=list(),
         doc="""
@@ -493,6 +503,13 @@ PARAMETERS = {
         
         Note that you can use negative weights as well which translates roughly to:
         Generate an image that is the least likely to that feature.
+        """
+    ),
+    "targets.features.scale": Parameter(
+        float, default=1., expression_groups=EXPR_GROUPS.target_feature,
+        doc="""
+        A scaling parameter that is multiplied with the **similarity** value to
+        yield the actual similarity used, e.g., for **best_match** [select](#targetsselect).
         """
     ),
     "targets.features.loss": Parameter(
