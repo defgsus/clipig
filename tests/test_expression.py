@@ -33,3 +33,10 @@ class TestExpression(unittest.TestCase):
         params = convert_params(params)
         set_parameter_defaults(params)
         self.assertEqual([448, 112], params["resolution"])
+    
+    @unittest.expectedFailure
+    def test_lists_as_result_of_expression(self):
+        self.assertEqual(
+            [1., 2.],
+            Expression(float, "[1, 2]")(),
+        )

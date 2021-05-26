@@ -189,6 +189,8 @@ class Expression:
 
     def __call__(self, **arguments):
         result = self.function(**self._with_aliases(arguments))
+        #if isinstance(result, (list, tuple)):
+        #    return [self.type(v) for v in result]
         return self.type(result)
 
     def _with_aliases(self, arguments: dict) -> dict:
@@ -208,7 +210,7 @@ class ExpressionContext:
 
     def __call__(
             self,
-            expr: Union[int, float, Expression, List[Union[int, float, Expression]]],
+            expr: Union[str, int, float, Expression, List[Union[str, int, float, Expression]]],
     ):
         def _convert(e):
             if isinstance(e, (int, float, str)):

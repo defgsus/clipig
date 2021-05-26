@@ -1,12 +1,21 @@
 import unittest
 
+from src import transforms, constraints
 from src.parameters import (
-    yaml_to_parameters, set_parameter_defaults, convert_params, merge_parameters
+    yaml_to_parameters, set_parameter_defaults, convert_params, merge_parameters,
+    PARAMETERS,
 )
-from src.expression import Expression
+from src.expression import Expression, ExpressionContext, EXPRESSION_ARGS
 
 
 class TestParameters(unittest.TestCase):
+
+    def get_expression_context(self, *groups: str) -> ExpressionContext:
+        params = dict()
+        for group in groups:
+            for name in EXPRESSION_ARGS[group]["args"]:
+                params[name] = 0
+        return ExpressionContext(**params)
 
     def test_set_default_params_empty(self):
         params = dict()
@@ -118,7 +127,7 @@ class TestParameters(unittest.TestCase):
         self.assertEqual(5, params["init"]["std"])
         self.assertEqual(2, len(params["targets"]))
 
-    def test_lists(self):
+    def test_lists_with_multiple_lengths(self):
         yaml = """
         targets:
           - transforms:
@@ -158,4 +167,22 @@ class TestParameters(unittest.TestCase):
         self.assertEqual(
             [1., 2., 3., 4.],
             params["targets"][0]["transforms"][0]["random_shift"],
+        )
+
+    @unittest.expectedFailure
+    def test_lists_as_result_of_expressions(self):
+        context = self.get_expression_context(
+            *PARAMETERS["targets.transforms.random_shift"].expression_groups,
+        )
+        yaml = """
+        targets:
+          - transforms:
+              - random_shift:
+                - [1, 2]
+        """
+        params = convert_params(yaml_to_parameters(yaml))
+
+        self.assertEqual(
+            [1., 2.],
+            context(params["targets"][0]["transforms"][0]["random_shift"]),
         )
