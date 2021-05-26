@@ -172,7 +172,7 @@ class SequenceParameter(Parameter):
             pass
         else:
             lengths = sorted(set([1] + self.lengths))
-            length_str = ", ".join(str(l) for l in lengths)
+            length_str = " or ".join(str(l) for l in lengths)
             raise ValueError(f"expected list of length {length_str}, got {len(sequence)}")
 
         return [
