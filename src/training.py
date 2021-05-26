@@ -281,7 +281,7 @@ class ImageTraining:
         self.log(2, "initializing pixels")
         res = context(self.parameters["resolution"])
         self.pixel_model = PixelsRGB(resolution=res).to(self.device)
-        self.pixel_model.initialize(self.parameters["init"])
+        self.pixel_model.initialize(**self.parameters["init"])
         self.base_learnrate, self.optimizer = \
             create_optimizer(self.pixel_model, self.parameters["optimizer"])
 

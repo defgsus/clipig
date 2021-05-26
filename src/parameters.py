@@ -313,6 +313,13 @@ PARAMETERS = {
         Defines the way, the pixels are initialized. Default is random pixels.
         """
     ),
+    "init.resolution": SequenceParameter(
+        int, length=2, default=None,
+        doc="""
+        This can alter the resolution of the noise or loaded image before
+        it is converted to the [resolution](#resolution) of the training image. 
+        """
+    ),
     "init.mean": SequenceParameter(
         float, length=3, default=[.5, .5, .5],
         doc="""
