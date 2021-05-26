@@ -122,6 +122,13 @@ The torch optimizer to perform the gradient descent.
 
 Defines the way, the pixels are initialized. Default is random pixels.
 
+#### `init.resolution`
+
+`list of length 2 of int` no default
+
+This can alter the resolution of the noise or loaded image before
+it is converted to the [resolution](#resolution) of the training image.
+
 #### `init.mean`
 
 `list of length 3 of float` default: **`[0.5, 0.5, 0.5]`**

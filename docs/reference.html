@@ -49,6 +49,7 @@
 <li class="toctree-l4"><a class="reference internal" href="reference.html#learnrate_scale">learnrate_scale</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#optimizer">optimizer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#init">init</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference.html#initresolution">init.resolution</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#initmean">init.mean</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#initstd">init.std</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#initimage">init.image</a></li>
@@ -257,6 +258,10 @@ different experiments.</p>
 <hr>
 <h3 id="init"><code>init</code></h3>
 <p>Defines the way, the pixels are initialized. Default is random pixels.</p>
+<h4 id="initresolution"><code>init.resolution</code></h4>
+<p><code>list of length 2 of int</code> no default</p>
+<p>This can alter the resolution of the noise or loaded image before
+it is converted to the <a href="#resolution">resolution</a> of the training image.</p>
 <h4 id="initmean"><code>init.mean</code></h4>
 <p><code>list of length 3 of float</code> default: <strong><code>[0.5, 0.5, 0.5]</code></strong></p>
 <p>The mean (brightness) of the initial pixel noise.</p>
