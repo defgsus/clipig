@@ -24,7 +24,8 @@ def dump_parameters_text(PARAMETERS: dict, file: Optional[TextIO] = None):
                 type_str = f"of one of {type_str}"
 
         if is_list:
-            type_str = f"list of length {param.length} {type_str}"
+            length_str = " or ".join(str(l) for l in param.lengths)
+            type_str = f"list of length {length_str} {type_str}"
         print(f"{path} (type: {type_str})", file=file)
 
 
@@ -72,7 +73,8 @@ def dump_parameters_md(file: Optional[TextIO] = None):
                 type_str = f"of one of {type_str}"
 
         if is_list:
-            type_str = f"list of length {param.length} {type_str}"
+            length_str = " or ".join(str(l) for l in param.lengths)
+            type_str = f"list of length {length_str} {type_str}"
 
         if param.default is None:
             default_str = "no default"

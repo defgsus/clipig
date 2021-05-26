@@ -128,7 +128,7 @@ class SequenceParameter(Parameter):
     def __init__(
             self,
             types: Union[Type, Sequence[Type]],
-            length: int,
+            length: Union[int, Sequence[int]],
             default: Any = None,
             null: bool = False,
             doc: Optional[str] = None,
@@ -141,12 +141,12 @@ class SequenceParameter(Parameter):
             doc=doc,
             expression_groups=expression_groups,
         )
-        self.length = length
+        self.lengths = [length] if isinstance(length, int) else list(length)
 
     def copy(self):
         return self.__class__(
             types=self.types,
-            length=self.length,
+            length=self.lengths,
             default=self.default,
             null=self.null,
             doc=self.doc,
@@ -164,14 +164,15 @@ class SequenceParameter(Parameter):
         else:
             sequence = [x]
 
-        if len(sequence) == 1 and self.length > 1:
-            sequence = sequence * self.length
-        elif len(sequence) == self.length:
+        smallest_length = min(self.lengths)
+
+        if len(sequence) == 1 and smallest_length > 1:
+            sequence = sequence * smallest_length
+        elif len(sequence) in self.lengths:
             pass
         else:
-            length_str = "1"
-            if self.length > 1:
-                length_str += f" or {self.length}"
+            lengths = sorted(set([1] + self.lengths))
+            length_str = ", ".join(str(l) for l in lengths)
             raise ValueError(f"expected list of length {length_str}, got {len(sequence)}")
 
         return [

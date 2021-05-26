@@ -90,6 +90,7 @@
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsrandom_translate">targets.transforms.random_translate</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsrepeat">targets.transforms.repeat</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsresize">targets.transforms.resize</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsrnoise">targets.transforms.rnoise</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsrotate">targets.transforms.rotate</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsshift">targets.transforms.shift</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#postproc">postproc</a></li>
@@ -118,6 +119,9 @@
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocrandom_scale">postproc.random_scale</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocrandom_shift">postproc.random_shift</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocrandom_translate">postproc.random_translate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#postprocrnoise">postproc.rnoise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference.html#postprocrnoisestd">postproc.rnoise.std</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference.html#postprocrnoiseresolution">postproc.rnoise.resolution</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#postprocrotate">postproc.rotate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocrotatedegree">postproc.rotate.degree</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocrotatecenter">postproc.rotate.center</a></li>
@@ -587,7 +591,7 @@ are filled with black (zero).</p>
 Areas outside of the image are filled with black (zero).</p>
 <p>Minimum and maximum scale, where <code>0.5</code> means half and <code>2.0</code> means double.</p>
 <h3 id="targetstransformsrandom_shift"><code>targets.transforms.random_shift</code></h3>
-<p><code>list of length 2 of float</code> no default</p>
+<p><code>list of length 2 or 4 of float</code> no default</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>This randomly translates the pixels of the image.</p>
 <p>Pixels that are moved outside get attached on the other side.</p>
@@ -596,6 +600,9 @@ Areas outside of the image are filled with black (zero).</p>
 <p>A number <strong>between -1 and 1</strong> translates by the fraction of the image resolution.
 E.g., <code>shift: 0 1</code> would randomly translate the image to every possible position
 given it's resolution.</p>
+<p><strong>Two numbers</strong> specify minimum and maximum shift both axis, 
+<strong>four numbers</strong> specify minimum and maximum shift for axis <strong>x</strong> and <strong>y</strong>
+respectively.</p>
 <h3 id="targetstransformsrandom_translate"><code>targets.transforms.random_translate</code></h3>
 <p><code>list of length 2 of float</code> no default</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
@@ -618,6 +625,19 @@ or two integers to specify them separately.</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The resolution of the image is changed.</p>
 <p>One integer for square images, two numbers to specify <strong>width</strong> and <strong>height</strong>.</p>
+<h3 id="targetstransformsrnoise"><code>targets.transforms.rnoise</code></h3>
+<p>Adds noise with a different resolution to the image.</p>
+<p>The noise has a scalable normal distribution around zero.</p>
+<h4 id="targetstransformsrnoisestd"><code>targets.transforms.rnoise.std</code></h4>
+<p><code>list of length 3 of float</code> no default</p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>Specifies the standard deviation of the noise distribution.</p>
+<p>One value or three values to specify <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> separately.</p>
+<h4 id="targetstransformsrnoiseresolution"><code>targets.transforms.rnoise.resolution</code></h4>
+<p><code>list of length 2 of int</code> no default</p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>The resolution of the noise image. It will be 
+resized to the processed image.</p>
 <h3 id="targetstransformsrotate"><code>targets.transforms.rotate</code></h3>
 <p>Rotates the image.</p>
 <p>The resolution is not changed and areas outside of the image
@@ -793,7 +813,7 @@ are filled with black (zero).</p>
 Areas outside of the image are filled with black (zero).</p>
 <p>Minimum and maximum scale, where <code>0.5</code> means half and <code>2.0</code> means double.</p>
 <h4 id="postprocrandom_shift"><code>postproc.random_shift</code></h4>
-<p><code>list of length 2 of float</code> no default</p>
+<p><code>list of length 2 or 4 of float</code> no default</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>This randomly translates the pixels of the image.</p>
 <p>Pixels that are moved outside get attached on the other side.</p>
@@ -802,6 +822,9 @@ Areas outside of the image are filled with black (zero).</p>
 <p>A number <strong>between -1 and 1</strong> translates by the fraction of the image resolution.
 E.g., <code>shift: 0 1</code> would randomly translate the image to every possible position
 given it's resolution.</p>
+<p><strong>Two numbers</strong> specify minimum and maximum shift both axis, 
+<strong>four numbers</strong> specify minimum and maximum shift for axis <strong>x</strong> and <strong>y</strong>
+respectively.</p>
 <h4 id="postprocrandom_translate"><code>postproc.random_translate</code></h4>
 <p><code>list of length 2 of float</code> no default</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
@@ -813,6 +836,20 @@ Areas outside of the image are filled with black (zero).</p>
 For example: <code>random_translate: a, b</code>, then horizontal shift is randomly sampled in 
 the range <code>-img_width * a &lt; dx &lt; img_width * a</code> and vertical shift is randomly sampled in the range 
 <code>-img_height * b &lt; dy &lt; img_height * b</code>.</p>
+<hr>
+<h3 id="postprocrnoise"><code>postproc.rnoise</code></h3>
+<p>Adds noise with a different resolution to the image.</p>
+<p>The noise has a scalable normal distribution around zero.</p>
+<h4 id="postprocrnoisestd"><code>postproc.rnoise.std</code></h4>
+<p><code>list of length 3 of float</code> no default</p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>Specifies the standard deviation of the noise distribution.</p>
+<p>One value or three values to specify <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> separately.</p>
+<h4 id="postprocrnoiseresolution"><code>postproc.rnoise.resolution</code></h4>
+<p><code>list of length 2 of int</code> no default</p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>The resolution of the noise image. It will be 
+resized to the processed image.</p>
 <hr>
 <h3 id="postprocrotate"><code>postproc.rotate</code></h3>
 <p>Rotates the image.</p>

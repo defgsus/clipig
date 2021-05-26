@@ -734,7 +734,7 @@ class RandomShift(Shift):
     NAME = "random_shift"
     PARAMS = {
         "offset": SequenceParameter(
-            float, length=2, default=None,
+            float, length=[2, 4], default=None,
             doc="""
             Specifies the random range of translation.
             
@@ -743,6 +743,10 @@ class RandomShift(Shift):
             A number **between -1 and 1** translates by the fraction of the image resolution.
             E.g., `shift: 0 1` would randomly translate the image to every possible position
             given it's resolution.
+            
+            **Two numbers** specify minimum and maximum shift both axis, 
+            **four numbers** specify minimum and maximum shift for axis **x** and **y**
+            respectively.
             """
         ),
     }
@@ -751,9 +755,16 @@ class RandomShift(Shift):
         super().__init__(offset)
 
     def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
-        mi, ma = context(self.offset)
-        x = random.uniform(mi, ma)
-        y = random.uniform(mi, ma)
+        offset = context(self.offset)
+
+        if len(offset) == 2:
+            mi_x = mi_y = offset[0]
+            ma_x = ma_y = offset[1]
+        else:
+            mi_x, ma_x, mi_y, ma_y = offset
+
+        x = random.uniform(mi_x, ma_x)
+        y = random.uniform(mi_y, ma_y)
         return self._shift(image, x, y)
 
 

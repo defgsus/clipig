@@ -704,7 +704,7 @@ Minimum and maximum scale, where `0.5` means half and `2.0` means double.
 
 ### `targets.transforms.random_shift`
 
-`list of length 2 of float` no default
+`list of length 2 or 4 of float` no default
 
 
 expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
@@ -720,6 +720,10 @@ A number **larger 1** or **smaller -1** translates by the actual pixels.
 A number **between -1 and 1** translates by the fraction of the image resolution.
 E.g., `shift: 0 1` would randomly translate the image to every possible position
 given it's resolution.
+
+**Two numbers** specify minimum and maximum shift both axis, 
+**four numbers** specify minimum and maximum shift for axis **x** and **y**
+respectively.
 
 ### `targets.transforms.random_translate`
 
@@ -762,6 +766,33 @@ expression variables: [learnrate](expressions.md#learnrate-variables), [resoluti
 The resolution of the image is changed.
 
 One integer for square images, two numbers to specify **width** and **height**.
+
+### `targets.transforms.rnoise`
+
+Adds noise with a different resolution to the image.
+
+The noise has a scalable normal distribution around zero.
+
+#### `targets.transforms.rnoise.std`
+
+`list of length 3 of float` no default
+
+
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
+
+Specifies the standard deviation of the noise distribution. 
+
+One value or three values to specify **red**, **green** and **blue** separately.
+
+#### `targets.transforms.rnoise.resolution`
+
+`list of length 2 of int` no default
+
+
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
+
+The resolution of the noise image. It will be 
+resized to the processed image.
 
 ### `targets.transforms.rotate`
 
@@ -1107,7 +1138,7 @@ Minimum and maximum scale, where `0.5` means half and `2.0` means double.
 
 #### `postproc.random_shift`
 
-`list of length 2 of float` no default
+`list of length 2 or 4 of float` no default
 
 
 expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
@@ -1123,6 +1154,10 @@ A number **larger 1** or **smaller -1** translates by the actual pixels.
 A number **between -1 and 1** translates by the fraction of the image resolution.
 E.g., `shift: 0 1` would randomly translate the image to every possible position
 given it's resolution.
+
+**Two numbers** specify minimum and maximum shift both axis, 
+**four numbers** specify minimum and maximum shift for axis **x** and **y**
+respectively.
 
 #### `postproc.random_translate`
 
@@ -1142,6 +1177,38 @@ Maximum absolute fraction for horizontal and vertical translations.
 For example: `random_translate: a, b`, then horizontal shift is randomly sampled in 
 the range `-img_width * a < dx < img_width * a` and vertical shift is randomly sampled in the range 
 `-img_height * b < dy < img_height * b`.
+
+
+
+---
+
+
+### `postproc.rnoise`
+
+Adds noise with a different resolution to the image.
+
+The noise has a scalable normal distribution around zero.
+
+#### `postproc.rnoise.std`
+
+`list of length 3 of float` no default
+
+
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
+
+Specifies the standard deviation of the noise distribution. 
+
+One value or three values to specify **red**, **green** and **blue** separately.
+
+#### `postproc.rnoise.resolution`
+
+`list of length 2 of int` no default
+
+
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
+
+The resolution of the noise image. It will be 
+resized to the processed image.
 
 
 

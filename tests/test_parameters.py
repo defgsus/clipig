@@ -1,6 +1,8 @@
 import unittest
 
-from src.parameters import set_parameter_defaults, convert_params, merge_parameters
+from src.parameters import (
+    yaml_to_parameters, set_parameter_defaults, convert_params, merge_parameters
+)
 from src.expression import Expression
 
 
@@ -115,3 +117,45 @@ class TestParameters(unittest.TestCase):
         self.assertEqual(2, params["init"]["mean"])
         self.assertEqual(5, params["init"]["std"])
         self.assertEqual(2, len(params["targets"]))
+
+    def test_lists(self):
+        yaml = """
+        targets:
+          - transforms:
+              - random_shift: 3
+        """
+        params = convert_params(yaml_to_parameters(yaml))
+        self.assertEqual(
+            [3., 3.],
+            params["targets"][0]["transforms"][0]["random_shift"],
+        )
+
+        yaml = """
+        targets:
+          - transforms:
+              - random_shift: 2 3
+        """
+        params = convert_params(yaml_to_parameters(yaml))
+        self.assertEqual(
+            [2., 3.],
+            params["targets"][0]["transforms"][0]["random_shift"],
+        )
+
+        yaml = """
+        targets:
+          - transforms:
+              - random_shift: 1 2 3
+        """
+        with self.assertRaises(ValueError):
+            params = convert_params(yaml_to_parameters(yaml))
+
+        yaml = """
+        targets:
+          - transforms:
+              - random_shift: 1 2 3 4
+        """
+        params = convert_params(yaml_to_parameters(yaml))
+        self.assertEqual(
+            [1., 2., 3., 4.],
+            params["targets"][0]["transforms"][0]["random_shift"],
+        )

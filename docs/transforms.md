@@ -29,5 +29,6 @@ Here's a list of all available transformations:
 - [random_translate](reference.md#targetstransformsrandom_translate): Randomly translates an image in the specified range.
 - [repeat](reference.md#targetstransformsrepeat): Repeats the image a number of times in the right and bottom direction.
 - [resize](reference.md#targetstransformsresize): The resolution of the image is changed.
+- [rnoise](reference.md#targetstransformsrnoise): Adds noise with a different resolution to the image.
 - [rotate](reference.md#targetstransformsrotate): Rotates the image.
 - [shift](reference.md#targetstransformsshift): This translates the image while wrapping the edges around.
