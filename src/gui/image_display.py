@@ -38,9 +38,14 @@ class ImageWidget(QWidget):
 
         self.zoom_bar = QScrollBar(Qt.Horizontal, self)
         lh.addWidget(self.zoom_bar)
+        self.zoom_bar.setStatusTip(self.tr("zoom"))
         self.zoom_bar.setRange(1, 500)
         self.zoom_bar.setValue(self.zoom)
         self.zoom_bar.valueChanged.connect(self.set_zoom)
+
+        b = QPushButton(self.tr("100%"))
+        lh.addWidget(b)
+        b.clicked.connect(lambda: self.set_zoom(100))
 
     @property
     def zoom(self):
