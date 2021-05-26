@@ -36,7 +36,7 @@ def create_optimizer(model: torch.nn.Module, params: str) -> Tuple[float, torch.
         )
 
     elif params == "rmsprob":
-        base_learnrate = 0.005
+        base_learnrate = 0.003
         optimizer = torch.optim.RMSprop(
             model.parameters(),
             lr=base_learnrate,  # will be adjusted per epoch
