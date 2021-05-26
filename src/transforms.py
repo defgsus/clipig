@@ -398,6 +398,45 @@ class Noise(TransformBase):
         return image + noise * std.reshape(3, 1, 1)
 
 
+class ScaledNoise(TransformBase):
+    """
+    Adds noise with a different resolution to the image.
+
+    The noise has a scalable normal distribution around zero.
+    """
+    NAME = "rnoise"
+    IS_RANDOM = True
+    PARAMS = {
+        "std": SequenceParameter(
+            float, length=3, default=None,
+            doc="""
+            Specifies the standard deviation of the noise distribution. 
+            
+            One value or three values to specify **red**, **green** and **blue** separately.
+            """
+        ),
+        "resolution": SequenceParameter(
+            int, length=2, default=None,
+            doc="""
+            The resolution of the noise image. It will be 
+            resized to the processed image.
+            """
+        ),
+    }
+
+    def __init__(self, std: List[Float], resolution: List[Int]):
+        super().__init__()
+        self.std = std
+        self.resolution = resolution
+
+    def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+        std = torch.Tensor(context(self.std)).to(image.device)
+        size = context(self.resolution)
+        noise = torch.randn([3, size[1], size[0]]).to(image.device)
+        noise = VF.resize(noise, image.shape[-2:])
+        return image + noise * std.reshape(3, 1, 1)
+
+
 class FNoise(TransformBase):
     """
     Adds noise to the image's fourier space.
