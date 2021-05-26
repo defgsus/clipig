@@ -1,7 +1,7 @@
 from copy import deepcopy
 from functools import partial
 from queue import Queue, Empty
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -16,6 +16,7 @@ from .image_display import ImageWidget
 from ..parameters import parameters_to_yaml, yaml_to_parameters, convert_params, set_parameter_defaults
 from .thread_wrapper import ImageTrainingThread
 from .statistics import Statistics
+from .yaml_editor import YamlEditor
 
 
 class Experiment(QWidget):
@@ -33,10 +34,7 @@ class Experiment(QWidget):
 
         l = QVBoxLayout()
         grid.addLayout(l, 0, 0)
-        self.editor = QPlainTextEdit()
-        font = QFont("Mono")
-        font.setPointSize(17)
-        self.editor.setFont(font)
+        self.editor = YamlEditor()
         l.addWidget(self.editor)
 
         self.log_display = QPlainTextEdit()
@@ -68,6 +66,9 @@ class Experiment(QWidget):
 
         self.statistics = Statistics()
         grid.addWidget(self.statistics, 1, 0, 1, 2)
+
+    def create_actions(self, menu: QMenu):
+        self.editor.create_actions(menu)
 
     def get_parameters(self) -> Optional[dict]:
         """
@@ -133,28 +134,19 @@ class Experiment(QWidget):
         elif name == "stopped":
             pass
 
-    def set_parameters(self, parameters: dict):
-        if parameters:
-            yaml_text = parameters_to_yaml(parameters)
-        else:
-            yaml_text = ""
-        self.editor.setPlainText(yaml_text)
-
     def halt(self):
         self.trainer.destroy()
 
-    def _get_parameters(self, for_training: bool = True) -> Optional[dict]:
-        try:
-            parameters = yaml_to_parameters(self.editor.toPlainText())
-            params = convert_params(parameters)
-            set_parameter_defaults(params)
-        except Exception as e:
-            print(e)
-            return
+    def set_parameters(self, parameters: Union[str, dict]):
+        self.editor.set_parameters(parameters)
 
-        if for_training:
+    def _get_parameters(self, for_training: bool = True) -> Optional[dict]:
+        params = self.editor.get_parameters()
+
+        if params and for_training:
             params["verbose"] = 2
             params["snapshot_interval"] = 1.
+
         return params
 
     def _call_queue_processing(self):

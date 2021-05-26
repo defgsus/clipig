@@ -29,6 +29,8 @@ class MainWindow(QMainWindow):
 
         menu.addAction(self.tr("E&xit"), self.close)
 
+        self.experiment_menu = self.menuBar().addMenu(self.tr("&Experiment"))
+
     def _create_widgets(self):
         self.tab_widget = QTabWidget(self)
         self.setCentralWidget(self.tab_widget)
@@ -58,7 +60,8 @@ class MainWindow(QMainWindow):
 
     def slot_tab_changed(self):
         widget = self.tab_widget.currentWidget()
-        # TODO: update menu
+        self.experiment_menu.clear()
+        widget.create_actions(self.experiment_menu)
 
     def slot_save_image(self):
         exp = self.experiment()
