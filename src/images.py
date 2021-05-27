@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import hashlib
 import requests
-from typing import List
+from typing import List, Union
 
 import PIL.Image
 import torch
@@ -41,8 +41,14 @@ def _load_web_image(url: str) -> PIL.Image.Image:
     return PIL.Image.open(CACHE_DIR.joinpath(hash))
 
 
-def resize_crop(image: torch.Tensor, resolution: List[int]):
-    width, height = image.shape[-1], image.shape[-2]
+def resize_crop(
+        image: Union[torch.Tensor, PIL.Image.Image],
+        resolution: List[int],
+) -> Union[torch.Tensor, PIL.Image.Image]:
+    if isinstance(image, PIL.Image.Image):
+        width, height = image.width, image.height
+    else:
+        width, height = image.shape[-1], image.shape[-2]
 
     if width != resolution[0] or height != resolution[1]:
 
@@ -56,7 +62,12 @@ def resize_crop(image: torch.Tensor, resolution: List[int]):
             [int(height * factor), int(width * factor)]
         )
 
-        if image.shape[-2:] != resolution:
+        if isinstance(image, PIL.Image.Image):
+            width, height = image.width, image.height
+        else:
+            width, height = image.shape[-1], image.shape[-2]
+
+        if width != resolution[0] or height != resolution[1]:
             image = VT.center_crop(image, resolution)
         
     return image
