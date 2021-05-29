@@ -4,6 +4,7 @@
 __pycache__/
 *.png
 *.yaml
+*.csv*
 images/
 notebooks/
 scratchpad/
