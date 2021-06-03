@@ -398,6 +398,33 @@ class Noise(TransformBase):
         return image + noise * std.reshape(3, 1, 1)
 
 
+class BlackWhiteNoise(TransformBase):
+    """
+    Adds gray-scale noise to the image.
+
+    The noise has a scalable normal distribution around zero.
+    """
+    NAME = "bwnoise"
+    IS_RANDOM = True
+    PARAMS = {
+        "std": Parameter(
+            float, default=None,
+            doc="""
+            Specifies the standard deviation of the noise distribution. 
+            """
+        ),
+    }
+
+    def __init__(self, std: Float):
+        super().__init__()
+        self.std = std
+
+    def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+        std = context(self.std)
+        noise = torch.randn(image.shape[-2:]).to(image.device) * std
+        return image + noise.unsqueeze(0).repeat(3, 1, 1)
+
+
 class ScaledNoise(TransformBase):
     """
     Adds noise with a different resolution to the image.
