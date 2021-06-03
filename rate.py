@@ -75,18 +75,18 @@ class ClipRater:
     def __init__(
             self,
             filenames: List[str],
-            texts: List[str],
-            images: List[str],
+            texts: Optional[List[str]] = None,
+            images: Optional[List[str]] = None,
             model: str = "ViT-B/32",
             device: str = "auto",
             batch_size: int = 10,
-            chaching: bool = False,
+            caching: bool = False,
     ):
         self.filenames = filenames
-        self.texts = texts
-        self.images = images
+        self.texts = texts or []
+        self.images = images or []
         self.batch_size = batch_size
-        self.caching = chaching
+        self.caching = caching
         self.model, self.preprocess = ClipSingleton.get(model, device)
         self.device = self.model.logit_scale.device
 
@@ -251,7 +251,7 @@ def main():
         images=images,
         model=args.model,
         device=args.device,
-        chaching=args.cache,
+        caching=args.cache,
     )
     similarities = rater.rate()
 
