@@ -1,11 +1,15 @@
 import pathlib
 import subprocess
+from typing import List, Optional
 
 
 def render(
         source: str,
         output_name: str,
         template_context: dict,
+        snapshot_interval: float = 0.,
+        device: str = "auto",
+        extra_args: Optional[List[str]] = None,
 ):
     """
     Render the yaml-config from source via clipig.py
@@ -14,13 +18,18 @@ def render(
     :param output_name: complete filename of the output image file
     :param template_context: dict with key/value mapping
         where each instane of `{{key}}` will be replaced with `value`.
+    :param extra_args: list of str, Extra command-line arguments
     """
     config_text = yaml_template(source, template_context)
 
     call_args = [
         "python", "clipig.py", "-", "--output", output_name,
-        "--snapshot-interval", "20",
-                                                ]
+        "--snapshot-interval", str(snapshot_interval),
+        "--device", device,
+    ]
+    if extra_args:
+        call_args += extra_args
+
     process = subprocess.Popen(call_args, stdin=subprocess.PIPE)
 
     process.communicate(config_text.encode("utf-8"))

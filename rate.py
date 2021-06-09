@@ -93,8 +93,9 @@ class ClipRater:
     def rate(self) -> pd.DataFrame:
         image_features, filenames = self._get_image_file_features(self.filenames, "encoding images")
         compare_features, columns = self._get_all_compare_features()
+        compare_features = compare_features.type_as(image_features)
 
-        similarities = 100. * image_features @ compare_features.T
+        similarities = image_features @ compare_features.T * 100.
 
         df = pd.DataFrame(similarities.numpy(), index=filenames, columns=columns)
         return df
@@ -184,8 +185,11 @@ class ClipRater:
         return torch.cat(compare_features), compare_feature_names
 
     def _get_cache_filename(self, filename: str) -> pathlib.Path:
-        path = pathlib.Path(filename).resolve()
-        key = f"{path}-{path.stat().st_mtime}"
+        if filename.startswith("https://") or filename.startswith("http://"):
+            key = filename
+        else:
+            path = pathlib.Path(filename).resolve()
+            key = f"{path}-{path.stat().st_mtime}"
         return self.CACHE_DIR / hashlib.md5(key.encode("utf-8")).hexdigest()
 
     def _get_cache(self, filename: str) -> Optional[torch.Tensor]:
