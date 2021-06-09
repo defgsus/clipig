@@ -101,7 +101,10 @@ pleasure and can be saved with `CTRL-S`.
 --- 
 
 Here's a motivating [article](https://defgsus.github.io/blog/2021/04/28/malazan-clip-features.html)
-whose images where created with some former code.
+whose images where created with some former code and 
+[another one](https://defgsus.github.io/blog/2021/06/09/clipig-animal-transfer.html)
+where the excellent [DALL-E](https://openai.com/blog/dall-e/) examples have been
+tried to reproduce.
 
 
 ## Known issues
