@@ -1,5 +1,3 @@
-import json
-import datetime
 import pathlib
 import time
 import sys
@@ -7,24 +5,33 @@ import sys
 from src.parameters import parse_arguments, save_yaml_config
 from src.files import make_filename_dir, change_extension
 from src.training import ImageTraining
+from src.files import prepare_output_name
 
 
 if __name__ == "__main__":
 
-    if len(sys.argv) > 1 and sys.argv[1] == "render-documentation":
-        from src.doc import render_documentation
-        render_documentation()
-        exit()
-
     parameters = parse_arguments()
-    # print(parameters); exit()
-    # print(json.dumps(parameters, indent=2)); exit()
-
-    trainer = ImageTraining(parameters)
-    start_time = time.time()
+    num_repeat = parameters.pop("repeat", 1)
 
     try:
-        trainer.train()
+
+        for i in range(num_repeat):
+
+            trainer = ImageTraining(parameters)
+            start_time = time.time()
+
+            trainer.train()
+
+            run_time = time.time() - start_time
+
+            trainer.save_image()
+
+            filename = change_extension(parameters["output"], "yaml")
+            if not pathlib.Path(filename).exists():
+                trainer.save_yaml(filename, run_time=run_time)
+
+            # update output-name when repeating
+            parameters["output"] = str(prepare_output_name(parameters["output"], make_dir=False))
 
     except KeyboardInterrupt:
         pass
@@ -34,11 +41,3 @@ if __name__ == "__main__":
         # the torchscript execution
         if not str(e).strip().endswith("RuntimeError:"):
             raise
-
-    run_time = time.time() - start_time
-
-    trainer.save_image()
-
-    filename = change_extension(parameters["output"], "yaml")
-    if not pathlib.Path(filename).exists():
-        trainer.save_yaml(filename, run_time=run_time)

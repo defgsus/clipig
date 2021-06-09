@@ -503,20 +503,21 @@ class ImageTraining:
 
             # -- store snapshot --
 
-            do_snapshot = epoch == 0 or epoch == self.parameters["epochs"] - 1
+            if self.parameters["snapshot_interval"]:
+                do_snapshot = epoch == 0 or epoch == self.parameters["epochs"] - 1
 
-            if isinstance(self.parameters["snapshot_interval"], int):
-                do_snapshot |= epoch - last_snapshot_epoch >= self.parameters["snapshot_interval"]
-            elif isinstance(self.parameters["snapshot_interval"], float):
-                do_snapshot |= cur_time - last_snapshot_time >= self.parameters["snapshot_interval"]
+                if isinstance(self.parameters["snapshot_interval"], int):
+                    do_snapshot |= epoch - last_snapshot_epoch >= self.parameters["snapshot_interval"]
+                elif isinstance(self.parameters["snapshot_interval"], float):
+                    do_snapshot |= cur_time - last_snapshot_time >= self.parameters["snapshot_interval"]
 
-            if epoch == 0 or do_snapshot:
-                last_snapshot_time = cur_time
-                last_snapshot_epoch = epoch
-                if self.snapshot_callback is None:
-                    self.save_image()
-                else:
-                    self.snapshot_callback(current_pixels)
+                if do_snapshot:
+                    last_snapshot_time = cur_time
+                    last_snapshot_epoch = epoch
+                    if self.snapshot_callback is None:
+                        self.save_image()
+                    else:
+                        self.snapshot_callback(current_pixels)
 
     def _postproc(self, context: ExpressionContext):
         image = self.pixel_model.pixels

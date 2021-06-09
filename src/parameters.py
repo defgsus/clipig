@@ -231,6 +231,8 @@ PARAMETERS = {
         
         A float number specifies the interval in seconds. An integer number specifies 
         the interval in number-of-epochs.
+        
+        A zero (either int of float) disables storage of snapshots. 
         """
     ),
     "epochs": Parameter(
@@ -678,7 +680,7 @@ def parse_arguments(gui_mode: bool = False) -> dict:
     parser.add_argument(
         "-s", "--snapshot-interval", type=float, default=None,
         help="Number of seconds after which a snapshot is saved, "
-             "defaults to %s" % PARAMETERS["snapshot_interval"].default,
+             "defaults to %s. Zero disables snapshots." % PARAMETERS["snapshot_interval"].default,
     )
     parser.add_argument(
         "-d", "--device", type=str, default=None,
@@ -722,7 +724,10 @@ def parse_arguments(gui_mode: bool = False) -> dict:
         elif "." not in output_name:
             output_name += ".png"
 
-    for key in ("optimizer", "learnrate", "epochs", "resolution", "device", "snapshot_interval"):
+    for key in (
+            "optimizer", "learnrate", "epochs", "resolution",
+            "device", "snapshot_interval",
+    ):
         if getattr(args, key) is not None:
             parameters[key] = getattr(args, key)
 
@@ -741,6 +746,9 @@ def parse_arguments(gui_mode: bool = False) -> dict:
 
     if parameters:
         parameters["output"] = str(prepare_output_name(output_name, make_dir=False))
+
+    if not gui_mode:
+        parameters["repeat"] = args.repeat
 
     return parameters
 

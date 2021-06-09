@@ -20,11 +20,18 @@ def prepare_output_name(output: str, make_dir: bool = False) -> str:
     if filepath.exists():
 
         filename = filepath.name
+        cur_number = None
         extension = None
+
         if "." in filename:
             filename = filename.split(".")
             extension = filename.pop(-1)
             filename = ".".join(filename)
+
+        if re.match(r".*-\d+$", filename):
+            filename = filename.split("-")
+            cur_number = int(filename[-1])
+            filename = "-".join(filename[:-1])
 
         existing_names = list(glob.glob(
             str(filepath.parent.joinpath(filename)) + "*"
@@ -41,6 +48,9 @@ def prepare_output_name(output: str, make_dir: bool = False) -> str:
             ))
         else:
             max_number = 0
+
+        if cur_number is not None:
+            max_number = max(max_number, cur_number)
 
         filename = f"{filename}-{max_number+1}"
         if extension:
