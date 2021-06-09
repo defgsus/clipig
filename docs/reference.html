@@ -75,6 +75,7 @@
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsadd">targets.transforms.add</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsblur">targets.transforms.blur</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsborder">targets.transforms.border</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsbwnoise">targets.transforms.bwnoise</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformscenter_crop">targets.transforms.center_crop</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsclamp">targets.transforms.clamp</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformscrop">targets.transforms.crop</a></li>
@@ -105,6 +106,7 @@
 <li class="toctree-l3"><a class="reference internal" href="reference.html#postprocborder">postproc.border</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocbordersize">postproc.border.size</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocbordercolor">postproc.border.color</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference.html#postprocbwnoise">postproc.bwnoise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocclamp">postproc.clamp</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#postprocedge">postproc.edge</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocedgekernel_size">postproc.edge.kernel_size</a></li>
@@ -211,6 +213,7 @@ filename or is automatically increased, if the file already exists.</li>
 <p>Interval after which a snapshot of the currently trained image is saved.</p>
 <p>A float number specifies the interval in seconds. An integer number specifies 
 the interval in number-of-epochs.</p>
+<p>A zero (either int of float) disables storage of snapshots.</p>
 <h4 id="epochs"><code>epochs</code></h4>
 <p><code>int</code> default: <strong><code>300</code></strong></p>
 <p>The number of training steps before stopping the training, not including batch sizes.</p>
@@ -471,6 +474,12 @@ or two integers to specify them separately.</p>
 <p>The color of the border as float numbers in the range <code>[0, 1]</code>.</p>
 <p>Three numbers for <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> or a single number 
 to specify a gray-scale.</p>
+<h3 id="targetstransformsbwnoise"><code>targets.transforms.bwnoise</code></h3>
+<p><code>float</code> no default</p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>Adds gray-scale noise to the image.</p>
+<p>The noise has a scalable normal distribution around zero.</p>
+<p>Specifies the standard deviation of the noise distribution.</p>
 <h3 id="targetstransformscenter_crop"><code>targets.transforms.center_crop</code></h3>
 <p><code>list of length 2 of int</code> no default</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
@@ -733,6 +742,12 @@ or two integers to specify them separately.</p>
 <p>The color of the border as float numbers in the range <code>[0, 1]</code>.</p>
 <p>Three numbers for <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> or a single number 
 to specify a gray-scale.</p>
+<h4 id="postprocbwnoise"><code>postproc.bwnoise</code></h4>
+<p><code>float</code> no default</p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>Adds gray-scale noise to the image.</p>
+<p>The noise has a scalable normal distribution around zero.</p>
+<p>Specifies the standard deviation of the noise distribution.</p>
 <h4 id="postprocclamp"><code>postproc.clamp</code></h4>
 <p><code>list of length 2 of float</code> no default</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>

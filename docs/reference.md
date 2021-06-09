@@ -28,6 +28,8 @@ Interval after which a snapshot of the currently trained image is saved.
 A float number specifies the interval in seconds. An integer number specifies 
 the interval in number-of-epochs.
 
+A zero (either int of float) disables storage of snapshots.
+
 #### `epochs`
 
 `int` default: **`300`**
@@ -466,6 +468,19 @@ The color of the border as float numbers in the range `[0, 1]`.
 
 Three numbers for **red**, **green** and **blue** or a single number 
 to specify a gray-scale.
+
+### `targets.transforms.bwnoise`
+
+`float` no default
+
+
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
+
+Adds gray-scale noise to the image.
+
+The noise has a scalable normal distribution around zero.
+
+Specifies the standard deviation of the noise distribution.
 
 ### `targets.transforms.center_crop`
 
@@ -971,6 +986,19 @@ The color of the border as float numbers in the range `[0, 1]`.
 
 Three numbers for **red**, **green** and **blue** or a single number 
 to specify a gray-scale.
+
+#### `postproc.bwnoise`
+
+`float` no default
+
+
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
+
+Adds gray-scale noise to the image.
+
+The noise has a scalable normal distribution around zero.
+
+Specifies the standard deviation of the noise distribution.
 
 #### `postproc.clamp`
 

@@ -12,6 +12,7 @@ Here's a list of all available transformations:
 - [add](reference.md#targetstransformsadd): Adds a fixed value to all pixels.
 - [blur](reference.md#targetstransformsblur): A gaussian blur is applied to the pixels.
 - [border](reference.md#targetstransformsborder): Draws a border on the edge of the image. The resolution is not changed.
+- [bwnoise](reference.md#targetstransformsbwnoise): Adds gray-scale noise to the image.
 - [center_crop](reference.md#targetstransformscenter_crop): Crops an image of the given resolution from the center.
 - [clamp](reference.md#targetstransformsclamp): Clamps the pixels into a fixed range.
 - [crop](reference.md#targetstransformscrop): Crops a specified section from the image.
