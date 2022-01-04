@@ -75,7 +75,7 @@ class PixelsBase(torch.nn.Module):
             pixels = pixels * std.reshape(-1, 1, 1) + mean.reshape(-1, 1, 1)
 
         if resolution[0] != self.resolution[0] or resolution[1] != self.resolution[1]:
-            pixels = VF.resize(pixels, self.resolution[::-1])
+            pixels = VF.resize(pixels, self.resolution[::-1], PIL.Image.BICUBIC)
 
         if image_tensor is None:
             pixels = torch.clamp(pixels, 0, 1)
@@ -101,10 +101,10 @@ class PixelsRGB(PixelsBase):
     def set_pixels(self, pixels: torch.Tensor):
         self.pixels[...] = pixels
 
-    def resize(self, resolution: List[int]):
+    def resize(self, resolution: List[int], interpolation: int = PIL.Image.BICUBIC):
         self.resolution = list(resolution)
         self.pixels = torch.nn.Parameter(
-            VF.resize(self.pixels, self.resolution[::-1])
+            VF.resize(self.pixels, self.resolution[::-1], interpolation=interpolation)
         )
 
     def forward(self):

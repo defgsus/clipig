@@ -265,6 +265,21 @@ PARAMETERS = {
         - 224 if t < .2 else 448
         ```
         would change the resolution from 224x224 to 448x448 at 20% of training time.
+        
+        The interpolation method defaults to 'cubic' and can be changed 
+        with [interpolation](#interpolation).
+        """,
+        expression_groups=EXPR_GROUPS.resolution,
+    ),
+    "interpolation": Parameter(
+        str, default="cubic",
+        doc="""
+        Filter used when resizing the training image.
+        
+        Can be one of: 
+        - `nearest`: no interpolation
+        - `linear`: bilinear interpolation 
+        - `cubic`: bicubic interpolation
         """,
         expression_groups=EXPR_GROUPS.resolution,
     ),

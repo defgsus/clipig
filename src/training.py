@@ -28,7 +28,7 @@ from . import constraints as constraint_modules
 from .constraints import get_mean_saturation
 from .clip_singleton import ClipSingleton
 from .strings import value_str
-from .images import load_image
+from .images import load_image, get_interpolation
 
 
 torch.autograd.set_detect_anomaly(True)
@@ -268,7 +268,7 @@ class ImageTraining:
             #compare_image = torch.zeros([3, 224, 224]).to(features.device) + .1
             compare_image = self.pixel_model.forward()
             if compare_image.shape != torch.Size([3, 224, 224]):
-                compare_image = VF.resize(compare_image, [224, 224])
+                compare_image = VF.resize(compare_image, [224, 224], PIL.Image.BICUBIC)
             compare_image = self.clip_preprocess.transforms[-1](compare_image)
             compare_feature = self.clip_model.encode_image(compare_image.unsqueeze(0))
             compare_feature / compare_feature.norm(dim=-1, keepdim=True)
@@ -285,8 +285,8 @@ class ImageTraining:
         self.base_learnrate, self.optimizer = \
             create_optimizer(self.pixel_model, self.parameters["optimizer"])
 
-    def _resize_pixel_model(self, res: List[int]):
-        self.pixel_model.resize(res)
+    def _resize_pixel_model(self, res: List[int], interpolation: int):
+        self.pixel_model.resize(res, interpolation=interpolation)
         self.base_learnrate, self.optimizer = \
             create_optimizer(self.pixel_model, self.parameters["optimizer"])
 
@@ -367,7 +367,10 @@ class ImageTraining:
 
             resolution = expression_context(self.parameters["resolution"])
             if resolution != self.pixel_model.resolution:
-                self._resize_pixel_model(resolution)
+                interpolation = get_interpolation(
+                    expression_context(self.parameters["interpolation"])
+                )
+                self._resize_pixel_model(resolution, interpolation)
 
             expression_context = expression_context.add(
                 resolution=[self.pixel_model.pixels.shape[-1], self.pixel_model.pixels.shape[-2]],
@@ -419,7 +422,7 @@ class ImageTraining:
                                 pixels = t(pixels, expression_context)
 
                         if pixels.shape != [3, 224, 224]:
-                            pixels = VF.resize(pixels, [224, 224])
+                            pixels = VF.resize(pixels, [224, 224], PIL.Image.BICUBIC)
 
                         target_pixels.append(pixels.unsqueeze(0))
                         target_pixel_idx = len(target_pixels) - 1

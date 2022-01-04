@@ -12,6 +12,13 @@ import torchvision.transforms.functional as VT
 CACHE_DIR = Path("~/.cache/img").expanduser()
 
 
+INTERPOLATIONS = {
+    "nearest": PIL.Image.NEAREST,
+    "linear": PIL.Image.BILINEAR,
+    "cubic": PIL.Image.BICUBIC,
+}
+
+
 def load_image(path: str) -> PIL.Image.Image:
     path = str(path)
     if path.startswith("http://") or path.startswith("https://"):
@@ -59,7 +66,8 @@ def resize_crop(
 
         image = VT.resize(
             image,
-            [int(height * factor), int(width * factor)]
+            [int(height * factor), int(width * factor)],
+            interpolation=PIL.Image.BICUBIC,
         )
 
         if isinstance(image, PIL.Image.Image):
@@ -71,3 +79,18 @@ def resize_crop(
             image = VT.center_crop(image, resolution)
         
     return image
+
+
+def get_interpolation(name: str) -> int:
+    """
+    Convert string to PIL interpolation
+    :param name: str
+    :return: int, like PIL.Image.BICUBIC
+    """
+    if name in INTERPOLATIONS:
+        return INTERPOLATIONS[name]
+
+    inters = ", ".join(f"'{i}'" for i in INTERPOLATIONS)
+    raise ValueError(
+        f"Interpolation must be one of {inters}, got '{name}'"
+    )
