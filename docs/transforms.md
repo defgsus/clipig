@@ -23,6 +23,7 @@ Here's a list of all available transformations:
 - [mul](reference.md#targetstransformsmul): Multiplies all pixels by a fixed value.
 - [noise](reference.md#targetstransformsnoise): Adds noise to the image.
 - [pad](reference.md#targetstransformspad): Pads the image with additional pixels at the borders.
+- [quantize](reference.md#targetstransformsquantize): Quantize the color values.
 - [random_crop](reference.md#targetstransformsrandom_crop): Crops a section of the specified resolution from a random position in the image.
 - [random_rotate](reference.md#targetstransformsrandom_rotate): Randomly rotates the image.
 - [random_scale](reference.md#targetstransformsrandom_scale): Randomly scales an image in the range specified.

@@ -65,6 +65,23 @@ resolution:
 ```
 would change the resolution from 224x224 to 448x448 at 20% of training time.
 
+The interpolation method defaults to 'cubic' and can be changed 
+with [interpolation](#interpolation).
+
+#### `interpolation`
+
+`str` default: **`cubic`**
+
+
+expression variables: [time](expressions.md#time-variables)
+
+Filter used when resizing the training image.
+
+Can be one of: 
+- `nearest`: no interpolation
+- `linear`: bilinear interpolation 
+- `cubic`: bicubic interpolation
+
 #### `model`
 
 `str` default: **`ViT-B/32`**
@@ -667,6 +684,24 @@ The way the padded area is filled.
 - `edge`: repeats the edge pixels
 - `wrap`: repeats the image from the opposite edge
 
+### `targets.transforms.quantize`
+
+`list of length 3 of float` no default
+
+
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
+
+Quantize the color values.
+
+This defines a fixed step-size for each color value.
+
+Generally, do not use in [target.transform](transforms.md) because it will
+remove the small gradient steps of the training. It might
+be useful in the [post-processing](#postproc) stage.
+
+The step-size. Three numbers specify **red**, **green** and **blue** while a 
+single number specifies a gray-scale color.
+
 ### `targets.transforms.random_crop`
 
 `list of length 2 of int` no default
@@ -1121,6 +1156,24 @@ The noise has a scalable normal distribution around zero.
 Specifies the standard deviation of the noise distribution. 
 
 One value or three values to specify **red**, **green** and **blue** separately.
+
+#### `postproc.quantize`
+
+`list of length 3 of float` no default
+
+
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
+
+Quantize the color values.
+
+This defines a fixed step-size for each color value.
+
+Generally, do not use in [target.transform](transforms.md) because it will
+remove the small gradient steps of the training. It might
+be useful in the [post-processing](#postproc) stage.
+
+The step-size. Three numbers specify **red**, **green** and **blue** while a 
+single number specifies a gray-scale color.
 
 
 

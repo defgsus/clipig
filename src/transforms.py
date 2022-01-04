@@ -901,13 +901,19 @@ class Clamp(TransformBase):
 class Quantize(TransformBase):
     """
     Quantize the color values.
+
+    This defines a fixed step-size for each color value.
+
+    Generally, do not use in [target.transform](transforms.md) because it will
+    remove the small gradient steps of the training. It might
+    be useful in the [post-processing](#postproc) stage.
     """
     NAME = "quantize"
     PARAMS = {
         "step": SequenceParameter(
             float, length=3, default=None,
             doc="""
-            The stepsize. Three numbers specify **red**, **green** and **blue** while a 
+            The step-size. Three numbers specify **red**, **green** and **blue** while a 
             single number specifies a gray-scale color.
             """
         ),

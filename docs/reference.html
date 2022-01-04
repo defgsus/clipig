@@ -43,6 +43,7 @@
 <li class="toctree-l4"><a class="reference internal" href="reference.html#epochs">epochs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#start_epoch">start_epoch</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#resolution">resolution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference.html#interpolation">interpolation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#model">model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#device">device</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#learnrate">learnrate</a></li>
@@ -85,6 +86,7 @@
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsmul">targets.transforms.mul</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsnoise">targets.transforms.noise</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformspad">targets.transforms.pad</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsquantize">targets.transforms.quantize</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsrandom_crop">targets.transforms.random_crop</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsrandom_rotate">targets.transforms.random_rotate</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsrandom_scale">targets.transforms.random_scale</a></li>
@@ -116,6 +118,7 @@
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocmean">postproc.mean</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocmul">postproc.mul</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocnoise">postproc.noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference.html#postprocquantize">postproc.quantize</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#postprocrandom_rotate">postproc.random_rotate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocrandom_rotatedegree">postproc.random_rotate.degree</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocrandom_rotatecenter">postproc.random_rotate.center</a></li>
@@ -232,6 +235,18 @@ numbers for width and height.</p>
 during training, e.g:</p>
 <pre class="code yaml">resolution:
 - 224 if t &lt; .2 else 448</pre><p>would change the resolution from 224x224 to 448x448 at 20% of training time.</p>
+<p>The interpolation method defaults to 'cubic' and can be changed 
+with <a href="#interpolation">interpolation</a>.</p>
+<h4 id="interpolation"><code>interpolation</code></h4>
+<p><code>str</code> default: <strong><code>cubic</code></strong></p>
+<p>expression variables: <a href="expressions.html#time-variables">time</a></p>
+<p>Filter used when resizing the training image.</p>
+<p>Can be one of:</p>
+<ul>
+<li><code>nearest</code>: no interpolation</li>
+<li><code>linear</code>: bilinear interpolation </li>
+<li><code>cubic</code>: bicubic interpolation</li>
+</ul>
 <h4 id="model"><code>model</code></h4>
 <p><code>str</code> default: <strong><code>ViT-B/32</code></strong></p>
 <p>The pre-trained <a href="https://github.com/openai/CLIP/">CLIP</a> model to use. Options are <code>RN50</code>, <code>RN101</code>, <code>RN50x4</code>, <code>ViT-B/32</code></p>
@@ -576,6 +591,16 @@ the image and two rows on top and bottom respectively.</p>
 <li><code>edge</code>: repeats the edge pixels</li>
 <li><code>wrap</code>: repeats the image from the opposite edge</li>
 </ul>
+<h3 id="targetstransformsquantize"><code>targets.transforms.quantize</code></h3>
+<p><code>list of length 3 of float</code> no default</p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>Quantize the color values.</p>
+<p>This defines a fixed step-size for each color value.</p>
+<p>Generally, do not use in <a href="transforms.html">target.transform</a> because it will
+remove the small gradient steps of the training. It might
+be useful in the <a href="#postproc">post-processing</a> stage.</p>
+<p>The step-size. Three numbers specify <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> while a 
+single number specifies a gray-scale color.</p>
 <h3 id="targetstransformsrandom_crop"><code>targets.transforms.random_crop</code></h3>
 <p><code>list of length 2 of int</code> no default</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
@@ -809,6 +834,16 @@ single number specifies a gray-scale color.</p>
 <p>The noise has a scalable normal distribution around zero.</p>
 <p>Specifies the standard deviation of the noise distribution.</p>
 <p>One value or three values to specify <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> separately.</p>
+<h4 id="postprocquantize"><code>postproc.quantize</code></h4>
+<p><code>list of length 3 of float</code> no default</p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>Quantize the color values.</p>
+<p>This defines a fixed step-size for each color value.</p>
+<p>Generally, do not use in <a href="transforms.html">target.transform</a> because it will
+remove the small gradient steps of the training. It might
+be useful in the <a href="#postproc">post-processing</a> stage.</p>
+<p>The step-size. Three numbers specify <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> while a 
+single number specifies a gray-scale color.</p>
 <hr>
 <h3 id="postprocrandom_rotate"><code>postproc.random_rotate</code></h3>
 <p>Randomly rotates the image.</p>
