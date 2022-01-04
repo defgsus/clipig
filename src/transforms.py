@@ -904,7 +904,7 @@ class Quantize(TransformBase):
 
     This defines a fixed step-size for each color value.
 
-    Generally, do not use in [target.transform](transforms.md) because it will
+    Generally, do not use in [target.transforms](transforms.md) because it will
     remove the small gradient steps of the training. It might
     be useful in the [post-processing](#postproc) stage.
     """
@@ -927,6 +927,64 @@ class Quantize(TransformBase):
         step = torch.Tensor(context(self.step)).to(image.device).reshape(3, -1)
 
         return ((image.reshape(3, -1) / step).floor() * step).reshape(image.shape)
+
+
+class Saturation(TransformBase):
+    """
+    Adjust the image saturation.
+
+    In the [target.transforms](transforms.md) stage, decreasing the
+    saturation before evaluation by CLIP will actually increase the
+    contrast of the training image.
+    """
+    NAME = "saturation"
+    PARAMS = {
+        "factor": Parameter(
+            float, default=1.,
+            doc="""
+            How much to adjust the saturation. 0 will
+            give a black and white image, 1 will give the original image while
+            2 will enhance the saturation by a factor of 2.
+            """
+        ),
+    }
+
+    def __init__(self, factor: float):
+        super().__init__()
+        self.factor = factor
+
+    def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+        factor = context(self.factor)
+        return VF.adjust_saturation(image, factor)
+
+
+class Contrast(TransformBase):
+    """
+    Adjust the image saturation.
+
+    In the [target.transforms](transforms.md) stage, decreasing the
+    contrast before evaluation by CLIP will increase the
+    dark and bright portions of the training image.
+    """
+    NAME = "contrast"
+    PARAMS = {
+        "factor": Parameter(
+            float, default=1.,
+            doc="""
+            How much to adjust the contrast. Can be any non negative number. 
+            0 gives a solid gray image, 1 gives the original image while 
+            2 increases the contrast by a factor of 2.
+            """
+        ),
+    }
+
+    def __init__(self, factor: float):
+        super().__init__()
+        self.factor = factor
+
+    def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+        factor = context(self.factor)
+        return VF.adjust_contrast(image, factor)
 
 
 # TODO: not really helpful a.t.m.

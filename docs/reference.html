@@ -79,6 +79,7 @@
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsbwnoise">targets.transforms.bwnoise</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformscenter_crop">targets.transforms.center_crop</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsclamp">targets.transforms.clamp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformscontrast">targets.transforms.contrast</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformscrop">targets.transforms.crop</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsedge">targets.transforms.edge</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsfnoise">targets.transforms.fnoise</a></li>
@@ -96,6 +97,7 @@
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsresize">targets.transforms.resize</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsrnoise">targets.transforms.rnoise</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsrotate">targets.transforms.rotate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformssaturation">targets.transforms.saturation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetstransformsshift">targets.transforms.shift</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#postproc">postproc</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocactive">postproc.active</a></li>
@@ -110,6 +112,7 @@
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocbordercolor">postproc.border.color</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocbwnoise">postproc.bwnoise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocclamp">postproc.clamp</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference.html#postproccontrast">postproc.contrast</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#postprocedge">postproc.edge</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocedgekernel_size">postproc.edge.kernel_size</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocedgesigma">postproc.edge.sigma</a></li>
@@ -131,6 +134,7 @@
 <li class="toctree-l3"><a class="reference internal" href="reference.html#postprocrotate">postproc.rotate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocrotatedegree">postproc.rotate.degree</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocrotatecenter">postproc.rotate.center</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference.html#postprocsaturation">postproc.saturation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference.html#postprocshift">postproc.shift</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetsconstraints">targets.constraints</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#targetsconstraintsblur">targets.constraints.blur</a></li>
@@ -509,6 +513,16 @@ to specify a gray-scale.</p>
 second is the maximum allowed value.</p>
 <p>An image displayed on screen or converted to a file does only include
 values in the range of <code>[0, 1]</code>.</p>
+<h3 id="targetstransformscontrast"><code>targets.transforms.contrast</code></h3>
+<p><code>float</code> default: <strong><code>1.0</code></strong></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>Adjust the image saturation.</p>
+<p>In the <a href="transforms.html">target.transforms</a> stage, decreasing the
+contrast before evaluation by <a href="https://github.com/openai/CLIP/">CLIP</a> will increase the
+dark and bright portions of the training image.</p>
+<p>How much to adjust the contrast. Can be any non negative number. 
+0 gives a solid gray image, 1 gives the original image while 
+2 increases the contrast by a factor of 2.</p>
 <h3 id="targetstransformscrop"><code>targets.transforms.crop</code></h3>
 <p><code>list of length 4 of float</code> no default</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
@@ -596,7 +610,7 @@ the image and two rows on top and bottom respectively.</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Quantize the color values.</p>
 <p>This defines a fixed step-size for each color value.</p>
-<p>Generally, do not use in <a href="transforms.html">target.transform</a> because it will
+<p>Generally, do not use in <a href="transforms.html">target.transforms</a> because it will
 remove the small gradient steps of the training. It might
 be useful in the <a href="#postproc">post-processing</a> stage.</p>
 <p>The step-size. Three numbers specify <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> while a 
@@ -690,6 +704,16 @@ are filled with black (zero).</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The center of rotation in the range <code>[0, 1]</code>.</p>
 <p>Two numbers to specify <strong>x</strong> and <strong>y</strong> separately.</p>
+<h3 id="targetstransformssaturation"><code>targets.transforms.saturation</code></h3>
+<p><code>float</code> default: <strong><code>1.0</code></strong></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>Adjust the image saturation.</p>
+<p>In the <a href="transforms.html">target.transforms</a> stage, decreasing the
+saturation before evaluation by <a href="https://github.com/openai/CLIP/">CLIP</a> will actually increase the
+contrast of the training image.</p>
+<p>How much to adjust the saturation. 0 will
+give a black and white image, 1 will give the original image while
+2 will enhance the saturation by a factor of 2.</p>
 <h3 id="targetstransformsshift"><code>targets.transforms.shift</code></h3>
 <p><code>list of length 2 of float</code> no default</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
@@ -781,6 +805,16 @@ to specify a gray-scale.</p>
 second is the maximum allowed value.</p>
 <p>An image displayed on screen or converted to a file does only include
 values in the range of <code>[0, 1]</code>.</p>
+<h4 id="postproccontrast"><code>postproc.contrast</code></h4>
+<p><code>float</code> default: <strong><code>1.0</code></strong></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>Adjust the image saturation.</p>
+<p>In the <a href="transforms.html">target.transforms</a> stage, decreasing the
+contrast before evaluation by <a href="https://github.com/openai/CLIP/">CLIP</a> will increase the
+dark and bright portions of the training image.</p>
+<p>How much to adjust the contrast. Can be any non negative number. 
+0 gives a solid gray image, 1 gives the original image while 
+2 increases the contrast by a factor of 2.</p>
 <hr>
 <h3 id="postprocedge"><code>postproc.edge</code></h3>
 <p>This removes everything except edges and generally has a bad effect on image
@@ -839,7 +873,7 @@ single number specifies a gray-scale color.</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>Quantize the color values.</p>
 <p>This defines a fixed step-size for each color value.</p>
-<p>Generally, do not use in <a href="transforms.html">target.transform</a> because it will
+<p>Generally, do not use in <a href="transforms.html">target.transforms</a> because it will
 remove the small gradient steps of the training. It might
 be useful in the <a href="#postproc">post-processing</a> stage.</p>
 <p>The step-size. Three numbers specify <strong>red</strong>, <strong>green</strong> and <strong>blue</strong> while a 
@@ -919,6 +953,16 @@ are filled with black (zero).</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
 <p>The center of rotation in the range <code>[0, 1]</code>.</p>
 <p>Two numbers to specify <strong>x</strong> and <strong>y</strong> separately.</p>
+<h4 id="postprocsaturation"><code>postproc.saturation</code></h4>
+<p><code>float</code> default: <strong><code>1.0</code></strong></p>
+<p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>
+<p>Adjust the image saturation.</p>
+<p>In the <a href="transforms.html">target.transforms</a> stage, decreasing the
+saturation before evaluation by <a href="https://github.com/openai/CLIP/">CLIP</a> will actually increase the
+contrast of the training image.</p>
+<p>How much to adjust the saturation. 0 will
+give a black and white image, 1 will give the original image while
+2 will enhance the saturation by a factor of 2.</p>
 <h4 id="postprocshift"><code>postproc.shift</code></h4>
 <p><code>list of length 2 of float</code> no default</p>
 <p>expression variables: <a href="expressions.html#learnrate-variables">learnrate</a>, <a href="expressions.html#resolution-variables">resolution</a>, <a href="expressions.html#time-variables">time</a></p>

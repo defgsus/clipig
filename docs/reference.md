@@ -527,6 +527,23 @@ second is the maximum allowed value.
 An image displayed on screen or converted to a file does only include
 values in the range of `[0, 1]`.
 
+### `targets.transforms.contrast`
+
+`float` default: **`1.0`**
+
+
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
+
+Adjust the image saturation.
+
+In the [target.transforms](transforms.md) stage, decreasing the
+contrast before evaluation by [CLIP](https://github.com/openai/CLIP/) will increase the
+dark and bright portions of the training image.
+
+How much to adjust the contrast. Can be any non negative number. 
+0 gives a solid gray image, 1 gives the original image while 
+2 increases the contrast by a factor of 2.
+
 ### `targets.transforms.crop`
 
 `list of length 4 of float` no default
@@ -695,7 +712,7 @@ Quantize the color values.
 
 This defines a fixed step-size for each color value.
 
-Generally, do not use in [target.transform](transforms.md) because it will
+Generally, do not use in [target.transforms](transforms.md) because it will
 remove the small gradient steps of the training. It might
 be useful in the [post-processing](#postproc) stage.
 
@@ -878,6 +895,23 @@ The center of rotation in the range `[0, 1]`.
 
 Two numbers to specify **x** and **y** separately.
 
+### `targets.transforms.saturation`
+
+`float` default: **`1.0`**
+
+
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
+
+Adjust the image saturation.
+
+In the [target.transforms](transforms.md) stage, decreasing the
+saturation before evaluation by [CLIP](https://github.com/openai/CLIP/) will actually increase the
+contrast of the training image.
+
+How much to adjust the saturation. 0 will
+give a black and white image, 1 will give the original image while
+2 will enhance the saturation by a factor of 2.
+
 ### `targets.transforms.shift`
 
 `list of length 2 of float` no default
@@ -1050,6 +1084,23 @@ second is the maximum allowed value.
 An image displayed on screen or converted to a file does only include
 values in the range of `[0, 1]`.
 
+#### `postproc.contrast`
+
+`float` default: **`1.0`**
+
+
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
+
+Adjust the image saturation.
+
+In the [target.transforms](transforms.md) stage, decreasing the
+contrast before evaluation by [CLIP](https://github.com/openai/CLIP/) will increase the
+dark and bright portions of the training image.
+
+How much to adjust the contrast. Can be any non negative number. 
+0 gives a solid gray image, 1 gives the original image while 
+2 increases the contrast by a factor of 2.
+
 
 
 ---
@@ -1168,7 +1219,7 @@ Quantize the color values.
 
 This defines a fixed step-size for each color value.
 
-Generally, do not use in [target.transform](transforms.md) because it will
+Generally, do not use in [target.transforms](transforms.md) because it will
 remove the small gradient steps of the training. It might
 be useful in the [post-processing](#postproc) stage.
 
@@ -1329,6 +1380,23 @@ expression variables: [learnrate](expressions.md#learnrate-variables), [resoluti
 The center of rotation in the range `[0, 1]`. 
 
 Two numbers to specify **x** and **y** separately.
+
+#### `postproc.saturation`
+
+`float` default: **`1.0`**
+
+
+expression variables: [learnrate](expressions.md#learnrate-variables), [resolution](expressions.md#resolution-variables), [time](expressions.md#time-variables)
+
+Adjust the image saturation.
+
+In the [target.transforms](transforms.md) stage, decreasing the
+saturation before evaluation by [CLIP](https://github.com/openai/CLIP/) will actually increase the
+contrast of the training image.
+
+How much to adjust the saturation. 0 will
+give a black and white image, 1 will give the original image while
+2 will enhance the saturation by a factor of 2.
 
 #### `postproc.shift`
 

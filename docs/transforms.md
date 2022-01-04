@@ -15,6 +15,7 @@ Here's a list of all available transformations:
 - [bwnoise](reference.md#targetstransformsbwnoise): Adds gray-scale noise to the image.
 - [center_crop](reference.md#targetstransformscenter_crop): Crops an image of the given resolution from the center.
 - [clamp](reference.md#targetstransformsclamp): Clamps the pixels into a fixed range.
+- [contrast](reference.md#targetstransformscontrast): Adjust the image saturation.
 - [crop](reference.md#targetstransformscrop): Crops a specified section from the image.
 - [edge](reference.md#targetstransformsedge): This removes everything except edges and generally has a bad effect on image
     quality. It might be useful, however.
@@ -33,4 +34,5 @@ Here's a list of all available transformations:
 - [resize](reference.md#targetstransformsresize): The resolution of the image is changed.
 - [rnoise](reference.md#targetstransformsrnoise): Adds noise with a different resolution to the image.
 - [rotate](reference.md#targetstransformsrotate): Rotates the image.
+- [saturation](reference.md#targetstransformssaturation): Adjust the image saturation.
 - [shift](reference.md#targetstransformsshift): This translates the image while wrapping the edges around.
