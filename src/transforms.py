@@ -898,6 +898,30 @@ class Clamp(TransformBase):
         return torch.clamp(image, range[0], range[1])
 
 
+class Quantize(TransformBase):
+    """
+    Quantize the color values.
+    """
+    NAME = "quantize"
+    PARAMS = {
+        "step": SequenceParameter(
+            float, length=3, default=None,
+            doc="""
+            The stepsize. Three numbers specify **red**, **green** and **blue** while a 
+            single number specifies a gray-scale color.
+            """
+        ),
+    }
+
+    def __init__(self, step: List[float]):
+        super().__init__()
+        self.step = step
+
+    def __call__(self, image: torch.Tensor, context: ExpressionContext) -> torch.Tensor:
+        step = torch.Tensor(context(self.step)).to(image.device).reshape(3, -1)
+
+        return ((image.reshape(3, -1) / step).floor() * step).reshape(image.shape)
+
 
 # TODO: not really helpful a.t.m.
 #
